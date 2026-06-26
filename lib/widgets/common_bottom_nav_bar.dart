@@ -18,7 +18,7 @@ class CommonBottomNavBar extends StatelessWidget {
     } else if (index == 2) {
       routeName = '/community';
     } else {
-      routeName = '/fish-info';
+      routeName = '/settings';
     }
 
     // 현재 route 확인
