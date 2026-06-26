@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'screens/home_screen.dart';
 import 'screens/calendar_screen.dart';
-import 'screens/settings_screen.dart';
+import 'screens/chatbot_screen.dart';
 
 import 'screens/iot/live_video_screen.dart';
 import 'screens/iot/water_temp_detail_screen.dart';
@@ -27,6 +27,8 @@ class MyApp extends StatelessWidget {
         // 하단 네비게이션바 메인 화면들
         '/home': (context) => const HomeScreen(),
         '/calendar': (context) => const CalendarScreen(),
+        '/chatbot': (context) => const ChatbotScreen(),
+
 
         // 설정 화면에서 이동되는 화면
         '/fish-info': (context) => const FishInfoManagementScreen(),
