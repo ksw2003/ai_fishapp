@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 
 import 'screens/home_screen.dart';
 import 'screens/calendar_screen.dart';
+import 'screens/community/community_list_screen.dart';
+
+import 'screens/community/post_writing_screen.dart';
 import 'screens/chatbot_screen.dart';
 
 import 'screens/iot/live_video_screen.dart';
@@ -27,8 +30,10 @@ class MyApp extends StatelessWidget {
         // 하단 네비게이션바 메인 화면들
         '/home': (context) => const HomeScreen(),
         '/calendar': (context) => const CalendarScreen(),
+        '/community': (context) => const CommunityListScreen(),
+        //post-writing:글쓰기 화면
+        '/post-writing': (context) => const PostWritingScreen(),
         '/chatbot': (context) => const ChatbotScreen(),
-
 
         // 설정 화면에서 이동되는 화면
         '/fish-info': (context) => const FishInfoManagementScreen(),
@@ -46,7 +51,7 @@ class MyApp extends StatelessWidget {
         '/feeding-loading': (context) => const FeedingLoadingScreen(),
 
         // 아직 미완성 화면은 임시로 홈 연결
-        '/community': (context) => const HomeScreen(),
+        '/Home': (context) => const HomeScreen(),
       },
     );
   }
