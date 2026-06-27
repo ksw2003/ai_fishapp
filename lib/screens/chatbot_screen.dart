@@ -88,7 +88,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                         color: Color(0xFF8FA8D8),
                       ),
                       onPressed: () {
-                        Navigator.pushReplacementNamed(context, '/home');
+                        Navigator.pushReplacementNamed(context, '/community');
                       },
                     ),
                   ),
