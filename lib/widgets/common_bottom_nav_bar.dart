@@ -16,7 +16,7 @@ class CommonBottomNavBar extends StatelessWidget {
     } else if (index == 1) {
       routeName = '/calendar';
     } else if (index == 2) {
-      routeName = '/chatbot';
+      routeName = '/community';
     } else {
       routeName = '/settings';
     }
