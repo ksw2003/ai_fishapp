@@ -12,119 +12,130 @@ class WaterTempDetailScreen extends StatelessWidget {
     const double minTemp = 23;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
+      backgroundColor: Colors.white,
       body: SafeArea(
-        child: Center(
-          child: Container(
-            width: 360,
-            height: 760,
-            color: Colors.white,
-            child: Stack(
-              children: [
-                // 뒤로가기 버튼
-                Positioned(
-                  top: 18,
-                  left: 18,
-                  child: IconButton(
-                    icon: const Icon(
-                      Icons.arrow_back_ios_new,
-                      size: 18,
-                      color: Color(0xFF8FA8D8),
-                    ),
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                  ),
-                ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final double screenHeight = constraints.maxHeight;
+            final double gaugeHeight = (screenHeight * 0.58).clamp(330.0, 430.0);
 
-                // 현재 수온 텍스트
-                Positioned(
-                  top: 185,
-                  left: 62,
+            return SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: screenHeight,
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(28, 18, 28, 28),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        '현재 수온은',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFF005BD8),
+                      // 뒤로가기 버튼
+                      IconButton(
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        icon: const Icon(
+                          Icons.arrow_back_ios_new,
+                          size: 18,
+                          color: Color(0xFF8FA8D8),
                         ),
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
                       ),
-                      const SizedBox(height: 6),
-                      Text(
-                        '${currentTemp.toInt()}°C',
-                        style: const TextStyle(
-                          fontSize: 31,
-                          fontWeight: FontWeight.w900,
-                          color: Color(0xFF005BD8),
-                          height: 1,
-                        ),
+
+                      SizedBox(height: screenHeight * 0.10),
+
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // 왼쪽 텍스트 영역
+                          Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.only(left: 34),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  SizedBox(height: screenHeight * 0.08),
+
+                                  const Text(
+                                    '현재 수온은',
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w800,
+                                      color: Color(0xFF005BD8),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    '${currentTemp.toInt()}°C',
+                                    style: const TextStyle(
+                                      fontSize: 31,
+                                      fontWeight: FontWeight.w900,
+                                      color: Color(0xFF005BD8),
+                                      height: 1,
+                                    ),
+                                  ),
+
+                                  SizedBox(height: screenHeight * 0.23),
+
+                                  const Text(
+                                    '오늘 최고수온:',
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w800,
+                                      color: Color(0xFFB0C4EA),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    '${maxTemp.toInt()}°C',
+                                    style: const TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w900,
+                                      color: Color(0xFF91ACDF),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 22),
+                                  const Text(
+                                    '오늘 최저수온:',
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w800,
+                                      color: Color(0xFFB0C4EA),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    '${minTemp.toInt()}°C',
+                                    style: const TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w900,
+                                      color: Color(0xFF91ACDF),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(width: 16),
+
+                          // 오른쪽 수온 게이지
+                          TemperatureBar(
+                            temperature: currentTemp,
+                            minTemperature: 15,
+                            maxTemperature: 30,
+                            barHeight: gaugeHeight,
+                          ),
+                        ],
                       ),
                     ],
                   ),
                 ),
-
-                // 오늘 최고/최저 수온
-                Positioned(
-                  top: 415,
-                  left: 62,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        '오늘 최고수온:',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFFB0C4EA),
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${maxTemp.toInt()}°C',
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w900,
-                          color: Color(0xFF91ACDF),
-                        ),
-                      ),
-                      const SizedBox(height: 22),
-                      const Text(
-                        '오늘 최저수온:',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFFB0C4EA),
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${minTemp.toInt()}°C',
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w900,
-                          color: Color(0xFF91ACDF),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // 오른쪽 수온 게이지
-                const Positioned(
-                  top: 128,
-                  right: 44,
-                  child: TemperatureBar(
-                    temperature: currentTemp,
-                    minTemperature: 15,
-                    maxTemperature: 30,
-                  ),
-                ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         ),
       ),
     );
@@ -135,18 +146,19 @@ class TemperatureBar extends StatelessWidget {
   final double temperature;
   final double minTemperature;
   final double maxTemperature;
+  final double barHeight;
 
   const TemperatureBar({
     super.key,
     required this.temperature,
     required this.minTemperature,
     required this.maxTemperature,
+    required this.barHeight,
   });
 
   @override
   Widget build(BuildContext context) {
     const double barWidth = 58;
-    const double barHeight = 430;
 
     final double ratio =
         ((temperature - minTemperature) / (maxTemperature - minTemperature))
@@ -189,7 +201,7 @@ class TemperatureBar extends StatelessWidget {
 
           // 게이지 안 온도 텍스트
           Positioned(
-            bottom: getTemperatureTextBottom(fillHeight),
+            bottom: getTemperatureTextBottom(fillHeight, barHeight),
             child: Text(
               '${temperature.toInt()}°C',
               style: const TextStyle(
@@ -204,15 +216,16 @@ class TemperatureBar extends StatelessWidget {
     );
   }
 
-  double getTemperatureTextBottom(double fillHeight) {
+  double getTemperatureTextBottom(double fillHeight, double barHeight) {
     final double position = fillHeight - 65;
+    final double maxPosition = barHeight - 80;
 
     if (position < 20) {
       return 20;
     }
 
-    if (position > 350) {
-      return 350;
+    if (position > maxPosition) {
+      return maxPosition;
     }
 
     return position;
@@ -229,7 +242,7 @@ List<Color> getTemperatureGradient(double temp) {
       Color(0xFF006BF0),
     ];
   } else if (temp <= 26) {
-    // 적정 수온: 네 사진 느낌 청록 ~ 파랑
+    // 적정 수온: 청록 ~ 파랑
     return const [
       Color(0xFF18DDE8),
       Color(0xFF00A8F5),

@@ -34,211 +34,192 @@ class HomeScreen extends StatelessWidget {
         '${now.year}년 ${now.month}월 ${now.day}일 (${getKoreanWeekday(now.weekday)})';
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
+      backgroundColor: Colors.white,
       body: SafeArea(
-        child: Center(
-          child: Container(
-            width: 360,
-            height: 760,
-            color: Colors.white,
-            child: Stack(
-              children: [
-                // 상단 환영 문구
-                Positioned(
-                  top: 34,
-                  left: 28,
-                  child: RichText(
-                    text: const TextSpan(
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w900,
-                        color: Color(0xFF2D3E5F),
-                      ),
-                      children: [
-                        TextSpan(text: '환영합니다 '),
-                        TextSpan(
-                          text: userName,
-                          style: TextStyle(
-                            color: Color(0xFF008DF2),
-                          ),
+        child: Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(28, 34, 28, 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // 상단 환영 문구
+                    RichText(
+                      text: const TextSpan(
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xFF2D3E5F),
                         ),
-                        TextSpan(text: '님'),
-                      ],
+                        children: [
+                          TextSpan(text: '환영합니다 '),
+                          TextSpan(
+                            text: userName,
+                            style: TextStyle(
+                              color: Color(0xFF008DF2),
+                            ),
+                          ),
+                          TextSpan(text: '님'),
+                        ],
+                      ),
                     ),
-                  ),
-                ),
 
-                // 날짜 + 카메라 + 오늘의 물고기 상태 카드
-                // 카드 전체를 누르면 실시간 영상 화면으로 이동
-                Positioned(
-                  top: 82,
-                  left: 28,
-                  right: 28,
-                  child: Material(
-                    color: Colors.transparent,
-                    borderRadius: BorderRadius.circular(12),
-                    child: InkWell(
+                    const SizedBox(height: 28),
+
+                    // 날짜 + 카메라 + 오늘의 물고기 상태 카드
+                    Material(
+                      color: Colors.transparent,
                       borderRadius: BorderRadius.circular(12),
-                      splashColor: Colors.white.withOpacity(0.22),
-                      highlightColor: Colors.white.withOpacity(0.10),
-                      onTap: () {
-                        Navigator.pushNamed(context, '/live-video');
-                      },
-                      child: Ink(
-                        height: 135,
-                        padding: const EdgeInsets.fromLTRB(16, 12, 14, 14),
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              Color(0xFF238BFF),
-                              Color(0xFF25C6F2),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(12),
+                        splashColor: Colors.white.withOpacity(0.22),
+                        highlightColor: Colors.white.withOpacity(0.10),
+                        onTap: () {
+                          Navigator.pushNamed(context, '/live-video');
+                        },
+                        child: Ink(
+                          width: double.infinity,
+                          height: 135,
+                          padding: const EdgeInsets.fromLTRB(16, 12, 14, 14),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                Color(0xFF238BFF),
+                                Color(0xFF25C6F2),
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Stack(
+                            children: [
+                              Positioned(
+                                top: 0,
+                                left: 0,
+                                child: Text(
+                                  todayText,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w800,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+
+                              const Positioned(
+                                top: 2,
+                                right: 2,
+                                child: Icon(
+                                  Icons.photo_camera_outlined,
+                                  size: 34,
+                                  color: Colors.white,
+                                ),
+                              ),
+
+                              const Positioned(
+                                right: 0,
+                                bottom: 18,
+                                child: Text(
+                                  '오늘의 물고기 상태:',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w800,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+
+                              Positioned(
+                                right: 0,
+                                bottom: 0,
+                                child: Text(
+                                  fishCondition,
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w800,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
                             ],
                           ),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Stack(
-                          children: [
-                            Positioned(
-                              top: 0,
-                              left: 0,
-                              child: Text(
-                                todayText,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w800,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-
-                            // 카메라 아이콘
-                            // 백엔드에서 실시간 영상 URL을 받아오면 이 카드 클릭 시 영상 화면으로 이동
-                            const Positioned(
-                              top: 2,
-                              right: 2,
-                              child: Icon(
-                                Icons.photo_camera_outlined,
-                                size: 34,
-                                color: Colors.white,
-                              ),
-                            ),
-
-                            const Positioned(
-                              right: 0,
-                              bottom: 18,
-                              child: Text(
-                                '오늘의 물고기 상태:',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w800,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-
-                            Positioned(
-                              right: 0,
-                              bottom: 0,
-                              child: Text(
-                                fishCondition,
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w800,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                          ],
                         ),
                       ),
                     ),
-                  ),
+
+                    const SizedBox(height: 19),
+
+                    // 카드 4개
+                    Row(
+                      children: [
+                        Expanded(
+                          child: HomeInfoCard(
+                            title: '수온',
+                            value: '${waterTemp.toInt()}˚C',
+                            valueColor: const Color(0xFF9CB8E8),
+                            onTap: () {
+                              Navigator.pushNamed(context, '/water-temp');
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: HomeInfoCard(
+                            title: '수질',
+                            value: waterQuality,
+                            valueColor: const Color(0xFF00BDF2),
+                            onTap: () {
+                              print('수질 카드 클릭');
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    Row(
+                      children: [
+                        Expanded(
+                          child: HomeActionCard(
+                            title: '환수하기',
+                            isDone: waterChangeDone,
+                            onTap: () {
+                              Navigator.pushNamed(
+                                context,
+                                '/water-change-loading',
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: HomeActionCard(
+                            title: '먹이주기',
+                            isDone: feedingDone,
+                            onTap: () {
+                              Navigator.pushNamed(
+                                context,
+                                '/feeding-loading',
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-
-                // 카드 4개
-                Positioned(
-                  top: 236,
-                  left: 28,
-                  right: 28,
-                  child: Column(
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: HomeInfoCard(
-                              title: '수온',
-                              value: '${waterTemp.toInt()}˚C',
-                              valueColor: const Color(0xFF9CB8E8),
-                              onTap: () {
-                                Navigator.pushNamed(context, '/water-temp');
-                              },
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: HomeInfoCard(
-                              title: '수질',
-                              value: waterQuality,
-                              valueColor: const Color(0xFF00BDF2),
-                              onTap: () {
-                                // 나중에 수질 상세 화면 만들면 여기 route 연결
-                                print('수질 카드 클릭');
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-
-                      const SizedBox(height: 12),
-
-                      Row(
-                        children: [
-                          Expanded(
-                            child: HomeActionCard(
-                              title: '환수하기',
-                              isDone: waterChangeDone,
-                              onTap: () {
-                                Navigator.pushNamed(
-                                  context,
-                                  '/water-change-loading',
-                                );
-                              },
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: HomeActionCard(
-                              title: '먹이주기',
-                              isDone: feedingDone,
-                              onTap: () {
-                                Navigator.pushNamed(
-                                  context,
-                                  '/feeding-loading',
-                                );
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-
-                // 공통 하단 네비게이션바
-                const Positioned(
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  child: CommonBottomNavBar(
-                    selectedIndex: 0,
-                  ),
-                ),
-              ],
+              ),
             ),
-          ),
+          ],
         ),
+      ),
+
+      // 공통 하단 네비게이션바
+      bottomNavigationBar: const CommonBottomNavBar(
+        selectedIndex: 0,
       ),
     );
   }

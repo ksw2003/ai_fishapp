@@ -82,287 +82,253 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
     // 선택한 날짜의 데이터
     // 기록 없는 날짜는 기본값 표시
-    final Map<String, dynamic> selectedData =
-        dailyRecords[selectedKey] ??
-            {
-              'avgTemp': '-',
-              'waterQuality': '기록 없음',
-              'waterChangeDone': false,
-              'feedingDone': false,
-            };
+    final Map<String, dynamic> selectedData = dailyRecords[selectedKey] ??
+        {
+          'avgTemp': '-',
+          'waterQuality': '기록 없음',
+          'waterChangeDone': false,
+          'feedingDone': false,
+        };
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
+      backgroundColor: Colors.white,
       body: SafeArea(
-        child: Center(
-          child: Container(
-            width: 360,
-            height: 760,
-            color: Colors.white,
-            child: Stack(
-              children: [
-                // 위 내용만 스크롤 가능
-                Positioned.fill(
-                  bottom: 76,
-                  child: SingleChildScrollView(
-                    physics: const BouncingScrollPhysics(),
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(28, 54, 28, 28),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // 상단 월 표시 + 이전/다음 버튼
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                monthName(focusedDay.month),
-                                style: const TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w900,
-                                  color: Color(0xFF2D3E5F),
-                                ),
-                              ),
-                              Row(
-                                children: [
-                                  IconButton(
-                                    icon: const Icon(
-                                      Icons.chevron_left,
-                                      size: 22,
-                                      color: Color(0xFF8FA8D8),
-                                    ),
-                                    onPressed: () {
-                                      setState(() {
-                                        focusedDay = DateTime(
-                                          focusedDay.year,
-                                          focusedDay.month - 1,
-                                          1,
-                                        );
-                                        selectedDay = focusedDay;
-                                      });
-                                    },
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(
-                                      Icons.chevron_right,
-                                      size: 22,
-                                      color: Color(0xFF8FA8D8),
-                                    ),
-                                    onPressed: () {
-                                      setState(() {
-                                        focusedDay = DateTime(
-                                          focusedDay.year,
-                                          focusedDay.month + 1,
-                                          1,
-                                        );
-                                        selectedDay = focusedDay;
-                                      });
-                                    },
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-
-                          const SizedBox(height: 18),
-
-                          // 달력
-                          TableCalendar(
-                            firstDay: DateTime(2020, 1, 1),
-                            lastDay: DateTime(2035, 12, 31),
-                            focusedDay: focusedDay,
-                            selectedDayPredicate: (day) {
-                              return isSameDay(selectedDay, day);
-                            },
-                            startingDayOfWeek: StartingDayOfWeek.monday,
-                            headerVisible: false,
-                            daysOfWeekHeight: 28,
-                            rowHeight: 42,
-                            sixWeekMonthsEnforced: false,
-
-                            onDaySelected: (selected, focused) {
-                              setState(() {
-                                selectedDay = selected;
-                                focusedDay = focused;
-                              });
-                            },
-
-                            onPageChanged: (focused) {
-                              setState(() {
-                                focusedDay = focused;
-                              });
-                            },
-
-                            eventLoader: (day) {
-  return [];
-},
-
-                            daysOfWeekStyle: const DaysOfWeekStyle(
-                              weekdayStyle: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w800,
-                                color: Color(0xFF2D3E5F),
-                              ),
-                              weekendStyle: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w800,
-                                color: Color(0xFF2D3E5F),
-                              ),
-                            ),
-
-                            calendarStyle: CalendarStyle(
-                              outsideDaysVisible: false,
-
-                              defaultTextStyle: const TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: Color(0xFF2D3E5F),
-                              ),
-                              weekendTextStyle: const TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: Color(0xFF2D3E5F),
-                              ),
-
-                              todayDecoration: BoxDecoration(
-                                color:
-                                    const Color(0xFFBDEBFF).withOpacity(0.75),
-                                shape: BoxShape.circle,
-                              ),
-                              todayTextStyle: const TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w800,
-                                color: Color(0xFF2D3E5F),
-                              ),
-
-                              selectedDecoration: const BoxDecoration(
-                                color: Color(0xFF22B8F2),
-                                shape: BoxShape.circle,
-                              ),
-                              selectedTextStyle: const TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w900,
-                                color: Colors.white,
-                              ),
-
-                              markerDecoration: const BoxDecoration(
-                                color: Color(0xFF22B8F2),
-                                shape: BoxShape.circle,
-                              ),
-                              markersMaxCount: 1,
-                              markerSize: 4,
-                              markerMargin: const EdgeInsets.only(top: 3),
-
-                              cellMargin: const EdgeInsets.all(4),
-                            ),
-                          ),
-
-                          const SizedBox(height: 20),
-
-                          // 선택 날짜 표시
-                          Text(
-                            '${selectedDay.year}.${selectedDay.month.toString().padLeft(2, '0')}.${selectedDay.day.toString().padLeft(2, '0')} 기록',
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w800,
-                              color: Color(0xFF2D3E5F),
-                            ),
-                          ),
-
-                          const SizedBox(height: 18),
-
-                          // 선택 날짜의 기록 카드
-                          Row(
-                            children: [
-                              Expanded(
-                                child: CalendarInfoCard(
-                                  title: '평균 수온',
-                                  value: selectedData['avgTemp'] == '-'
-                                      ? '-'
-                                      : '${selectedData['avgTemp']}˚C',
-                                  valueColor: const Color(0xFF9CB8E8),
-onTap: () {
-  Navigator.pushNamed(
-    context,
-    '/daily-temp-detail',
-    arguments: {
-      'selectedDate': selectedDay,
-      'averageTemp': selectedData['avgTemp'] == '-'
-          ? 0.0
-          : selectedData['avgTemp'],
-      'maxTemp': selectedData['maxTemp'] ?? 25.0,
-      'minTemp': selectedData['minTemp'] ?? 23.0,
-    },
-  );
-},
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: CalendarInfoCard(
-                                  title: '수질',
-                                  value: selectedData['waterQuality'],
-                                  valueColor: const Color(0xFF00BDF2),
-                                  onTap: () {
-                                    print('수질 카드 클릭');
-                                  },
-                                ),
-                              ),
-                            ],
-                          ),
-
-                          const SizedBox(height: 12),
-
-                          Row(
-                            children: [
-                              Expanded(
-                                child: CalendarActionCard(
-                                  title: '환수하기',
-                                  isDone: selectedData['waterChangeDone'],
-                                  onTap: () {
-                                    Navigator.pushNamed(
-                                      context,
-                                      '/water-change-loading',
-                                    );
-                                  },
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: CalendarActionCard(
-                                  title: '먹이주기',
-                                  isDone: selectedData['feedingDone'],
-                                  onTap: () {
-                                    Navigator.pushNamed(
-                                      context,
-                                      '/feeding-loading',
-                                    );
-                                  },
-                                ),
-                              ),
-                            ],
-                          ),
-
-                          const SizedBox(height: 30),
-                        ],
-                      ),
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(28, 54, 28, 28),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 상단 월 표시 + 이전/다음 버튼
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    monthName(focusedDay.month),
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w900,
+                      color: Color(0xFF2D3E5F),
                     ),
                   ),
-                ),
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(
+                          Icons.chevron_left,
+                          size: 22,
+                          color: Color(0xFF8FA8D8),
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            focusedDay = DateTime(
+                              focusedDay.year,
+                              focusedDay.month - 1,
+                              1,
+                            );
+                            selectedDay = focusedDay;
+                          });
+                        },
+                      ),
+                      IconButton(
+                        icon: const Icon(
+                          Icons.chevron_right,
+                          size: 22,
+                          color: Color(0xFF8FA8D8),
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            focusedDay = DateTime(
+                              focusedDay.year,
+                              focusedDay.month + 1,
+                              1,
+                            );
+                            selectedDay = focusedDay;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                ],
+              ),
 
-                // 하단 네비게이션바는 고정
-                const Positioned(
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  child: CommonBottomNavBar(
-                    selectedIndex: 1,
+              const SizedBox(height: 18),
+
+              // 달력
+              TableCalendar(
+                firstDay: DateTime(2020, 1, 1),
+                lastDay: DateTime(2035, 12, 31),
+                focusedDay: focusedDay,
+                selectedDayPredicate: (day) {
+                  return isSameDay(selectedDay, day);
+                },
+                startingDayOfWeek: StartingDayOfWeek.monday,
+                headerVisible: false,
+                daysOfWeekHeight: 28,
+                rowHeight: 42,
+                sixWeekMonthsEnforced: false,
+                onDaySelected: (selected, focused) {
+                  setState(() {
+                    selectedDay = selected;
+                    focusedDay = focused;
+                  });
+                },
+                onPageChanged: (focused) {
+                  setState(() {
+                    focusedDay = focused;
+                  });
+                },
+                eventLoader: (day) {
+                  return [];
+                },
+                daysOfWeekStyle: const DaysOfWeekStyle(
+                  weekdayStyle: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF2D3E5F),
+                  ),
+                  weekendStyle: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF2D3E5F),
                   ),
                 ),
-              ],
-            ),
+                calendarStyle: CalendarStyle(
+                  outsideDaysVisible: false,
+                  defaultTextStyle: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF2D3E5F),
+                  ),
+                  weekendTextStyle: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF2D3E5F),
+                  ),
+                  todayDecoration: BoxDecoration(
+                    color: const Color(0xFFBDEBFF).withOpacity(0.75),
+                    shape: BoxShape.circle,
+                  ),
+                  todayTextStyle: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF2D3E5F),
+                  ),
+                  selectedDecoration: const BoxDecoration(
+                    color: Color(0xFF22B8F2),
+                    shape: BoxShape.circle,
+                  ),
+                  selectedTextStyle: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                  ),
+                  markerDecoration: const BoxDecoration(
+                    color: Color(0xFF22B8F2),
+                    shape: BoxShape.circle,
+                  ),
+                  markersMaxCount: 1,
+                  markerSize: 4,
+                  markerMargin: const EdgeInsets.only(top: 3),
+                  cellMargin: const EdgeInsets.all(4),
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              // 선택 날짜 표시
+              Text(
+                '${selectedDay.year}.${selectedDay.month.toString().padLeft(2, '0')}.${selectedDay.day.toString().padLeft(2, '0')} 기록',
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF2D3E5F),
+                ),
+              ),
+
+              const SizedBox(height: 18),
+
+              // 선택 날짜의 기록 카드
+              Row(
+                children: [
+                  Expanded(
+                    child: CalendarInfoCard(
+                      title: '평균 수온',
+                      value: selectedData['avgTemp'] == '-'
+                          ? '-'
+                          : '${selectedData['avgTemp']}˚C',
+                      valueColor: const Color(0xFF9CB8E8),
+                      onTap: () {
+                        Navigator.pushNamed(
+                          context,
+                          '/daily-temp-detail',
+                          arguments: {
+                            'selectedDate': selectedDay,
+                            'averageTemp': selectedData['avgTemp'] == '-'
+                                ? 0.0
+                                : selectedData['avgTemp'],
+                            'maxTemp': selectedData['maxTemp'] ?? 25.0,
+                            'minTemp': selectedData['minTemp'] ?? 23.0,
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: CalendarInfoCard(
+                      title: '수질',
+                      value: selectedData['waterQuality'],
+                      valueColor: const Color(0xFF00BDF2),
+                      onTap: () {
+                        print('수질 카드 클릭');
+                      },
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 12),
+
+              Row(
+                children: [
+                  Expanded(
+                    child: CalendarActionCard(
+                      title: '환수하기',
+                      isDone: selectedData['waterChangeDone'],
+                      onTap: () {
+                        Navigator.pushNamed(
+                          context,
+                          '/water-change-loading',
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: CalendarActionCard(
+                      title: '먹이주기',
+                      isDone: selectedData['feedingDone'],
+                      onTap: () {
+                        Navigator.pushNamed(
+                          context,
+                          '/feeding-loading',
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 30),
+            ],
           ),
         ),
+      ),
+
+      // 하단 네비게이션바 고정
+      bottomNavigationBar: const CommonBottomNavBar(
+        selectedIndex: 1,
       ),
     );
   }

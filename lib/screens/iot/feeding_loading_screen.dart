@@ -1,8 +1,8 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 
-class FeedingLoadingScreen extends StatelessWidget {
-  const FeedingLoadingScreen({super.key});
+class WaterChangeLoadingScreen extends StatelessWidget {
+  const WaterChangeLoadingScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +38,7 @@ class FeedingLoadingScreen extends StatelessWidget {
                       RotatingLoadingIcon(),
                       SizedBox(height: 24),
                       Text(
-                        '먹이 급여중입니다...',
+                        '환수중입니다...',
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
@@ -72,6 +72,7 @@ class _RotatingLoadingIconState extends State<RotatingLoadingIcon>
   void initState() {
     super.initState();
 
+    // 계속 회전
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1100),
@@ -127,6 +128,7 @@ class LoadingArcPainter extends CustomPainter {
     final Offset center = Offset(size.width / 2, size.height / 2);
     final double radius = size.width / 2 - 10;
 
+    // 일부만 그려지는 원
     canvas.drawArc(
       Rect.fromCircle(center: center, radius: radius),
       pi * 0.25,
@@ -135,6 +137,7 @@ class LoadingArcPainter extends CustomPainter {
       arcPaint,
     );
 
+    // 끝에 작은 점
     final double dotAngle = pi * 0.25;
     final Offset dotOffset = Offset(
       center.dx + cos(dotAngle) * radius,

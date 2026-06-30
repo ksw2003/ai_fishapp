@@ -7,50 +7,45 @@ class WaterChangeLoadingScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
+      backgroundColor: Colors.white,
       body: SafeArea(
-        child: Center(
-          child: Container(
-            width: 360,
-            height: 760,
-            color: Colors.white,
-            child: Stack(
-              children: [
-                Positioned(
-                  top: 18,
-                  left: 18,
-                  child: IconButton(
-                    icon: const Icon(
-                      Icons.arrow_back_ios_new,
-                      size: 18,
-                      color: Color(0xFF8FA8D8),
-                    ),
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                  ),
+        child: Stack(
+          children: [
+            // 뒤로가기 버튼
+            Positioned(
+              top: 18,
+              left: 18,
+              child: IconButton(
+                icon: const Icon(
+                  Icons.arrow_back_ios_new,
+                  size: 18,
+                  color: Color(0xFF8FA8D8),
                 ),
-
-                const Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      RotatingLoadingIcon(),
-                      SizedBox(height: 24),
-                      Text(
-                        '환수중입니다...',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF9CB8E8),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+              ),
             ),
-          ),
+
+            // 중앙 로딩 영역
+            const Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  RotatingLoadingIcon(),
+                  SizedBox(height: 24),
+                  Text(
+                    '환수중입니다...',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF9CB8E8),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -72,7 +67,7 @@ class _RotatingLoadingIconState extends State<RotatingLoadingIcon>
   void initState() {
     super.initState();
 
-    // 계속 회전
+    // 서버 완료 신호가 오기 전까지 계속 회전
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1100),
@@ -87,19 +82,11 @@ class _RotatingLoadingIconState extends State<RotatingLoadingIcon>
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 64,
-      height: 64,
-      child: AnimatedBuilder(
-        animation: _controller,
-        builder: (context, child) {
-          return Transform.rotate(
-            angle: _controller.value * 2 * pi,
-            child: CustomPaint(
-              painter: LoadingArcPainter(),
-            ),
-          );
-        },
+    return RotationTransition(
+      turns: _controller,
+      child: CustomPaint(
+        size: const Size(64, 64),
+        painter: LoadingArcPainter(),
       ),
     );
   }
@@ -148,5 +135,7 @@ class LoadingArcPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+  bool shouldRepaint(covariant LoadingArcPainter oldDelegate) {
+    return false;
+  }
 }
