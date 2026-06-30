@@ -11,7 +11,6 @@ class WaterChangeLoadingScreen extends StatelessWidget {
       body: SafeArea(
         child: Stack(
           children: [
-            // 뒤로가기 버튼
             Positioned(
               top: 18,
               left: 18,
@@ -27,12 +26,11 @@ class WaterChangeLoadingScreen extends StatelessWidget {
               ),
             ),
 
-            // 중앙 로딩 영역
             const Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  RotatingLoadingIcon(),
+                  WaterChangeRotatingLoadingIcon(),
                   SizedBox(height: 24),
                   Text(
                     '환수중입니다...',
@@ -52,14 +50,16 @@ class WaterChangeLoadingScreen extends StatelessWidget {
   }
 }
 
-class RotatingLoadingIcon extends StatefulWidget {
-  const RotatingLoadingIcon({super.key});
+class WaterChangeRotatingLoadingIcon extends StatefulWidget {
+  const WaterChangeRotatingLoadingIcon({super.key});
 
   @override
-  State<RotatingLoadingIcon> createState() => _RotatingLoadingIconState();
+  State<WaterChangeRotatingLoadingIcon> createState() =>
+      _WaterChangeRotatingLoadingIconState();
 }
 
-class _RotatingLoadingIconState extends State<RotatingLoadingIcon>
+class _WaterChangeRotatingLoadingIconState
+    extends State<WaterChangeRotatingLoadingIcon>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
 
@@ -67,7 +67,6 @@ class _RotatingLoadingIconState extends State<RotatingLoadingIcon>
   void initState() {
     super.initState();
 
-    // 서버 완료 신호가 오기 전까지 계속 회전
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1100),
@@ -86,13 +85,13 @@ class _RotatingLoadingIconState extends State<RotatingLoadingIcon>
       turns: _controller,
       child: CustomPaint(
         size: const Size(64, 64),
-        painter: LoadingArcPainter(),
+        painter: WaterChangeLoadingArcPainter(),
       ),
     );
   }
 }
 
-class LoadingArcPainter extends CustomPainter {
+class WaterChangeLoadingArcPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final Rect rect = Offset.zero & size;
@@ -115,7 +114,6 @@ class LoadingArcPainter extends CustomPainter {
     final Offset center = Offset(size.width / 2, size.height / 2);
     final double radius = size.width / 2 - 10;
 
-    // 일부만 그려지는 원
     canvas.drawArc(
       Rect.fromCircle(center: center, radius: radius),
       pi * 0.25,
@@ -124,7 +122,6 @@ class LoadingArcPainter extends CustomPainter {
       arcPaint,
     );
 
-    // 끝에 작은 점
     final double dotAngle = pi * 0.25;
     final Offset dotOffset = Offset(
       center.dx + cos(dotAngle) * radius,
@@ -135,7 +132,7 @@ class LoadingArcPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant LoadingArcPainter oldDelegate) {
+  bool shouldRepaint(covariant WaterChangeLoadingArcPainter oldDelegate) {
     return false;
   }
 }

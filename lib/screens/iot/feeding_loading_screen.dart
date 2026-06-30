@@ -1,70 +1,64 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 
-class WaterChangeLoadingScreen extends StatelessWidget {
-  const WaterChangeLoadingScreen({super.key});
+class FeedingLoadingScreen extends StatelessWidget {
+  const FeedingLoadingScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
+      backgroundColor: Colors.white,
       body: SafeArea(
-        child: Center(
-          child: Container(
-            width: 360,
-            height: 760,
-            color: Colors.white,
-            child: Stack(
-              children: [
-                Positioned(
-                  top: 18,
-                  left: 18,
-                  child: IconButton(
-                    icon: const Icon(
-                      Icons.arrow_back_ios_new,
-                      size: 18,
-                      color: Color(0xFF8FA8D8),
-                    ),
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                  ),
+        child: Stack(
+          children: [
+            Positioned(
+              top: 18,
+              left: 18,
+              child: IconButton(
+                icon: const Icon(
+                  Icons.arrow_back_ios_new,
+                  size: 18,
+                  color: Color(0xFF8FA8D8),
                 ),
-
-                const Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      RotatingLoadingIcon(),
-                      SizedBox(height: 24),
-                      Text(
-                        '환수중입니다...',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF9CB8E8),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+              ),
             ),
-          ),
+
+            const Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  FeedingRotatingLoadingIcon(),
+                  SizedBox(height: 24),
+                  Text(
+                    '먹이 급여중입니다...',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF9CB8E8),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-class RotatingLoadingIcon extends StatefulWidget {
-  const RotatingLoadingIcon({super.key});
+class FeedingRotatingLoadingIcon extends StatefulWidget {
+  const FeedingRotatingLoadingIcon({super.key});
 
   @override
-  State<RotatingLoadingIcon> createState() => _RotatingLoadingIconState();
+  State<FeedingRotatingLoadingIcon> createState() =>
+      _FeedingRotatingLoadingIconState();
 }
 
-class _RotatingLoadingIconState extends State<RotatingLoadingIcon>
+class _FeedingRotatingLoadingIconState extends State<FeedingRotatingLoadingIcon>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
 
@@ -72,7 +66,6 @@ class _RotatingLoadingIconState extends State<RotatingLoadingIcon>
   void initState() {
     super.initState();
 
-    // 계속 회전
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1100),
@@ -87,25 +80,17 @@ class _RotatingLoadingIconState extends State<RotatingLoadingIcon>
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 64,
-      height: 64,
-      child: AnimatedBuilder(
-        animation: _controller,
-        builder: (context, child) {
-          return Transform.rotate(
-            angle: _controller.value * 2 * pi,
-            child: CustomPaint(
-              painter: LoadingArcPainter(),
-            ),
-          );
-        },
+    return RotationTransition(
+      turns: _controller,
+      child: CustomPaint(
+        size: const Size(64, 64),
+        painter: FeedingLoadingArcPainter(),
       ),
     );
   }
 }
 
-class LoadingArcPainter extends CustomPainter {
+class FeedingLoadingArcPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final Rect rect = Offset.zero & size;
@@ -128,7 +113,6 @@ class LoadingArcPainter extends CustomPainter {
     final Offset center = Offset(size.width / 2, size.height / 2);
     final double radius = size.width / 2 - 10;
 
-    // 일부만 그려지는 원
     canvas.drawArc(
       Rect.fromCircle(center: center, radius: radius),
       pi * 0.25,
@@ -137,7 +121,6 @@ class LoadingArcPainter extends CustomPainter {
       arcPaint,
     );
 
-    // 끝에 작은 점
     final double dotAngle = pi * 0.25;
     final Offset dotOffset = Offset(
       center.dx + cos(dotAngle) * radius,
@@ -148,5 +131,7 @@ class LoadingArcPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+  bool shouldRepaint(covariant FeedingLoadingArcPainter oldDelegate) {
+    return false;
+  }
 }
