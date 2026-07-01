@@ -34,8 +34,15 @@ class CommonBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final double screenHeight = MediaQuery.of(context).size.height;
+
+    // 화면 높이에 따라 자동 조정
+    final double navHeight = (screenHeight * 0.075).clamp(56.0, 68.0);
+    final double itemWidth = (screenHeight * 0.06).clamp(46.0, 52.0);
+    final double itemHeight = (screenHeight * 0.048).clamp(36.0, 42.0);
+
     return Container(
-      height: 68,
+      height: navHeight,
       color: Colors.white,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -44,29 +51,37 @@ class CommonBottomNavBar extends StatelessWidget {
             context: context,
             icon: Icons.home_outlined,
             index: 0,
-            iconSize: 30,
-            selectedIconSize: 31,
+            iconSize: 28,
+            selectedIconSize: 29,
+            itemWidth: itemWidth,
+            itemHeight: itemHeight,
           ),
           _navItem(
             context: context,
             icon: Icons.calendar_today_outlined,
             index: 1,
-            iconSize: 24,
-            selectedIconSize: 25,
+            iconSize: 23,
+            selectedIconSize: 24,
+            itemWidth: itemWidth,
+            itemHeight: itemHeight,
           ),
           _navItem(
             context: context,
             icon: Icons.chat_bubble_outline,
             index: 2,
-            iconSize: 24,
-            selectedIconSize: 25,
+            iconSize: 23,
+            selectedIconSize: 24,
+            itemWidth: itemWidth,
+            itemHeight: itemHeight,
           ),
           _navItem(
             context: context,
             icon: Icons.settings_outlined,
             index: 3,
-            iconSize: 24,
-            selectedIconSize: 25,
+            iconSize: 23,
+            selectedIconSize: 24,
+            itemWidth: itemWidth,
+            itemHeight: itemHeight,
           ),
         ],
       ),
@@ -79,6 +94,8 @@ class CommonBottomNavBar extends StatelessWidget {
     required int index,
     required double iconSize,
     required double selectedIconSize,
+    required double itemWidth,
+    required double itemHeight,
   }) {
     final bool isSelected = selectedIndex == index;
 
@@ -91,13 +108,13 @@ class CommonBottomNavBar extends StatelessWidget {
         highlightColor: const Color(0xFF8FA8D8).withOpacity(0.08),
         onTap: () => _movePage(context, index),
         child: SizedBox(
-          width: 52,
-          height: 42,
+          width: itemWidth,
+          height: itemHeight,
           child: Center(
             child: isSelected
                 ? Container(
-                    width: 52,
-                    height: 42,
+                    width: itemWidth,
+                    height: itemHeight,
                     decoration: BoxDecoration(
                       color: const Color(0xFFC7E5FF),
                       borderRadius: BorderRadius.circular(18),
