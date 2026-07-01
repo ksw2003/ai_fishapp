@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import './community_post.dart';
-import 'post_card.dart';
-import 'community_detail_screen.dart';
+import 'community/community_post.dart';
+import 'community/post_card.dart';
+import 'community/community_detail_screen.dart';
 import '../../widgets/common_bottom_nav_bar.dart';
 class CommunityListScreen extends StatefulWidget {
   const CommunityListScreen({super.key});

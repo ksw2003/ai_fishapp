@@ -167,7 +167,12 @@ class _StartScreenState extends State<StartScreen> {
                           foregroundColor: Colors.black,
                         ),
 
-                        onPressed: () {},
+                        onPressed: () {
+                          Navigator.pushNamed(
+                            context,
+                            "/make-profile",
+                          );
+                        },
 
                         child: const Text(
                           '카카오 로그인',
@@ -186,7 +191,12 @@ class _StartScreenState extends State<StartScreen> {
                       height: 50,
 
                       child: OutlinedButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          Navigator.pushNamed(
+                              context,
+                              "/make-profile",
+                          );
+                        },
 
                         child: const Text(
                           '구글 로그인',

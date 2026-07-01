@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 
+import 'screens/start_screen.dart';
+import 'screens/make_profile_screen.dart';
+
 import 'screens/home_screen.dart';
 import 'screens/calendar_screen.dart';
-import 'screens/community/community_list_screen.dart';
+import 'screens/community_list_screen.dart';
 
 import 'screens/community/post_writing_screen.dart';
 import 'screens/chatbot_screen.dart';
@@ -13,6 +16,10 @@ import 'screens/iot/daily_temp_detail_screen.dart';
 import 'screens/iot/water_change_loading_screen.dart';
 import 'screens/iot/feeding_loading_screen.dart';
 import 'screens/iot/fish_info_management_screen.dart';
+
+import 'screens/mypage_screen.dart';
+import 'screens/setting/myfish_screen.dart';
+import 'screens/setting/profile_edit_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -25,8 +32,10 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      initialRoute: '/home',
+      initialRoute: '/start',
       routes: {
+        '/start': (context) => const StartScreen(),
+        '/make-profile': (context) => const MakeProfileScreen(),
         // 하단 네비게이션바 메인 화면들
         '/home': (context) => const HomeScreen(),
         '/calendar': (context) => const CalendarScreen(),
@@ -50,6 +59,10 @@ class MyApp extends StatelessWidget {
             const WaterChangeLoadingScreen(),
         '/feeding-loading': (context) => const FeedingLoadingScreen(),
 
+        //설정변경
+        '/settings': (context) => const MyPageScreen(),
+        '/my-fish': (context) => const MyFishScreen(),
+        '/profile-edit': (context) => const ProfileEditScreen(),
         // 아직 미완성 화면은 임시로 홈 연결
         '/Home': (context) => const HomeScreen(),
       },
