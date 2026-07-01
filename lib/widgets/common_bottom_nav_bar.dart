@@ -35,55 +35,38 @@ class CommonBottomNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 76,
+      height: 68,
       color: Colors.white,
-      child: Column(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          Expanded(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _navItem(
-                  context: context,
-                  icon: Icons.home_outlined,
-                  index: 0,
-                  iconSize: 30,
-                  selectedIconSize: 31,
-                ),
-                _navItem(
-                  context: context,
-                  icon: Icons.calendar_today_outlined,
-                  index: 1,
-                  iconSize: 24,
-                  selectedIconSize: 25,
-                ),
-                _navItem(
-                  context: context,
-                  icon: Icons.chat_bubble_outline,
-                  index: 2,
-                  iconSize: 24,
-                  selectedIconSize: 25,
-                ),
-                _navItem(
-                  context: context,
-                  icon: Icons.settings_outlined,
-                  index: 3,
-                  iconSize: 24,
-                  selectedIconSize: 25,
-                ),
-              ],
-            ),
+          _navItem(
+            context: context,
+            icon: Icons.home_outlined,
+            index: 0,
+            iconSize: 30,
+            selectedIconSize: 31,
           ),
-
-          // 하단 검정 바
-          Container(
-            width: 120,
-            height: 4,
-            margin: const EdgeInsets.only(bottom: 7),
-            decoration: BoxDecoration(
-              color: const Color(0xFF222222),
-              borderRadius: BorderRadius.circular(10),
-            ),
+          _navItem(
+            context: context,
+            icon: Icons.calendar_today_outlined,
+            index: 1,
+            iconSize: 24,
+            selectedIconSize: 25,
+          ),
+          _navItem(
+            context: context,
+            icon: Icons.chat_bubble_outline,
+            index: 2,
+            iconSize: 24,
+            selectedIconSize: 25,
+          ),
+          _navItem(
+            context: context,
+            icon: Icons.settings_outlined,
+            index: 3,
+            iconSize: 24,
+            selectedIconSize: 25,
           ),
         ],
       ),
@@ -104,14 +87,9 @@ class CommonBottomNavBar extends StatelessWidget {
       borderRadius: BorderRadius.circular(18),
       child: InkWell(
         borderRadius: BorderRadius.circular(18),
-
-        // 누를 때 효과
         splashColor: const Color(0xFF8FA8D8).withOpacity(0.18),
         highlightColor: const Color(0xFF8FA8D8).withOpacity(0.08),
-
         onTap: () => _movePage(context, index),
-
-        // 누르는 영역 = 선택된 파란 박스랑 같은 크기
         child: SizedBox(
           width: 52,
           height: 42,
