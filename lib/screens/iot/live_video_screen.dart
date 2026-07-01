@@ -15,123 +15,110 @@ class LiveVideoScreen extends StatelessWidget {
         '${now.year}년 ${now.month}월 ${now.day}일 (${getKoreanWeekday(now.weekday)})';
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
+      backgroundColor: Colors.white,
       body: SafeArea(
-        child: Center(
-          child: Container(
-            width: 360,
-            height: 760,
-            color: Colors.white,
-            child: Stack(
-              children: [
-                // 뒤로가기 버튼
-                Positioned(
-                  top: 18,
-                  left: 18,
-                  child: IconButton(
-                    icon: const Icon(
-                      Icons.arrow_back_ios_new,
-                      size: 18,
-                      color: Color(0xFF8FA8D8),
-                    ),
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                  ),
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(28, 18, 28, 28),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 뒤로가기 버튼
+              IconButton(
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+                icon: const Icon(
+                  Icons.arrow_back_ios_new,
+                  size: 18,
+                  color: Color(0xFF8FA8D8),
                 ),
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+              ),
 
-                // 상단 환영 문구
-                Positioned(
-                  top: 72,
-                  left: 28,
-                  child: RichText(
-                    text: const TextSpan(
+              const SizedBox(height: 30),
+
+              // 상단 환영 문구
+              RichText(
+                text: const TextSpan(
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFF2D3E5F),
+                  ),
+                  children: [
+                    TextSpan(text: '환영합니다 '),
+                    TextSpan(
+                      text: userName,
                       style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w900,
-                        color: Color(0xFF2D3E5F),
+                        color: Color(0xFF25A8F2),
                       ),
-                      children: [
-                        TextSpan(text: '환영합니다 '),
-                        TextSpan(
-                          text: userName,
-                          style: TextStyle(
-                            color: Color(0xFF25A8F2),
-                          ),
-                        ),
-                        TextSpan(text: '님'),
-                      ],
                     ),
-                  ),
+                    TextSpan(text: '님'),
+                  ],
                 ),
+              ),
 
-                // 날짜 그라데이션 박스
-                Positioned(
-                  top: 120,
-                  left: 28,
-                  right: 28,
-                  child: Container(
-                    height: 44,
-                    padding: const EdgeInsets.symmetric(horizontal: 14),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
-                        colors: [
-                          Color(0xFF238BFF),
-                          Color(0xFF25C6F2),
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(5),
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            todayText,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w800,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
+              const SizedBox(height: 28),
 
-                        // 카메라 아이콘
-                        const Icon(
-                          Icons.photo_camera_outlined,
-                          size: 25,
-                          color: Colors.white,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                // 실시간 영상 영역
-                const Positioned(
-                  top: 196,
-                  left: 28,
-                  right: 28,
-                  child: Column(
-                    children: [
-                      RealtimeVideoBox(
-                        videoUrl: null,
-                      ),
-                      SizedBox(height: 18),
-                      Text(
-                        '실시간 어항 영상',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w900,
-                          color: Color(0xFF222222),
-                        ),
-                      ),
+              // 날짜 그라데이션 박스
+              Container(
+                width: double.infinity,
+                height: 44,
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                    colors: [
+                      Color(0xFF238BFF),
+                      Color(0xFF25C6F2),
                     ],
                   ),
+                  borderRadius: BorderRadius.circular(5),
                 ),
-              ],
-            ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        todayText,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                    const Icon(
+                      Icons.photo_camera_outlined,
+                      size: 25,
+                      color: Colors.white,
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 32),
+
+              // 실시간 영상 영역
+              const RealtimeVideoBox(
+                videoUrl: null,
+              ),
+
+              const SizedBox(height: 18),
+
+              const Center(
+                child: Text(
+                  '실시간 어항 영상',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFF222222),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -159,7 +146,7 @@ class RealtimeVideoBox extends StatelessWidget {
           borderRadius: BorderRadius.circular(8),
         ),
         child: const Center(
-          child: RotatingLoadingIcon(),
+          child: LiveVideoRotatingLoadingIcon(),
         ),
       );
     }
@@ -186,14 +173,16 @@ class RealtimeVideoBox extends StatelessWidget {
   }
 }
 
-class RotatingLoadingIcon extends StatefulWidget {
-  const RotatingLoadingIcon({super.key});
+class LiveVideoRotatingLoadingIcon extends StatefulWidget {
+  const LiveVideoRotatingLoadingIcon({super.key});
 
   @override
-  State<RotatingLoadingIcon> createState() => _RotatingLoadingIconState();
+  State<LiveVideoRotatingLoadingIcon> createState() =>
+      _LiveVideoRotatingLoadingIconState();
 }
 
-class _RotatingLoadingIconState extends State<RotatingLoadingIcon>
+class _LiveVideoRotatingLoadingIconState
+    extends State<LiveVideoRotatingLoadingIcon>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
 
@@ -215,25 +204,17 @@ class _RotatingLoadingIconState extends State<RotatingLoadingIcon>
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 46,
-      height: 46,
-      child: AnimatedBuilder(
-        animation: _controller,
-        builder: (context, child) {
-          return Transform.rotate(
-            angle: _controller.value * 2 * pi,
-            child: CustomPaint(
-              painter: LoadingArcPainter(),
-            ),
-          );
-        },
+    return RotationTransition(
+      turns: _controller,
+      child: CustomPaint(
+        size: const Size(46, 46),
+        painter: LiveVideoLoadingArcPainter(),
       ),
     );
   }
 }
 
-class LoadingArcPainter extends CustomPainter {
+class LiveVideoLoadingArcPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final Rect rect = Offset.zero & size;
@@ -274,7 +255,9 @@ class LoadingArcPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+  bool shouldRepaint(covariant LiveVideoLoadingArcPainter oldDelegate) {
+    return false;
+  }
 }
 
 String getKoreanWeekday(int weekday) {
