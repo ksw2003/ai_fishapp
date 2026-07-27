@@ -37,9 +37,9 @@ class CommonBottomNavBar extends StatelessWidget {
     final double screenHeight = MediaQuery.of(context).size.height;
 
     // 화면 높이에 따라 자동 조정
-    final double navHeight = (screenHeight * 0.075).clamp(56.0, 68.0);
-    final double itemWidth = (screenHeight * 0.06).clamp(46.0, 52.0);
-    final double itemHeight = (screenHeight * 0.048).clamp(36.0, 42.0);
+    final double navHeight = (screenHeight * 0.0923).clamp(56.0, 68.0);
+    final double itemWidth = (screenHeight * 0.2).clamp(48.0, 69.0);
+    final double itemHeight = (screenHeight * 0.055).clamp(36.0, 48.0);
 
     return Container(
       height: navHeight,
@@ -51,8 +51,8 @@ class CommonBottomNavBar extends StatelessWidget {
             context: context,
             icon: Icons.home_outlined,
             index: 0,
-            iconSize: 28,
-            selectedIconSize: 29,
+            iconSize: 38,
+            selectedIconSize: 39,
             itemWidth: itemWidth,
             itemHeight: itemHeight,
           ),
@@ -60,8 +60,8 @@ class CommonBottomNavBar extends StatelessWidget {
             context: context,
             icon: Icons.calendar_today_outlined,
             index: 1,
-            iconSize: 23,
-            selectedIconSize: 24,
+            iconSize: 30,
+            selectedIconSize: 31,
             itemWidth: itemWidth,
             itemHeight: itemHeight,
           ),
@@ -69,8 +69,8 @@ class CommonBottomNavBar extends StatelessWidget {
             context: context,
             icon: Icons.chat_bubble_outline,
             index: 2,
-            iconSize: 23,
-            selectedIconSize: 24,
+            iconSize: 30,
+            selectedIconSize: 31,
             itemWidth: itemWidth,
             itemHeight: itemHeight,
           ),
@@ -78,8 +78,8 @@ class CommonBottomNavBar extends StatelessWidget {
             context: context,
             icon: Icons.settings_outlined,
             index: 3,
-            iconSize: 23,
-            selectedIconSize: 24,
+            iconSize: 30,
+            selectedIconSize: 31,
             itemWidth: itemWidth,
             itemHeight: itemHeight,
           ),
@@ -101,9 +101,9 @@ class CommonBottomNavBar extends StatelessWidget {
 
     return Material(
       color: Colors.transparent,
-      borderRadius: BorderRadius.circular(18),
+      borderRadius: BorderRadius.circular(20),
       child: InkWell(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(20),
         splashColor: const Color(0xFF8FA8D8).withOpacity(0.18),
         highlightColor: const Color(0xFF8FA8D8).withOpacity(0.08),
         onTap: () => _movePage(context, index),
@@ -117,7 +117,7 @@ class CommonBottomNavBar extends StatelessWidget {
                     height: itemHeight,
                     decoration: BoxDecoration(
                       color: const Color(0xFFC7E5FF),
-                      borderRadius: BorderRadius.circular(18),
+                      borderRadius: BorderRadius.circular(20),
                     ),
                     child: Icon(
                       icon,

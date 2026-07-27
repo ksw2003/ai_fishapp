@@ -17,7 +17,7 @@ class _ProfileEditScreenState
 
   final TextEditingController nicknameController =
   TextEditingController(
-    text: "한경이1",
+    text: "한경이",
   );
 
   bool canUseNickname = true;

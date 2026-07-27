@@ -1,8 +1,59 @@
 import 'package:flutter/material.dart';
 import '../widgets/common_bottom_nav_bar.dart';
+import '../api/sensor_api.dart';
+import '../models/sensor.dart';
+import 'dart:async';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+
+  final SensorApi _sensorApi = SensorApi();
+
+  SensorData? sensor;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+
+    loadSensor();
+
+    _timer = Timer.periodic(
+      const Duration(seconds: 5),
+          (_) => loadSensor(),
+    );
+  }
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> loadSensor() async {
+    try {
+      print("API 호출 시작");
+
+      final result = await _sensorApi.getStatus();
+
+      print("온도 : ${result.temperature}");
+      print("TDS : ${result.waterQuality}");
+      print("물고기 : ${result.fishStatus}");
+
+      setState(() {
+        sensor = result;
+      });
+
+    } catch (e, s) {
+      print(e);
+      print(s);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -13,12 +64,6 @@ class HomeScreen extends StatelessWidget {
 
     // 로그인한 사용자 이름
     const String userName = '한경이';
-
-    // 백엔드에서 받아올 현재 수온 값
-    const double waterTemp = 25;
-
-    // 백엔드에서 받아올 현재 수질 상태
-    const String waterQuality = '정상';
 
     // AI 분석 결과 또는 백엔드에서 받아올 오늘의 물고기 상태
     const String fishCondition = '매우 좋음';
@@ -40,7 +85,7 @@ class HomeScreen extends StatelessWidget {
           children: [
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(28, 34, 28, 24),
+                padding: const EdgeInsets.fromLTRB(37.5, 24, 30, 24),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -48,8 +93,9 @@ class HomeScreen extends StatelessWidget {
                     RichText(
                       text: const TextSpan(
                         style: TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w900,
+                          fontSize: 26.19,
+                          fontWeight: FontWeight.w700,
+                          height: 1.09,
                           color: Color(0xFF2D3E5F),
                         ),
                         children: [
@@ -70,18 +116,18 @@ class HomeScreen extends StatelessWidget {
                     // 날짜 + 카메라 + 오늘의 물고기 상태 카드
                     Material(
                       color: Colors.transparent,
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(22.5),
                       child: InkWell(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(22.5),
                         splashColor: Colors.white.withOpacity(0.22),
                         highlightColor: Colors.white.withOpacity(0.10),
                         onTap: () {
                           Navigator.pushNamed(context, '/live-video');
                         },
                         child: Ink(
-                          width: double.infinity,
-                          height: 135,
-                          padding: const EdgeInsets.fromLTRB(16, 12, 14, 14),
+                          width: 340,
+                          height: 210.50,
+                          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
                           decoration: BoxDecoration(
                             gradient: const LinearGradient(
                               begin: Alignment.topLeft,
@@ -101,8 +147,9 @@ class HomeScreen extends StatelessWidget {
                                 child: Text(
                                   todayText,
                                   style: const TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w800,
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.w700,
+                                    height: 1.46,
                                     color: Colors.white,
                                   ),
                                 ),
@@ -113,19 +160,20 @@ class HomeScreen extends StatelessWidget {
                                 right: 2,
                                 child: Icon(
                                   Icons.photo_camera_outlined,
-                                  size: 34,
+                                  size: 48,
                                   color: Colors.white,
                                 ),
                               ),
 
                               const Positioned(
                                 right: 0,
-                                bottom: 18,
+                                bottom: 36,
                                 child: Text(
                                   '오늘의 물고기 상태:',
                                   style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w800,
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.w700,
+                                    height: 1.46,
                                     color: Colors.white,
                                   ),
                                 ),
@@ -137,8 +185,9 @@ class HomeScreen extends StatelessWidget {
                                 child: Text(
                                   fishCondition,
                                   style: const TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w800,
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.w700,
+                                    height: 1.46,
                                     color: Colors.white,
                                   ),
                                 ),
@@ -157,7 +206,9 @@ class HomeScreen extends StatelessWidget {
                         Expanded(
                           child: HomeInfoCard(
                             title: '수온',
-                            value: '${waterTemp.toInt()}˚C',
+                            value: sensor == null
+                                ? '--℃'
+                                : '${sensor!.temperature.toInt()}℃',
                             valueColor: const Color(0xFF9CB8E8),
                             onTap: () {
                               Navigator.pushNamed(context, '/water-temp');
@@ -168,7 +219,9 @@ class HomeScreen extends StatelessWidget {
                         Expanded(
                           child: HomeInfoCard(
                             title: '수질',
-                            value: waterQuality,
+                            value: sensor == null
+                                ? '--'
+                                : _getWaterQualityText(sensor!.waterQuality),
                             valueColor: const Color(0xFF00BDF2),
                             onTap: () {
                               print('수질 카드 클릭');
@@ -225,6 +278,16 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
+String _getWaterQualityText(int tds) {
+  if (tds <= 300) {
+    return "좋음";
+  } else if (tds <= 600) {
+    return "보통";
+  } else {
+    return "나쁨";
+  }
+}
+
 class HomeInfoCard extends StatefulWidget {
   final String title;
   final String value;
@@ -261,8 +324,8 @@ class _HomeInfoCardState extends State<HomeInfoCard> {
       child: Material(
         color: Colors.white,
         elevation: isPressed ? 1 : 5,
-        shadowColor: Colors.black.withOpacity(0.18),
-        borderRadius: BorderRadius.circular(14),
+        shadowColor: Colors.black.withOpacity(0.4),
+        borderRadius: BorderRadius.circular(15),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           splashColor: const Color(0xFF8FA8D8).withOpacity(0.18),
@@ -278,7 +341,8 @@ class _HomeInfoCardState extends State<HomeInfoCard> {
             setPressed(false);
           },
           child: Ink(
-            height: 110,
+            height: 158,
+            width: 158,
             padding: const EdgeInsets.all(13),
             decoration: BoxDecoration(
               color: isPressed ? const Color(0xFFF4F8FF) : Colors.white,
@@ -296,9 +360,10 @@ class _HomeInfoCardState extends State<HomeInfoCard> {
                   child: Text(
                     widget.title,
                     style: const TextStyle(
-                      fontSize: 14,
+                      fontSize: 24,
                       fontWeight: FontWeight.w800,
                       color: Color(0xFF2D3E5F),
+                      height: 1.46,
                     ),
                   ),
                 ),
@@ -308,7 +373,7 @@ class _HomeInfoCardState extends State<HomeInfoCard> {
                   child: Text(
                     widget.value,
                     style: TextStyle(
-                      fontSize: 23,
+                      fontSize: 24,
                       fontWeight: FontWeight.w900,
                       color: widget.valueColor,
                     ),
@@ -363,7 +428,7 @@ class _HomeActionCardState extends State<HomeActionCard> {
       child: Material(
         color: Colors.white,
         elevation: isPressed ? 1 : 5,
-        shadowColor: Colors.black.withOpacity(0.18),
+        shadowColor: Colors.black.withOpacity(0.4),
         borderRadius: BorderRadius.circular(14),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
@@ -380,7 +445,8 @@ class _HomeActionCardState extends State<HomeActionCard> {
             setPressed(false);
           },
           child: Ink(
-            height: 110,
+            height: 158,
+            width: 158,
             padding: const EdgeInsets.all(13),
             decoration: BoxDecoration(
               color: isPressed ? const Color(0xFFF4F8FF) : Colors.white,
@@ -398,7 +464,7 @@ class _HomeActionCardState extends State<HomeActionCard> {
                   child: Text(
                     widget.title,
                     style: const TextStyle(
-                      fontSize: 14,
+                      fontSize: 24,
                       fontWeight: FontWeight.w800,
                       color: Color(0xFF2D3E5F),
                     ),
@@ -409,7 +475,7 @@ class _HomeActionCardState extends State<HomeActionCard> {
                   bottom: 0,
                   child: Icon(
                     statusIcon,
-                    size: 34,
+                    size: 48,
                     color: statusColor,
                   ),
                 ),

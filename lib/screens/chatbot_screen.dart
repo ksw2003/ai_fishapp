@@ -227,12 +227,11 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                 ),
               ),
             ),
-
-            const CommonBottomNavBar(
-              selectedIndex: 2,
-            ),
           ],
         ),
+      ),
+      bottomNavigationBar: const CommonBottomNavBar(
+        selectedIndex: 2,
       ),
     );
   }

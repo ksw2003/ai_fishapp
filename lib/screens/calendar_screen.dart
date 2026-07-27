@@ -15,7 +15,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
   // 화면 구현용 임시 데이터
   // 나중에 백엔드/API 응답값으로 교체할 부분
   // ===============================
-
   // 현재 보고 있는 달
   DateTime focusedDay = DateTime.now();
 
@@ -106,7 +105,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   Text(
                     monthName(focusedDay.month),
                     style: const TextStyle(
-                      fontSize: 15,
+                      fontSize: 24,
                       fontWeight: FontWeight.w900,
                       color: Color(0xFF2D3E5F),
                     ),
@@ -164,8 +163,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 },
                 startingDayOfWeek: StartingDayOfWeek.monday,
                 headerVisible: false,
-                daysOfWeekHeight: 28,
-                rowHeight: 42,
+                daysOfWeekHeight: 50,
+                rowHeight: 50,
                 sixWeekMonthsEnforced: false,
                 onDaySelected: (selected, focused) {
                   setState(() {
@@ -183,12 +182,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 },
                 daysOfWeekStyle: const DaysOfWeekStyle(
                   weekdayStyle: TextStyle(
-                    fontSize: 10,
+                    fontSize: 15,
                     fontWeight: FontWeight.w800,
                     color: Color(0xFF2D3E5F),
                   ),
                   weekendStyle: TextStyle(
-                    fontSize: 10,
+                    fontSize: 15,
                     fontWeight: FontWeight.w800,
                     color: Color(0xFF2D3E5F),
                   ),
@@ -196,12 +195,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 calendarStyle: CalendarStyle(
                   outsideDaysVisible: false,
                   defaultTextStyle: const TextStyle(
-                    fontSize: 11,
+                    fontSize: 17,
                     fontWeight: FontWeight.w700,
                     color: Color(0xFF2D3E5F),
                   ),
                   weekendTextStyle: const TextStyle(
-                    fontSize: 11,
+                    fontSize: 17,
                     fontWeight: FontWeight.w700,
                     color: Color(0xFF2D3E5F),
                   ),
@@ -210,7 +209,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     shape: BoxShape.circle,
                   ),
                   todayTextStyle: const TextStyle(
-                    fontSize: 11,
+                    fontSize: 17,
                     fontWeight: FontWeight.w800,
                     color: Color(0xFF2D3E5F),
                   ),
@@ -219,7 +218,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     shape: BoxShape.circle,
                   ),
                   selectedTextStyle: const TextStyle(
-                    fontSize: 11,
+                    fontSize: 17,
                     fontWeight: FontWeight.w900,
                     color: Colors.white,
                   ),
@@ -234,15 +233,15 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 ),
               ),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: 22),
 
               // 선택 날짜 표시
               Text(
                 '${selectedDay.year}.${selectedDay.month.toString().padLeft(2, '0')}.${selectedDay.day.toString().padLeft(2, '0')} 기록',
                 style: const TextStyle(
-                  fontSize: 13,
+                  fontSize: 20,
                   fontWeight: FontWeight.w800,
-                  color: Color(0xFF2D3E5F),
+                  color: Color(0xFF393C43),
                 ),
               ),
 
@@ -399,7 +398,7 @@ class _CalendarInfoCardState extends State<CalendarInfoCard> {
                   child: Text(
                     widget.title,
                     style: const TextStyle(
-                      fontSize: 14,
+                      fontSize: 20,
                       fontWeight: FontWeight.w800,
                       color: Color(0xFF2D3E5F),
                     ),
@@ -466,7 +465,7 @@ class _CalendarActionCardState extends State<CalendarActionCard> {
       child: Material(
         color: Colors.white,
         elevation: isPressed ? 2 : 8,
-        shadowColor: Colors.black.withOpacity(0.28),
+        shadowColor: Colors.black.withOpacity(0.4),
         borderRadius: BorderRadius.circular(14),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
@@ -495,7 +494,7 @@ class _CalendarActionCardState extends State<CalendarActionCard> {
                   child: Text(
                     widget.title,
                     style: const TextStyle(
-                      fontSize: 14,
+                      fontSize: 20,
                       fontWeight: FontWeight.w800,
                       color: Color(0xFF2D3E5F),
                     ),

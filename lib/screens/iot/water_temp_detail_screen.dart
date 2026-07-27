@@ -1,15 +1,70 @@
-import 'package:flutter/material.dart';
+import 'dart:async';
 
-class WaterTempDetailScreen extends StatelessWidget {
+import 'package:flutter/material.dart';
+import '../../api/sensor_api.dart';
+import '../../models/sensor.dart';
+
+class WaterTempDetailScreen extends StatefulWidget {
   const WaterTempDetailScreen({super.key});
 
   @override
+  State<WaterTempDetailScreen> createState() =>
+      _WaterTempDetailScreenState();
+}
+
+class _WaterTempDetailScreenState extends State<WaterTempDetailScreen> {
+  final SensorApi _sensorApi = SensorApi();
+
+  SensorData? sensor;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _loadData();
+
+    // 5초마다 최신 데이터 조회
+    _timer = Timer.periodic(const Duration(seconds: 5), (_) {
+      _loadData();
+    });
+  }
+
+  Future<void> _loadData() async {
+    try {
+      final data = await _sensorApi.getStatus();
+
+      if (!mounted) return;
+
+      setState(() {
+        sensor = data;
+      });
+    } catch (e) {
+      debugPrint(e.toString());
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // 지금은 화면 구현용 임시값
-    // 나중에 백엔드에서 받은 수온값으로 바꾸면 됨
-    const double currentTemp = 25;
-    const double maxTemp = 25;
-    const double minTemp = 23;
+    if (sensor == null) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    final double currentTemp = sensor!.temperature;
+
+    // 아직 API가 없으므로 임시
+    final double maxTemp = currentTemp;
+    final double minTemp = currentTemp;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -17,7 +72,8 @@ class WaterTempDetailScreen extends StatelessWidget {
         child: LayoutBuilder(
           builder: (context, constraints) {
             final double screenHeight = constraints.maxHeight;
-            final double gaugeHeight = (screenHeight * 0.58).clamp(330.0, 430.0);
+            final double gaugeHeight =
+            (screenHeight * 0.58).clamp(330.0, 430.0);
 
             return SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
@@ -234,21 +290,21 @@ class TemperatureBar extends StatelessWidget {
 
 // 온도에 따라 게이지 색 바뀌는 부분
 List<Color> getTemperatureGradient(double temp) {
-  if (temp <= 20) {
+  if (temp < 18) {
     // 낮은 수온: 밝은 하늘색 ~ 파랑
     return const [
       Color(0xFFB8F3FF),
       Color(0xFF48B8FF),
       Color(0xFF006BF0),
     ];
-  } else if (temp <= 26) {
+  } else if (temp <= 22) {
     // 적정 수온: 청록 ~ 파랑
     return const [
       Color(0xFF18DDE8),
       Color(0xFF00A8F5),
       Color(0xFF006BF0),
     ];
-  } else if (temp <= 30) {
+  } else if (temp <= 26) {
     // 높은 수온: 노랑 ~ 주황
     return const [
       Color(0xFFFFE082),
