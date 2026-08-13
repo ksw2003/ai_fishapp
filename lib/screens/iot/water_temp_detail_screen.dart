@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import '../../api/sensor_api.dart';
 import '../../models/sensor.dart';
@@ -27,21 +26,7 @@ class _WaterTempDetailScreenState extends State<WaterTempDetailScreen> {
       setState(() {
         sensor = SensorData.fromJson(data);
       });
-    }
-  }
-
-  Future<void> _loadData() async {
-    try {
-      final data = await _sensorApi.setState();
-
-      if (!mounted) return;
-
-      setState(() {
-        sensor = data;
-      });
-    } catch (e) {
-      debugPrint(e.toString());
-    }
+    });
   }
 
   @override
@@ -63,8 +48,8 @@ class _WaterTempDetailScreenState extends State<WaterTempDetailScreen> {
     final double currentTemp = sensor!.temperature;
 
     // 아직 API가 없으므로 임시
-    final double maxTemp = currentTemp;
-    final double minTemp = currentTemp;
+    final double maxTemp = sensor!.maxTemp;
+    final double minTemp = sensor!.minTemp;
 
     return Scaffold(
       backgroundColor: Colors.white,

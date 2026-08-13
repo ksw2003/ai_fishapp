@@ -22,6 +22,8 @@ class _CommunityListScreenState extends State<CommunityListScreen> {
   final tagController = TextEditingController();
   final FocusNode tagFocusNode = FocusNode();
 
+
+
   @override
   void initState() {
     super.initState();
@@ -58,6 +60,7 @@ class _CommunityListScreenState extends State<CommunityListScreen> {
     }).toList();
   }
 
+
   @override
   void dispose() {
     searchController.dispose();
@@ -68,6 +71,10 @@ class _CommunityListScreenState extends State<CommunityListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final fabSize = (screenWidth * 0.14).clamp(52.0, 64.0);
+    final fabSpacing = (screenWidth * 0.03).clamp(10.0, 18.0);
+
     return GestureDetector(
         behavior: HitTestBehavior.translucent,
         onTap: () {
@@ -85,7 +92,7 @@ class _CommunityListScreenState extends State<CommunityListScreen> {
       floatingActionButtonLocation:
       FloatingActionButtonLocation.endFloat,
       floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 20),
+        padding: EdgeInsets.only(right: screenWidth * 0.01, bottom: 30),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -105,10 +112,10 @@ class _CommunityListScreenState extends State<CommunityListScreen> {
                 }
               },
 
-              child: const Icon(
+              child: Icon(
                 Icons.add,
                 color: Colors.white,
-                size: 32,
+                size: fabSize * 0.55,
               ),
             ),
 

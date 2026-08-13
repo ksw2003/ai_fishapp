@@ -22,36 +22,18 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
 
-    loadSensor();
+    _sensorApi.connect().listen((data) {
+      if (!mounted) return;
 
-    _timer = Timer.periodic(
-      const Duration(seconds: 5),
-          (_) => loadSensor(),
-    );
+      setState(() {
+        sensor = SensorData.fromJson(data);
+      });
+    });
   }
   @override
   void dispose() {
     _timer?.cancel();
     super.dispose();
-  }
-
-  Future<void> loadSensor() async {
-    try {
-      print("API 호출 시작");
-
-      final result = await _sensorApi.getStatus();
-
-      print("온도 : ${result.temperature}");
-      print("TDS : ${result.water_quality}");
-
-      setState(() {
-        sensor = result;
-      });
-
-    } catch (e, s) {
-      print(e);
-      print(s);
-    }
   }
 
   @override
@@ -84,7 +66,7 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(37.5, 24, 30, 24),
+                padding: const EdgeInsets.fromLTRB(24,40,24,24),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -123,9 +105,13 @@ class _HomeScreenState extends State<HomeScreen> {
                         onTap: () {
                           Navigator.pushNamed(context, '/live-video');
                         },
-                        child: Ink(
-                          width: 340,
-                          height: 210.50,
+                        child: Container(
+                          width: double.infinity,
+                          height: MediaQuery.of(context).size.width * 0.55,
+                          constraints: const BoxConstraints(
+                            minHeight: 180,
+                            maxHeight: 240,
+                          ),
                           padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
                           decoration: BoxDecoration(
                             gradient: const LinearGradient(
