@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
-import './community_post.dart';
+import '../../models/post.dart';
+import '../../services/community_service.dart';
 
 class PostCard extends StatelessWidget {
-  final CommunityPost post;
+  final Post post;
   final String keyword;
+  final String selectedTag;
 
   const PostCard({
     super.key,
     required this.post,
     required this.keyword,
+    required this.selectedTag,
   });
 
   Widget buildHighlightedTitle() {
@@ -125,7 +128,7 @@ class PostCard extends StatelessWidget {
                 child: Padding(
                   padding: const EdgeInsets.only(top: 6),
                   child: Text(
-                    post.author,
+                    post.nickname,
                     style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.w700,
@@ -133,22 +136,6 @@ class PostCard extends StatelessWidget {
                   ),
                 ),
               ),
-
-              if (post.isMine)
-                PopupMenuButton(
-                  padding: EdgeInsets.zero,
-                  icon: const Icon(Icons.more_vert),
-                  itemBuilder: (_) => const [
-                    PopupMenuItem(
-                      value: "edit",
-                      child: Text("수정"),
-                    ),
-                    PopupMenuItem(
-                      value: "delete",
-                      child: Text("삭제"),
-                    ),
-                  ],
-                ),
             ],
           ),
 
@@ -193,9 +180,9 @@ class PostCard extends StatelessWidget {
                       color: Color(0xff9BA9B0),
                     ),
                     const SizedBox(width: 5),
-                    Text(
-                      post.commentCount.toString(),
-                      style: const TextStyle(
+                    const Text(
+                      "0",
+                      style: TextStyle(
                         fontSize: 18,
                         color: Color(0xff9BA9B0),
                       ),
@@ -215,9 +202,11 @@ class PostCard extends StatelessWidget {
                 ),
                 child: Center(
                   child: Text(
-                    post.tag,
-                    style: const TextStyle(
-                      color: Color(0xff9BA9B0),
+                    post.fishType,
+                    style: TextStyle(
+                      color: keyword.isNotEmpty
+                          ? Colors.blue
+                          : const Color(0xff9BA9B0),
                       fontSize: 18,
                     ),
                   ),

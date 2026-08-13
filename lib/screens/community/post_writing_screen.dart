@@ -1,7 +1,13 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import '../../services/community_service.dart';
+import 'package:image_picker/image_picker.dart';
+import '../../models/post_detail.dart';
+import '../../api/api_client.dart';
 
 class PostWritingScreen extends StatefulWidget {
-  const PostWritingScreen({super.key});
+  final PostDetail? post;
+  const PostWritingScreen({super.key, this.post});
 
   @override
   State<PostWritingScreen> createState() =>
@@ -13,6 +19,10 @@ class _PostWritingScreenState
 
   final titleController = TextEditingController();
   final contentController = TextEditingController();
+  final ImagePicker picker = ImagePicker();
+  List<XFile> images = [];
+  List<Map<String, dynamic>> oldImages = [];
+  List<int> deletedImageIds = [];
 
   final List<String> tags = [
     "구피",
@@ -27,6 +37,35 @@ class _PostWritingScreenState
     titleController.dispose();
     contentController.dispose();
     super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    if (widget.post != null) {
+      titleController.text = widget.post!.title;
+      contentController.text = widget.post!.content;
+      selectedTag = widget.post!.fishType;
+
+      oldImages = List<Map<String, dynamic>>.from(widget.post!.images);
+      print(widget.post!.images);
+      print(oldImages);
+    }
+  }
+
+  Future<void> pickImages() async {
+    final picked = await picker.pickMultiImage();
+
+    if (picked.isNotEmpty) {
+      setState(() {
+        images.addAll(picked);
+
+        if (images.length > 4) {
+          images = images.take(4).toList();
+        }
+      });
+    }
   }
 
   @override
@@ -60,22 +99,58 @@ class _PostWritingScreenState
 
     const Spacer(),
 
-    TextButton(
-    onPressed: () {},
+      TextButton(
+        onPressed: () async {
+          print("title = ${titleController.text}");
+          print("content = ${contentController.text}");
+          print("tag = $selectedTag");
+          try {
+            if (widget.post == null) {
 
-    child: const Text(
-    "등록",
-    style: TextStyle(
-    color: Color(0xff9BA9B0),
-    fontSize: 22,
-    fontWeight: FontWeight.w700,
-    ),
-    ),
-    ),
+              await CommunityService.createPost(
+                title: titleController.text,
+                content: contentController.text,
+                fishType: selectedTag,
+                images: images,
+              );
 
+            } else {
+
+              await CommunityService.updatePost(
+                postId: widget.post!.postId,
+                title: titleController.text,
+                content: contentController.text,
+                fishType: selectedTag,
+                images: images,
+                deletedImageIds: deletedImageIds,
+              );
+
+            }
+
+            if (!mounted) return;
+
+            Navigator.pop(context, true);
+          } catch (e) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(e.toString()),
+              ),
+            );
+          }
+        },
+
+        child: Text(
+          widget.post == null ? "등록" : "수정",
+          style: TextStyle(
+            color: Color(0xff9BA9B0),
+            fontSize: 22,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
     ],
     ),
-    ),
+        ),
 
     /// 태그
     Padding(
@@ -293,9 +368,8 @@ class _PostWritingScreenState
               10,
             ),
             child: Row(
-              children: const [
-
-                Text(
+              children: [
+                const Text(
                   "사진 등록",
                   style: TextStyle(
                     color: Color(0xff9BA9B0),
@@ -304,17 +378,16 @@ class _PostWritingScreenState
                   ),
                 ),
 
-                Spacer(),
+                const Spacer(),
 
                 Text(
-                  "1/4",
-                  style: TextStyle(
+                  "${oldImages.length + images.length}/4",
+                  style: const TextStyle(
                     color: Color(0xff9BA9B0),
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-
               ],
             ),
           ),
@@ -322,74 +395,132 @@ class _PostWritingScreenState
           /// 사진 영역
           SizedBox(
             height: 120,
-
-            child: ListView(
+            child: ListView.builder(
               scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 15),
+              itemCount: oldImages.length + images.length + 1,
+                itemBuilder: (context, index) {
+                  if (index < oldImages.length) {
 
-              padding: const EdgeInsets.symmetric(
-                horizontal: 15,
-              ),
+                    print("${ApiClient.baseUrl}${oldImages[index]["Image_url"]}");
 
-              children: [
+                    return Stack(
+                      children: [
 
-                /// 더미 사진
-                Container(
-                  width: 108,
-                  height: 108,
-                  margin: const EdgeInsets.only(
-                    right: 12,
-                  ),
-                  decoration: BoxDecoration(
-                    borderRadius:
-                    BorderRadius.circular(20),
-                    border: Border.all(
-                      color: const Color(0xff9BA9B0),
-                      width: 2,
-                    ),
-                    image: const DecorationImage(
-                      image: NetworkImage(
-                        "https://picsum.photos/200",
+                        Container(
+                          width: 108,
+                          height: 108,
+                          margin: const EdgeInsets.only(right: 12),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: const Color(0xff9BA9B0),
+                              width: 2,
+                            ),
+                          ),
+                          clipBehavior: Clip.hardEdge,
+                          child: Image.network(
+                            "${ApiClient.baseUrl}${oldImages[index]["Image_url"]}",
+                            fit: BoxFit.cover,
+                            loadingBuilder: (context, child, loadingProgress) {
+                              if (loadingProgress == null) return child;
+                              return const Center(child: CircularProgressIndicator());
+                            },
+                            errorBuilder: (context, error, stackTrace) {
+                              debugPrint("★★★★★ IMAGE ERROR ★★★★★");
+                              debugPrint(error.toString());
+                              debugPrint(stackTrace.toString());
+                              return const Icon(Icons.error, color: Colors.red);
+                            },
+                          ),
+                        ),
+
+                        Positioned(
+                          top: 5,
+                          right: 15,
+                          child: GestureDetector(
+                            onTap: () {
+
+                              setState(() {
+
+                                deletedImageIds.add(
+                                  oldImages[index]["Image_id"],
+                                );
+
+                                oldImages.removeAt(index);
+
+                              });
+
+                            },
+
+                            child: const CircleAvatar(
+                              radius: 12,
+                              backgroundColor: Colors.black54,
+                              child: Icon(
+                                Icons.close,
+                                size: 15,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+
+                      ],
+                    );
+                  }
+
+                  final newIndex = index - oldImages.length;
+
+                  // 새로 선택한 사진
+                  if (newIndex < images.length) {
+                    return Container(
+                      width: 108,
+                      height: 108,
+                      margin: const EdgeInsets.only(right: 12),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: const Color(0xff9BA9B0),
+                          width: 2,
+                        ),
+                        image: DecorationImage(
+                          image: FileImage(
+                            File(images[newIndex].path),
+                          ),
+                          fit: BoxFit.cover,
+                        ),
                       ),
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                ),
+                    );
+                  }
 
-                /// 사진 추가
-                GestureDetector(
-                  onTap: () {},
-
-                  child: Container(
-                    width: 108,
-                    height: 108,
-
-                    decoration: BoxDecoration(
-                      borderRadius:
-                      BorderRadius.circular(20),
-
-                      border: Border.all(
-                        color: const Color(0xff9BA9B0),
-                        width: 2,
-                        style: BorderStyle.solid,
+                  // + 버튼
+                  return GestureDetector(
+                    onTap: pickImages,
+                    child: Container(
+                      width: 108,
+                      height: 108,
+                      margin: const EdgeInsets.only(right: 12),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: const Color(0xff9BA9B0),
+                          width: 2,
+                        ),
+                      ),
+                      child: const Center(
+                        child: Icon(
+                          Icons.add,
+                          color: Color(0xff9BA9B0),
+                          size: 45,
+                        ),
                       ),
                     ),
-
-                    child: const Center(
-                      child: Icon(
-                        Icons.add,
-                        color: Color(0xff9BA9B0),
-                        size: 45,
-                      ),
-                    ),
-                  ),
-                ),
-
-              ],
+                  );
+                },
             ),
           ),
 
           const SizedBox(height: 20),
-
         ],
         ),
         ),

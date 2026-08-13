@@ -21,18 +21,18 @@ class _WaterTempDetailScreenState extends State<WaterTempDetailScreen> {
   @override
   void initState() {
     super.initState();
+    SensorApi().connect().listen((data) {
+      if (!mounted) return;
 
-    _loadData();
-
-    // 5초마다 최신 데이터 조회
-    _timer = Timer.periodic(const Duration(seconds: 5), (_) {
-      _loadData();
-    });
+      setState(() {
+        sensor = SensorData.fromJson(data);
+      });
+    }
   }
 
   Future<void> _loadData() async {
     try {
-      final data = await _sensorApi.getStatus();
+      final data = await _sensorApi.setState();
 
       if (!mounted) return;
 

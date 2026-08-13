@@ -177,7 +177,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                                     border: InputBorder.none,
                                     isCollapsed: true,
                                     contentPadding:
-                                        const EdgeInsets.fromLTRB(
+                                    const EdgeInsets.fromLTRB(
                                       14,
                                       1,
                                       14,
@@ -200,9 +200,9 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                             clipBehavior: Clip.antiAlias,
                             child: InkWell(
                               splashColor:
-                                  const Color(0xFF8FA8D8).withOpacity(0.18),
+                              const Color(0xFF8FA8D8).withOpacity(0.18),
                               highlightColor:
-                                  const Color(0xFF8FA8D8).withOpacity(0.08),
+                              const Color(0xFF8FA8D8).withOpacity(0.08),
                               onTap: sendMessage,
                               child: const SizedBox(
                                 width: 42,
@@ -250,7 +250,7 @@ class ChatBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Color bubbleColor =
-        isUser ? const Color(0xFFDDF3FF) : Colors.white;
+    isUser ? const Color(0xFFDDF3FF) : Colors.white;
 
     return Align(
       alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,

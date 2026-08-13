@@ -42,8 +42,7 @@ class _HomeScreenState extends State<HomeScreen> {
       final result = await _sensorApi.getStatus();
 
       print("온도 : ${result.temperature}");
-      print("TDS : ${result.waterQuality}");
-      print("물고기 : ${result.fishStatus}");
+      print("TDS : ${result.water_quality}");
 
       setState(() {
         sensor = result;
@@ -221,7 +220,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             title: '수질',
                             value: sensor == null
                                 ? '--'
-                                : _getWaterQualityText(sensor!.waterQuality),
+                                : _getWaterQualityText(sensor!.water_quality),
                             valueColor: const Color(0xFF00BDF2),
                             onTap: () {
                               print('수질 카드 클릭');

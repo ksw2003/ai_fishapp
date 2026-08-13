@@ -1,19 +1,28 @@
 import 'package:flutter/material.dart';
 import '../../widgets/common_bottom_nav_bar.dart';
+import '../../services/fishinfo_service.dart';
+import '../../../models/fishinfo.dart';
 
 class FishRowData {
+  final int? fishId;
+
   final TextEditingController speciesController;
   final TextEditingController countController;
 
   bool isNew;
 
   FishRowData({
+    this.fishId,
     required String species,
     required int count,
     this.isNew = false,
-  })  : speciesController = TextEditingController(text: species),
-        countController = TextEditingController(
-          text: count == 0 ? "" : count.toString(),
+  })  : speciesController =
+  TextEditingController(text: species),
+        countController =
+        TextEditingController(
+          text: count == 0
+              ? ""
+              : count.toString(),
         );
 }
 
@@ -21,17 +30,48 @@ class MyFishScreen extends StatefulWidget {
   const MyFishScreen({super.key});
 
   @override
-  State<MyFishScreen> createState() => _MyFishScreenState();
+  State<MyFishScreen> createState() =>
+      _MyFishScreenState();
 }
 
 class _MyFishScreenState extends State<MyFishScreen> {
   bool isEdit = false;
 
-  final List<FishRowData> fishes = [
-    FishRowData(species: "구피", count: 10),
-    FishRowData(species: "네온 테트라", count: 5),
-    FishRowData(species: "금붕어", count: 3),
-  ];
+  final List<FishRowData> fishes = [];
+  bool isLoading = true;
+  @override
+  void initState() {
+    super.initState();
+    loadFish();
+  }
+
+  Future<void> loadFish() async {
+    try {
+      final List<Fish> fishList =
+      await FishService.getFishList();
+
+      fishes.clear();
+
+    for (var fish in fishList) {
+      fishes.add(
+        FishRowData(
+          fishId: fish.fishId,
+          species: fish.fishType,
+          count: fish.fishCount,
+        ),
+      );
+    }
+      setState(() {
+        isLoading = false;
+      });
+    } catch (e) {
+      print("조회 실패 : $e");
+
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -52,7 +92,10 @@ class _MyFishScreenState extends State<MyFishScreen> {
       ),
 
       body: SafeArea(
-        child: Column(
+        child: isLoading
+            ? const Center(
+          child: CircularProgressIndicator(),
+        ) : Column(
           children: [
 
             Padding(
@@ -74,20 +117,47 @@ class _MyFishScreenState extends State<MyFishScreen> {
                   const Spacer(),
 
                   GestureDetector(
-                    onTap: () {
+  onTap: () async {
 
-                      if (isEdit) {
+  if (isEdit) {
 
-                        fishes.removeWhere((e) =>
-                        e.speciesController.text.trim().isEmpty &&
-                            e.countController.text.trim().isEmpty);
+  for (final fish in fishes) {
 
-                      }
+  final fishType =
+  fish.speciesController.text.trim();
 
-                      setState(() {
-                        isEdit = !isEdit;
-                      });
-                    },
+  final fishCount =
+  int.tryParse(
+  fish.countController.text,
+  ) ??
+  0;
+
+  if (fishType.isEmpty) continue;
+
+  if (fish.isNew) {
+
+  await FishService.addFish(
+  fishType: fishType,
+  fishCount: fishCount,
+  );
+
+  } else {
+
+  await FishService.updateFish(
+  fishId: fish.fishId!,
+  fishType: fishType,
+  fishCount: fishCount,
+  );
+  }
+  }
+
+  await loadFish();
+  }
+
+  setState(() {
+  isEdit = !isEdit;
+  });
+  },
                     child: Text(
                       isEdit ? "저장" : "수정",
                       style: const TextStyle(
@@ -130,23 +200,27 @@ class _MyFishScreenState extends State<MyFishScreen> {
                       child: FishRowWidget(
                         data: fishes[index],
                         isEdit: isEdit,
-                        onDelete: () {
+  onDelete: () async {
 
-                          setState(() {
+  final fish = fishes[index];
 
-                            fishes[index]
-                                .speciesController
-                                .dispose();
+  if (fish.fishId != null) {
 
-                            fishes[index]
-                                .countController
-                                .dispose();
+  await FishService.deleteFish(
+  fish.fishId!,
+  );
+  }
 
-                            fishes.removeAt(index);
+  setState(() {
 
-                          });
+  fish.speciesController.dispose();
+  fish.countController.dispose();
 
-                        },
+  fishes.removeAt(index);
+
+  });
+
+  },
                       ),
                     ),
                   ),
@@ -202,7 +276,7 @@ class _MyFishScreenState extends State<MyFishScreen> {
                   SizedBox(
                     height: 44,
                     child: ElevatedButton(
-                      onPressed: () {},
+                      onPressed: loadFish,
                       style:
                       ElevatedButton.styleFrom(
                         elevation: 0,

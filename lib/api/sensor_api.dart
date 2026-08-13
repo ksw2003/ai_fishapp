@@ -1,18 +1,33 @@
 import 'dart:convert';
-
+import 'package:http/http.dart' as http;
 import '../models/sensor.dart';
 import 'api_client.dart';
 
 class SensorApi {
-  Future<SensorData> getStatus() async {
-    final response = await ApiClient.get("/api/tank/status");
+  Stream<Map<String, dynamic>> connect() async* {
+    final request = http.Request(
+      'GET',
+      Uri.parse(
+        'http://172.20.10.3:3000/api/tank/data',
+      ),
+    );
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
+    final response =
+    await http.Client().send(request);
 
-      return SensorData.fromJson(data["tank"]);
+    await for (final chunk in response.stream
+        .transform(utf8.decoder)) {
+
+      final lines = chunk.split('\n');
+
+      for (final line in lines) {
+        if (line.startsWith('data: ')) {
+          final jsonString =
+          line.substring(6);
+
+          yield jsonDecode(jsonString);
+        }
+      }
     }
-
-    throw Exception("상태 조회 실패");
   }
 }

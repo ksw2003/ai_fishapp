@@ -1,28 +1,28 @@
 class SensorData {
   final double temperature;
-  final int waterQuality;
-  final int activity;
-  final String fishStatus;
-  final List<dynamic> alerts;
-  final DateTime updatedAt;
+  final int water_quality;
+  final double maxTemp;
+  final double minTemp;
+  final DateTime maxTempAt;
+  final DateTime minTempAt;
 
   SensorData({
     required this.temperature,
-    required this.waterQuality,
-    required this.activity,
-    required this.fishStatus,
-    required this.alerts,
-    required this.updatedAt,
+    required this.water_quality,
+    required this.maxTemp,
+    required this.minTemp,
+    required this.maxTempAt,
+    required this.minTempAt,
   });
 
   factory SensorData.fromJson(Map<String, dynamic> json) {
     return SensorData(
       temperature: (json['temperature'] as num).toDouble(),
-      waterQuality: json['waterQuality'] as int,
-      activity: json['activity'] as int,
-      fishStatus: json['fishStatus'] as String,
-      alerts: json['alerts'] as List<dynamic>,
-      updatedAt: DateTime.parse(json['updatedAt']),
+      water_quality: json['water_quality'] as int,
+      maxTemp: (json['max_temp'] as num).toDouble(),
+      minTemp: (json['min_temp'] as num).toDouble(),
+      maxTempAt: DateTime.parse(json['max_temp_at']),
+      minTempAt: DateTime.parse(json['min_temp_at']),
     );
   }
 }
