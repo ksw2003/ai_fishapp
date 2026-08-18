@@ -1,7 +1,5 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../models/sensor.dart';
-import 'api_client.dart';
 
 class SensorApi {
   Stream<Map<String, dynamic>> connect() async* {
@@ -14,6 +12,24 @@ class SensorApi {
 
     final response =
     await http.Client().send(request);
+
+    if (response.statusCode != 200) {
+      final body =
+      await response.stream.bytesToString();
+
+      try {
+        final json =
+        jsonDecode(body);
+
+        throw Exception(
+          json['message'],
+        );
+      } catch (_) {
+        throw Exception(
+          '서버 연결 실패',
+        );
+      }
+    }
 
     await for (final chunk in response.stream
         .transform(utf8.decoder)) {

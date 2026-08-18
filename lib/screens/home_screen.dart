@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../widgets/common_bottom_nav_bar.dart';
 import '../api/sensor_api.dart';
 import '../models/sensor.dart';
+import '../widgets/error_banner.dart';
 import 'dart:async';
 
 class HomeScreen extends StatefulWidget {
@@ -17,20 +18,50 @@ class _HomeScreenState extends State<HomeScreen> {
 
   SensorData? sensor;
   Timer? _timer;
+  String? errorMessage;
+  int errorVersion = 0;
 
   @override
   void initState() {
     super.initState();
 
-    _sensorApi.connect().listen((data) {
-      if (!mounted) return;
+    _sensorApi.connect().listen(
+          (data) {
+        if (!mounted) return;
 
-      setState(() {
-        sensor = SensorData.fromJson(data);
-      });
-    });
+        setState(() {
+          sensor = SensorData.fromJson(data);
+        });
+      },
+      onError: (error) {
+        showError(
+          error.toString().replaceFirst(
+            'Exception: ',
+            '',
+          ),
+        );
+      },
+
+    );
   }
   @override
+  void showError(String message) {
+    setState(() {
+      errorMessage = message;
+      errorVersion++;
+    });
+
+    Future.delayed(
+      const Duration(seconds: 3),
+          () {
+        if (!mounted) return;
+
+        setState(() {
+          errorMessage = null;
+        });
+      },
+    );
+  }
   void dispose() {
     _timer?.cancel();
     super.dispose();
@@ -59,7 +90,9 @@ class _HomeScreenState extends State<HomeScreen> {
     final String todayText =
         '${now.year}년 ${now.month}월 ${now.day}일 (${getKoreanWeekday(now.weekday)})';
 
-    return Scaffold(
+    return Stack(
+      children:[
+        Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
@@ -259,6 +292,22 @@ class _HomeScreenState extends State<HomeScreen> {
       bottomNavigationBar: const CommonBottomNavBar(
         selectedIndex: 0,
       ),
+    ),
+        if (errorMessage != null)
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: AnimatedSlide(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOut,
+              offset: Offset.zero,
+              child: ErrorBanner(
+                message: errorMessage!,
+              ),
+            ),
+          ),
+      ],
     );
   }
 }
