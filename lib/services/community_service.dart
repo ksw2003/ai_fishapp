@@ -26,11 +26,7 @@ class CommunityService {
 
   /// 게시글 상세
   static Future<PostDetail> getPostDetail(int postId) async {
-    final response = await http.get(
-      Uri.parse(
-        "${ApiClient.baseUrl}/api/community/posts/$postId",
-      ),
-    );
+    final response = await ApiClient.get('/api/community/posts/$postId',token: true);
     print(response.body);
 
     final json = jsonDecode(response.body);

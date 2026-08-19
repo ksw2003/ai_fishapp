@@ -1,5 +1,10 @@
 import 'dart:async';
+import 'dart:convert';
+import 'package:ai_fishapp/api/api_client.dart';
+import 'package:ai_fishapp/services/token_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:kakao_flutter_sdk_user/kakao_flutter_sdk_user.dart';
 
 class StartScreen extends StatefulWidget {
   const StartScreen({super.key});
@@ -22,6 +27,83 @@ class _StartScreenState extends State<StartScreen> {
       });
     });
   }
+
+  Future<void> kakaoLogin(BuildContext context)async{
+    try{
+      final data = await UserApi.instance.loginWithKakaoAccount();
+      final (success,hasUsernickname) = await getToken(data.accessToken,'kakao');
+      if(success){
+        if(hasUsernickname){
+          //관찰화면으로 이동 /home
+          if (!context.mounted) return;
+          Navigator.pushReplacementNamed(context, '/home');
+        }else{
+          //설정 화면으로 이동 /make-profile
+          if (!context.mounted) return;
+          Navigator.pushReplacementNamed(context, '/make-profile');
+        }
+      }else{
+        print('로그인 실패');
+      }
+    }catch(e){
+      print('카카오 로그인 오류: $e');
+    }
+  }
+
+  Future<void> googleLogin(BuildContext context)async{
+    try{
+      final GoogleSignInAccount googleUser = await GoogleSignIn.instance.authenticate();
+      print(googleUser);
+      final authorization = await googleUser.authorizationClient.authorizationForScopes([
+        'openid',
+        'email',
+        'profile',
+      ]);
+      final accesstoken = authorization?.accessToken;
+      if (accesstoken == null) {
+        print('구글 ID Token 없음');
+        return;
+      }
+      final (success,hasUsernickname) = await getToken(accesstoken,'google');
+      if(success){
+        if(hasUsernickname){
+          //관찰화면으로 이동 /home
+          if (!context.mounted) return;
+          Navigator.pushReplacementNamed(context, '/home');
+        }else{
+          //설정 화면으로 이동 /make-profile
+          if (!context.mounted) return;
+          Navigator.pushReplacementNamed(context, '/make-profile');
+        }
+      }else{
+        print('로그인 실패');
+      }
+    } on GoogleSignInException catch (e) {
+        print('===== GoogleSignInException =====');
+        print('code: ${e.code}');
+        print('description: ${e.description}');
+        print('details: ${e.details}');
+      }catch(e){
+      print('구글 로그인 오류: $e');
+    }
+  }
+
+  Future<(bool, dynamic)> getToken(String accesstoken,provider) async{
+    final response = await ApiClient.post('/api/auth/login',
+      jsonEncode({'accesstoken':accesstoken,'provider':provider})
+    );
+    print(response.body);
+    if(response.statusCode == 200){
+      final data = jsonDecode(response.body);
+      TokenStorage.saveTokens(data['accesstoken'],data['refreshtoken']);
+      return (true,data['exNickname']);
+    }else{
+      print('로그인 실패');
+      return (false,false);
+    }
+
+  }
+
 
   void openLoginPanel() {
     if (isLoading) return;
@@ -168,10 +250,7 @@ class _StartScreenState extends State<StartScreen> {
                         ),
 
                         onPressed: () {
-                          Navigator.pushNamed(
-                            context,
-                            "/make-profile",
-                          );
+                          kakaoLogin(context);
                         },
 
                         child: const Text(
@@ -192,10 +271,7 @@ class _StartScreenState extends State<StartScreen> {
 
                       child: OutlinedButton(
                         onPressed: () {
-                          Navigator.pushNamed(
-                              context,
-                              "/make-profile",
-                          );
+                          googleLogin(context);
                         },
 
                         child: const Text(

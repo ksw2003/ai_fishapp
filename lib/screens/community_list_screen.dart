@@ -124,7 +124,7 @@ class _CommunityListScreenState extends State<CommunityListScreen> {
               heroTag: "chat",
               elevation: 4,
               backgroundColor: Colors.transparent,
-              onPressed: () {
+              onPressed: () async{
                 Navigator.pushNamed(
                     context, '/chatbot');
               },

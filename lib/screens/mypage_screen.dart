@@ -1,18 +1,56 @@
+import 'dart:convert';
+
+import 'package:ai_fishapp/api/api_client.dart';
+import 'package:ai_fishapp/screens/start_screen.dart';
+import 'package:ai_fishapp/services/token_storage.dart';
 import 'package:flutter/material.dart';
 import '../widgets/common_bottom_nav_bar.dart';
 
-class MyPageScreen extends StatelessWidget {
+class MyPageScreen extends StatefulWidget {
   const MyPageScreen({super.key});
-
-  // ===============================
+  @override
+  State<MyPageScreen> createState() => _MyPageScreenState();
+}
+class _MyPageScreenState extends State<MyPageScreen>{
+ // ===============================
   // 임시 데이터
   // 나중에 UserModel(API)로 교체
   // ===============================
 
-  final String nickname = "한경이";
+  String nickname = "한경이";
 
-  final String profileImage =
+  String profileImage =
       "https://i.pravatar.cc/300";
+
+  @override
+  void initState(){
+    super.initState();
+    getUserInfo();
+  }
+  
+  Future<void> getUserInfo()async{
+    final response = await ApiClient.get('/api/auth/myinfo',token: true);
+    if(response.statusCode == 200){
+      final data = jsonDecode(response.body);
+      if (!mounted) return;
+      setState(() {
+        nickname = data["user"]["nickname"];
+        profileImage = data["image"];
+      });
+    }
+  }
+
+  Future<void>logout(BuildContext context)async{
+    final response = await ApiClient.post('/api/auth/logout',null,token: true);
+    if(response.statusCode == 204){
+      await TokenStorage.deleteTokens();
+      if (!mounted) return;
+
+      Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context)=> const StartScreen()),(route)=>false);
+    }else{
+      print('로그아웃 실패');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -142,10 +180,7 @@ class MyPageScreen extends StatelessWidget {
             child: InkWell(
               borderRadius: BorderRadius.circular(15),
               onTap: () {
-                Navigator.pushNamed(
-                  context,
-                  "/start",
-                );
+                logout(context);
               },
               child: const Center(
                 child: Text(
@@ -240,3 +275,6 @@ class _MyPageButtonState extends State<MyPageButton> {
     );
   }
 }
+
+
+ 

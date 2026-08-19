@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+import 'package:ai_fishapp/api/api_client.dart';
 import 'package:flutter/material.dart';
 import '../widgets/common_bottom_nav_bar.dart';
 import '../api/sensor_api.dart';
@@ -18,16 +21,22 @@ class _HomeScreenState extends State<HomeScreen> {
   SensorData? sensor;
   Timer? _timer;
 
+  String userName = '';
+
   @override
   void initState() {
     super.initState();
-
+    getUserName();
     _sensorApi.connect().listen((data) {
       if (!mounted) return;
+      if(data["type"]=='sensor'){
+        setState(() {
+          sensor = SensorData.fromJson(data["data"]);
+        });
+      }else if(data["type"] == 'warning'){
+        print(data["data"]);
+      }
 
-      setState(() {
-        sensor = SensorData.fromJson(data);
-      });
     });
   }
   @override
@@ -35,6 +44,17 @@ class _HomeScreenState extends State<HomeScreen> {
     _timer?.cancel();
     super.dispose();
   }
+
+  Future<void> getUserName()async{
+    final response = await ApiClient.get('/api/auth/myinfo',token: true);
+    if(response.statusCode == 200){
+      final data = jsonDecode(response.body);
+      setState(() {
+        userName = data["user"]["nickname"];
+      });
+
+    }
+  } 
 
   @override
   Widget build(BuildContext context) {
@@ -44,7 +64,6 @@ class _HomeScreenState extends State<HomeScreen> {
     // ===============================
 
     // 로그인한 사용자 이름
-    const String userName = '한경이';
 
     // AI 분석 결과 또는 백엔드에서 받아올 오늘의 물고기 상태
     const String fishCondition = '매우 좋음';
@@ -72,7 +91,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [
                     // 상단 환영 문구
                     RichText(
-                      text: const TextSpan(
+                      text: TextSpan(
                         style: TextStyle(
                           fontSize: 26.19,
                           fontWeight: FontWeight.w700,

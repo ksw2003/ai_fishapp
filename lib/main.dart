@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:kakao_flutter_sdk_user/kakao_flutter_sdk_user.dart';
 import 'screens/start_screen.dart';
 import 'screens/make_profile_screen.dart';
 
@@ -21,7 +24,14 @@ import 'screens/mypage_screen.dart';
 import 'screens/setting/myfish_screen.dart';
 import 'screens/setting/profile_edit_screen.dart';
 
-void main() {
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
+  await GoogleSignIn.instance.initialize(
+    serverClientId: dotenv.env['GOOGLE_KEY']
+  );
+  KakaoSdk.init(nativeAppKey: dotenv.env['KAKAO_NATIVE_APP_KEY']);
   runApp(const MyApp());
 }
 

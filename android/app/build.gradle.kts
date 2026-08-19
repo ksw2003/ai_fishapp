@@ -28,6 +28,7 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        manifestPlaceholders["KAKAO_SCHEME"] = project.findProperty("KAKAO_SCHEME") as String? ?: ""
     }
 
     buildTypes {

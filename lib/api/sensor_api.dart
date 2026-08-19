@@ -8,7 +8,7 @@ class SensorApi {
     final request = http.Request(
       'GET',
       Uri.parse(
-        'http://192.168.45.161:3000/api/tank/data',
+        'http://192.168.56.1:3000/api/tank/data',
       ),
     );
 
@@ -19,12 +19,10 @@ class SensorApi {
         .transform(utf8.decoder)) {
 
       final lines = chunk.split('\n');
-
       for (final line in lines) {
         if (line.startsWith('data: ')) {
           final jsonString =
           line.substring(6);
-
           yield jsonDecode(jsonString);
         }
       }
