@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import '../models/post.dart';
 import '../models/post_detail.dart';
 import '../api/api_client.dart';
+import '../services/token_storage.dart';
 
 class CommunityService {
 
@@ -26,11 +27,7 @@ class CommunityService {
 
   /// 게시글 상세
   static Future<PostDetail> getPostDetail(int postId) async {
-    final response = await http.get(
-      Uri.parse(
-        "${ApiClient.baseUrl}/api/community/posts/$postId",
-      ),
-    );
+    final response = await ApiClient.get('/api/community/posts/$postId',token: true);
     print(response.body);
 
     final json = jsonDecode(response.body);
@@ -58,6 +55,14 @@ class CommunityService {
         "${ApiClient.baseUrl}/api/community/posts",
       ),
     );
+
+    final accessToken =
+    await TokenStorage.getAccessToken();
+
+    if (accessToken != null) {
+      request.headers["authorization"] =
+      "Bearer $accessToken";
+    }
 
     request.fields["title"] = title;
     request.fields["content"] = content;

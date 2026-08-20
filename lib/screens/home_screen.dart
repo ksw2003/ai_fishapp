@@ -1,8 +1,10 @@
+import 'dart:convert';
+
+import 'package:ai_fishapp/api/api_client.dart';
 import 'package:flutter/material.dart';
 import '../widgets/common_bottom_nav_bar.dart';
 import '../api/sensor_api.dart';
 import '../models/sensor.dart';
-import '../widgets/error_banner.dart';
 import 'dart:async';
 
 class HomeScreen extends StatefulWidget {
@@ -18,53 +20,40 @@ class _HomeScreenState extends State<HomeScreen> {
 
   SensorData? sensor;
   Timer? _timer;
-  String? errorMessage;
-  int errorVersion = 0;
+
+  String userName = '';
 
   @override
   void initState() {
     super.initState();
-
-    _sensorApi.connect().listen(
-          (data) {
-        if (!mounted) return;
-
+    getUserName();
+    _sensorApi.connect().listen((data) {
+      if (!mounted) return;
+      if(data["type"]=='sensor'){
         setState(() {
-          sensor = SensorData.fromJson(data);
+          sensor = SensorData.fromJson(data["data"]);
         });
-      },
-      onError: (error) {
-        showError(
-          error.toString().replaceFirst(
-            'Exception: ',
-            '',
-          ),
-        );
-      },
+      }else if(data["type"] == 'warning'){
+        print(data["data"]);
+      }
 
-    );
+    });
   }
   @override
-  void showError(String message) {
-    setState(() {
-      errorMessage = message;
-      errorVersion++;
-    });
-
-    Future.delayed(
-      const Duration(seconds: 3),
-          () {
-        if (!mounted) return;
-
-        setState(() {
-          errorMessage = null;
-        });
-      },
-    );
-  }
   void dispose() {
     _timer?.cancel();
     super.dispose();
+  }
+
+  Future<void> getUserName()async{
+    final response = await ApiClient.get('/api/auth/myinfo',token: true);
+    if(response.statusCode == 200){
+      final data = jsonDecode(response.body);
+      setState(() {
+        userName = data["user"]["nickname"];
+      });
+
+    }
   }
 
   @override
@@ -75,7 +64,6 @@ class _HomeScreenState extends State<HomeScreen> {
     // ===============================
 
     // 로그인한 사용자 이름
-    const String userName = '한경이';
 
     // AI 분석 결과 또는 백엔드에서 받아올 오늘의 물고기 상태
     const String fishCondition = '매우 좋음';
@@ -90,9 +78,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final String todayText =
         '${now.year}년 ${now.month}월 ${now.day}일 (${getKoreanWeekday(now.weekday)})';
 
-    return Stack(
-      children:[
-        Scaffold(
+    return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
@@ -105,7 +91,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [
                     // 상단 환영 문구
                     RichText(
-                      text: const TextSpan(
+                      text: TextSpan(
                         style: TextStyle(
                           fontSize: 26.19,
                           fontWeight: FontWeight.w700,
@@ -292,22 +278,6 @@ class _HomeScreenState extends State<HomeScreen> {
       bottomNavigationBar: const CommonBottomNavBar(
         selectedIndex: 0,
       ),
-    ),
-        if (errorMessage != null)
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: AnimatedSlide(
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeOut,
-              offset: Offset.zero,
-              child: ErrorBanner(
-                message: errorMessage!,
-              ),
-            ),
-          ),
-      ],
     );
   }
 }
@@ -450,10 +420,10 @@ class _HomeActionCardState extends State<HomeActionCard> {
   @override
   Widget build(BuildContext context) {
     final Color statusColor =
-        widget.isDone ? const Color(0xFF00BDF2) : const Color(0xFFFF91A4);
+    widget.isDone ? const Color(0xFF00BDF2) : const Color(0xFFFF91A4);
 
     final IconData statusIcon =
-        widget.isDone ? Icons.check_circle_outline : Icons.close;
+    widget.isDone ? Icons.check_circle_outline : Icons.close;
 
     return AnimatedScale(
       scale: isPressed ? 0.96 : 1.0,

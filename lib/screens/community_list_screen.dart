@@ -76,305 +76,305 @@ class _CommunityListScreenState extends State<CommunityListScreen> {
     final fabSpacing = (screenWidth * 0.03).clamp(10.0, 18.0);
 
     return GestureDetector(
-        behavior: HitTestBehavior.translucent,
-        onTap: () {
-      FocusScope.of(context).unfocus();
-      if (isTagEditing) {
-        setState(() {
-          tagController.clear();
-          isTagEditing = false;
-        });
-      }
-    },
+      behavior: HitTestBehavior.translucent,
+      onTap: () {
+        FocusScope.of(context).unfocus();
+        if (isTagEditing) {
+          setState(() {
+            tagController.clear();
+            isTagEditing = false;
+          });
+        }
+      },
 
-    child: Scaffold(
-      backgroundColor: Colors.white,
-      floatingActionButtonLocation:
-      FloatingActionButtonLocation.endFloat,
-      floatingActionButton: Padding(
-        padding: EdgeInsets.only(right: screenWidth * 0.01, bottom: 30),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            FloatingActionButton(
-              heroTag: "write",
-              elevation: 3,
-              shape: const CircleBorder(),
-              backgroundColor: const Color(0xffBCC4D4),
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        floatingActionButtonLocation:
+        FloatingActionButtonLocation.endFloat,
+        floatingActionButton: Padding(
+          padding: EdgeInsets.only(right: screenWidth * 0.01, bottom: 30),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              FloatingActionButton(
+                heroTag: "write",
+                elevation: 3,
+                shape: const CircleBorder(),
+                backgroundColor: const Color(0xffBCC4D4),
 
-              onPressed: () async {
-                final result = await Navigator.pushNamed(
-                  context,
-                  '/post-writing',
-                );
-                if (result == true) {
-                  loadPosts();
-                }
-              },
+                onPressed: () async {
+                  final result = await Navigator.pushNamed(
+                    context,
+                    '/post-writing',
+                  );
+                  if (result == true) {
+                    loadPosts();
+                  }
+                },
 
-              child: Icon(
-                Icons.add,
-                color: Colors.white,
-                size: fabSize * 0.55,
-              ),
-            ),
-
-            const SizedBox(height: 14),
-            FloatingActionButton(
-              heroTag: "chat",
-              elevation: 4,
-              backgroundColor: Colors.transparent,
-              onPressed: () {
-                Navigator.pushNamed(
-                    context, '/chatbot');
-              },
-
-              child: Container(
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    begin: Alignment(0.0, 0.35),
-                    end: Alignment(1.23, 0.78),
-                    colors: [
-                      Color(0xff00C2FA),
-                      Color(0xff005FEA),
-                    ],
-                  ),
-                ),
-
-                child: const Center(
-                  child: Icon(
-                    Icons.chat_bubble,
-                    color: Colors.white,
-                  ),
+                child: Icon(
+                  Icons.add,
+                  color: Colors.white,
+                  size: fabSize * 0.55,
                 ),
               ),
-            ),
-          ],
+
+              const SizedBox(height: 14),
+              FloatingActionButton(
+                heroTag: "chat",
+                elevation: 4,
+                backgroundColor: Colors.transparent,
+                onPressed: () async{
+                  Navigator.pushNamed(
+                      context, '/chatbot');
+                },
+
+                child: Container(
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      begin: Alignment(0.0, 0.35),
+                      end: Alignment(1.23, 0.78),
+                      colors: [
+                        Color(0xff00C2FA),
+                        Color(0xff005FEA),
+                      ],
+                    ),
+                  ),
+
+                  child: const Center(
+                    child: Icon(
+                      Icons.chat_bubble,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
 
-      body: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 20,
-                vertical: 10,
-              ),
-              child: Row(
-                children: [
-                  IconButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                    icon: const Icon(
-                        Icons.arrow_back_ios_new),
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    onPressed: () {},
-                    icon: const Icon(Icons.menu),
-                  ),
-                ],
-              ),
-            ),
-
-            /// 검색창
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 27),
-              child: SizedBox(
-                height: 49,
-                child: TextField(
-                  controller: searchController,
-                  onChanged: (_) => setState(() {}),
-                  decoration: InputDecoration(
-                    hintText: "검색",
-                    prefixIcon:
-                    const Icon(Icons.search),
-                    contentPadding:
-                    const EdgeInsets.symmetric(
-                        vertical: 0),
-                    enabledBorder:
-                    OutlineInputBorder(
-                      borderRadius:
-                      BorderRadius.circular(15),
-                      borderSide:
-                      const BorderSide(
-                        color: Color(0xffF5F5F5),
-                        width: 3,
-                      ),
+        body: SafeArea(
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 10,
+                ),
+                child: Row(
+                  children: [
+                    IconButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      icon: const Icon(
+                          Icons.arrow_back_ios_new),
                     ),
-                    focusedBorder:
-                    OutlineInputBorder(
-                      borderRadius:
-                      BorderRadius.circular(15),
-                      borderSide:
-                      const BorderSide(
-                        color: Color(0xff94ABCC),
-                        width: 2,
+                    const Spacer(),
+                    IconButton(
+                      onPressed: () {},
+                      icon: const Icon(Icons.menu),
+                    ),
+                  ],
+                ),
+              ),
+
+              /// 검색창
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 27),
+                child: SizedBox(
+                  height: 49,
+                  child: TextField(
+                    controller: searchController,
+                    onChanged: (_) => setState(() {}),
+                    decoration: InputDecoration(
+                      hintText: "검색",
+                      prefixIcon:
+                      const Icon(Icons.search),
+                      contentPadding:
+                      const EdgeInsets.symmetric(
+                          vertical: 0),
+                      enabledBorder:
+                      OutlineInputBorder(
+                        borderRadius:
+                        BorderRadius.circular(15),
+                        borderSide:
+                        const BorderSide(
+                          color: Color(0xffF5F5F5),
+                          width: 3,
+                        ),
+                      ),
+                      focusedBorder:
+                      OutlineInputBorder(
+                        borderRadius:
+                        BorderRadius.circular(15),
+                        borderSide:
+                        const BorderSide(
+                          color: Color(0xff94ABCC),
+                          width: 2,
+                        ),
                       ),
                     ),
                   ),
                 ),
               ),
-            ),
 
-            /// 태그
-            Padding(
-              padding: const EdgeInsets.only(
-                right: 30,
-                top: 10,
-                bottom: 8,
-              ),
+              /// 태그
+              Padding(
+                padding: const EdgeInsets.only(
+                  right: 30,
+                  top: 10,
+                  bottom: 8,
+                ),
 
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
 
-                  const Text(
-                    "태그 : ",
-                    style: TextStyle(
-                      color: Color(0xff94ABCC),
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-
-                  GestureDetector(
-                    onTap: () {
-
-                      if (!isTagEditing) {
-
-                        tagController.text =
-                        selectedTag == "전체"
-                            ? ""
-                            : selectedTag;
-
-                        setState(() {
-                          isTagEditing = true;
-                        });
-
-                        Future.delayed(Duration.zero, () {
-                          tagFocusNode.requestFocus();
-                        });
-                      }
-                    },
-
-                    child: Container(
-                      constraints: const BoxConstraints(
-                        maxWidth: 180,
+                    const Text(
+                      "태그 : ",
+                      style: TextStyle(
+                        color: Color(0xff94ABCC),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
                       ),
+                    ),
 
-                      child: isTagEditing
+                    GestureDetector(
+                      onTap: () {
 
-                          ? IntrinsicWidth(
-                        child: TextField(
-                          controller: tagController,
-                          focusNode: tagFocusNode,
-                          autofocus: true,
+                        if (!isTagEditing) {
 
-                          textAlign: TextAlign.left,
+                          tagController.text =
+                          selectedTag == "전체"
+                              ? ""
+                              : selectedTag;
 
-                          decoration: const InputDecoration(
-                            border: InputBorder.none,
-                            isDense: true,
-                            contentPadding: EdgeInsets.zero,
-                            constraints: BoxConstraints(
-                              minWidth: 10,
+                          setState(() {
+                            isTagEditing = true;
+                          });
+
+                          Future.delayed(Duration.zero, () {
+                            tagFocusNode.requestFocus();
+                          });
+                        }
+                      },
+
+                      child: Container(
+                        constraints: const BoxConstraints(
+                          maxWidth: 180,
+                        ),
+
+                        child: isTagEditing
+
+                            ? IntrinsicWidth(
+                          child: TextField(
+                            controller: tagController,
+                            focusNode: tagFocusNode,
+                            autofocus: true,
+
+                            textAlign: TextAlign.left,
+
+                            decoration: const InputDecoration(
+                              border: InputBorder.none,
+                              isDense: true,
+                              contentPadding: EdgeInsets.zero,
+                              constraints: BoxConstraints(
+                                minWidth: 10,
+                              ),
                             ),
-                          ),
 
-                          style: const TextStyle(
-                            color: Colors.blue,
+                            style: const TextStyle(
+                              color: Colors.blue,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                            ),
+
+                            onSubmitted: (value) {
+
+                              setState(() {
+
+                                selectedTag =
+                                value.trim().isEmpty
+                                    ? "전체"
+                                    : value.trim();
+
+                                isTagEditing = false;
+                              });
+
+                              FocusScope.of(context).unfocus();
+                            },
+                          ),
+                        )
+
+                            : Text(
+                          selectedTag,
+
+                          overflow: TextOverflow.visible,
+                          softWrap: false,
+
+                          style: TextStyle(
+                            color: selectedTag == "전체"
+                                ? const Color(0xff94ABCC)
+                                : Colors.blue,
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
                           ),
-
-                          onSubmitted: (value) {
-
-                            setState(() {
-
-                              selectedTag =
-                              value.trim().isEmpty
-                                  ? "전체"
-                                  : value.trim();
-
-                              isTagEditing = false;
-                            });
-
-                            FocusScope.of(context).unfocus();
-                          },
-                        ),
-                      )
-
-                          : Text(
-                        selectedTag,
-
-                        overflow: TextOverflow.visible,
-                        softWrap: false,
-
-                        style: TextStyle(
-                          color: selectedTag == "전체"
-                              ? const Color(0xff94ABCC)
-                              : Colors.blue,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
 
-            /// 게시글 목록
-            Expanded(
-              child: isLoading
-                  ? const Center(
-                child:
-                CircularProgressIndicator(),
-              )
-                  : ListView.builder(
-                padding: EdgeInsets.zero,
-                itemCount:
-                filteredPosts.length,
-                itemBuilder:
-                    (context, index) {
-                  final post =
-                  filteredPosts[index];
+              /// 게시글 목록
+              Expanded(
+                child: isLoading
+                    ? const Center(
+                  child:
+                  CircularProgressIndicator(),
+                )
+                    : ListView.builder(
+                  padding: EdgeInsets.zero,
+                  itemCount:
+                  filteredPosts.length,
+                  itemBuilder:
+                      (context, index) {
+                    final post =
+                    filteredPosts[index];
 
-                  return InkWell(
-                    onTap: () async {
-                      final result = await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => CommunityDetailScreen(
-                            postId: post.postId,
+                    return InkWell(
+                      onTap: () async {
+                        final result = await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => CommunityDetailScreen(
+                              postId: post.postId,
+                            ),
                           ),
-                        ),
-                      );
+                        );
 
-                      if (result == true) {
-                        loadPosts(); // 또는 fetchPosts()
-                      }
+                        if (result == true) {
+                          loadPosts(); // 또는 fetchPosts()
+                        }
 
-                    },
-                    child: PostCard(
-                      post: post,
-                      keyword:
-                      searchController
-                          .text,
-                      selectedTag: selectedTag,
-                    ),
-                  );
-                },
+                      },
+                      child: PostCard(
+                        post: post,
+                        keyword:
+                        searchController
+                            .text,
+                        selectedTag: selectedTag,
+                      ),
+                    );
+                  },
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
 
         bottomNavigationBar:
         const CommonBottomNavBar(

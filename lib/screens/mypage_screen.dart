@@ -1,18 +1,56 @@
+import 'dart:convert';
+
+import 'package:ai_fishapp/api/api_client.dart';
+import 'package:ai_fishapp/screens/start_screen.dart';
+import 'package:ai_fishapp/services/token_storage.dart';
 import 'package:flutter/material.dart';
 import '../widgets/common_bottom_nav_bar.dart';
 
-class MyPageScreen extends StatelessWidget {
+class MyPageScreen extends StatefulWidget {
   const MyPageScreen({super.key});
-
+  @override
+  State<MyPageScreen> createState() => _MyPageScreenState();
+}
+class _MyPageScreenState extends State<MyPageScreen>{
   // ===============================
   // 임시 데이터
   // 나중에 UserModel(API)로 교체
   // ===============================
 
-  final String nickname = "한경이";
+  String nickname = "한경이";
 
-  final String profileImage =
+  String profileImage =
       "https://i.pravatar.cc/300";
+
+  @override
+  void initState(){
+    super.initState();
+    getUserInfo();
+  }
+
+  Future<void> getUserInfo()async{
+    final response = await ApiClient.get('/api/auth/myinfo',token: true);
+    if(response.statusCode == 200){
+      final data = jsonDecode(response.body);
+      if (!mounted) return;
+      setState(() {
+        nickname = data["user"]["nickname"];
+        profileImage = data["image"];
+      });
+    }
+  }
+
+  Future<void>logout(BuildContext context)async{
+    final response = await ApiClient.post('/api/auth/logout',null,token: true);
+    if(response.statusCode == 204){
+      await TokenStorage.deleteTokens();
+      if (!mounted) return;
+
+      Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context)=> const StartScreen()),(route)=>false);
+    }else{
+      print('로그아웃 실패');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,151 +62,148 @@ class MyPageScreen extends StatelessWidget {
       ),
 
       body: SafeArea(
-      child: Stack(
-      children: [
+        child: Stack(
+          children: [
 
-      //----------------------------------------
-      // 뒤로가기
-      //----------------------------------------
+            //----------------------------------------
+            // 뒤로가기
+            //----------------------------------------
 
-      Positioned(
-      top: 18,
-      left: 12,
-      child: IconButton(
-        onPressed: () {
-          Navigator.pop(context);
-        },
-        icon: const Icon(
-          Icons.arrow_back_ios_new,
-          color: Color(0xff8FA8D8),
-        ),
-      ),
-    ),
-
-    //----------------------------------------
-    // 내용
-    //----------------------------------------
-
-    SingleChildScrollView(
-    child: Padding(
-    padding: const EdgeInsets.only(
-    top: 70,
-    left: 28,
-    right: 28,
-    bottom: 30,
-    ),
-    child: Column(
-    children: [
-
-    //--------------------------------
-    // 프로필 사진
-    //--------------------------------
-
-    CircleAvatar(
-    radius: 50,
-    backgroundColor: const Color(0xffBCC4D4),
-    child: CircleAvatar(
-    radius: 47,
-    backgroundImage: NetworkImage(profileImage),
-    ),
-    ),
-
-    const SizedBox(height: 12),
-
-    //--------------------------------
-    // 닉네임
-    //--------------------------------
-
-    Text(
-    nickname,
-    style: const TextStyle(
-    fontSize: 26,
-    fontWeight: FontWeight.w700,
-    ),
-    ),
-
-    const SizedBox(height: 40),
-
-    //--------------------------------
-    // 프로필 변경 버튼
-    //--------------------------------
-
-    MyPageButton(
-    title: "프로필 변경",
-    onTap: () {
-    Navigator.pushNamed(
-    context,
-    "/profile-edit",
-    );
-    },
-    ),
-
-    const SizedBox(height: 18),
-
-    //--------------------------------
-    // 나의 물고기 버튼
-    //--------------------------------
-
-    MyPageButton(
-    title: "나의 물고기",
-    onTap: () {
-    Navigator.pushNamed(
-    context,
-    "/my-fish",
-    );
-    },
-    ),
-
-    const SizedBox(height: 28),
-      //--------------------------------
-      // 로그아웃 버튼
-      //--------------------------------
-
-      SizedBox(
-        width: double.infinity,
-        height: 58,
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(15),
-            gradient: const LinearGradient(
-              colors: [
-                Color(0xff2D9CFF),
-                Color(0xff3CC8F2),
-              ],
-            ),
-          ),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              borderRadius: BorderRadius.circular(15),
-              onTap: () {
-                Navigator.pushNamed(
-                  context,
-                  "/start",
-                );
-              },
-              child: const Center(
-                child: Text(
-                  "로그아웃",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                  ),
+            Positioned(
+              top: 18,
+              left: 12,
+              child: IconButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                icon: const Icon(
+                  Icons.arrow_back_ios_new,
+                  color: Color(0xff8FA8D8),
                 ),
               ),
             ),
-          ),
-        ),
-      ),
 
-      const SizedBox(height: 40),
-    ],
-    ),
-    ),
-    ),
-      ],
-      ),
+            //----------------------------------------
+            // 내용
+            //----------------------------------------
+
+            SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.only(
+                  top: 70,
+                  left: 28,
+                  right: 28,
+                  bottom: 30,
+                ),
+                child: Column(
+                  children: [
+
+                    //--------------------------------
+                    // 프로필 사진
+                    //--------------------------------
+
+                    CircleAvatar(
+                      radius: 50,
+                      backgroundColor: const Color(0xffBCC4D4),
+                      child: CircleAvatar(
+                        radius: 47,
+                        backgroundImage: NetworkImage(profileImage),
+                      ),
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    //--------------------------------
+                    // 닉네임
+                    //--------------------------------
+
+                    Text(
+                      nickname,
+                      style: const TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+
+                    const SizedBox(height: 40),
+
+                    //--------------------------------
+                    // 프로필 변경 버튼
+                    //--------------------------------
+
+                    MyPageButton(
+                      title: "프로필 변경",
+                      onTap: () {
+                        Navigator.pushNamed(
+                          context,
+                          "/profile-edit",
+                        );
+                      },
+                    ),
+
+                    const SizedBox(height: 18),
+
+                    //--------------------------------
+                    // 나의 물고기 버튼
+                    //--------------------------------
+
+                    MyPageButton(
+                      title: "나의 물고기",
+                      onTap: () {
+                        Navigator.pushNamed(
+                          context,
+                          "/my-fish",
+                        );
+                      },
+                    ),
+
+                    const SizedBox(height: 28),
+                    //--------------------------------
+                    // 로그아웃 버튼
+                    //--------------------------------
+
+                    SizedBox(
+                      width: double.infinity,
+                      height: 58,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(15),
+                          gradient: const LinearGradient(
+                            colors: [
+                              Color(0xff2D9CFF),
+                              Color(0xff3CC8F2),
+                            ],
+                          ),
+                        ),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(15),
+                            onTap: () {
+                              logout(context);
+                            },
+                            child: const Center(
+                              child: Text(
+                                "로그아웃",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 40),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -240,3 +275,6 @@ class _MyPageButtonState extends State<MyPageButton> {
     );
   }
 }
+
+
+
