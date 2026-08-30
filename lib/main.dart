@@ -52,7 +52,10 @@ class MyApp extends StatelessWidget {
         '/community': (context) => const CommunityListScreen(),
         //post-writing:글쓰기 화면
         '/post-writing': (context) => const PostWritingScreen(),
-        '/chatbot': (context) => const ChatbotScreen(),
+        '/chatbot': (context){
+          final roomId = ModalRoute.of(context)!.settings.arguments as int;
+          return ChatbotScreen(roomId:roomId);
+        },
 
         // 설정 화면에서 이동되는 화면
         '/fish-info': (context) => const FishInfoManagementScreen(),

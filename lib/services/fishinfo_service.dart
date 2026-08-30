@@ -7,7 +7,7 @@ import '../api/api_client.dart';
 class FishService {
   static Future<List<Fish>> getFishList() async {
     final response =
-    await ApiClient.get("/api/fishinfo/data");
+    await ApiClient.get("/api/fishinfo",token: true);
 
     final data = jsonDecode(response.body);
 
@@ -19,55 +19,17 @@ class FishService {
         .toList();
   }
 
+  static Future<void> postFishList({
+    required List<Map<String,dynamic>> fishes
+  }) async{
+    try{
+      final body = {'fishes':fishes};
+      final response = await ApiClient.post('/api/fishinfo',jsonEncode(body),token: true);
+      print("성공");
+    }catch(error){
+      print(error);
+      print("실패");
+    }
 
-  //새 물고기 등록
-  static Future<void> addFish({
-    required String fishType,
-    required int fishCount,
-  }) async {
-    await http.post(
-      Uri.parse(
-        "${ApiClient.baseUrl}/api/fishinfo/new",
-      ),
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: jsonEncode({
-        "newFish": {
-          "fish_type": fishType,
-          "fish_count": fishCount,
-        }
-      }),
-    );
-  }
-
-  //물고기 정보 수정 예: /api/fish/3 : 3번 물고기 수정
-  static Future<void> updateFish({
-    required int fishId,
-    required String fishType,
-    required int fishCount,
-  }) async {
-    await http.post(
-      Uri.parse(
-        "${ApiClient.baseUrl}/api/fishinfo/$fishId",
-      ),
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: jsonEncode({
-        "fish_type": fishType,
-        "fish_count": fishCount,
-      }),
-    );
-  }
-
-  //물고기 삭제
-  static Future<void> deleteFish(
-      int fishId) async {
-    await http.delete(
-      Uri.parse(
-        "${ApiClient.baseUrl}/api/fishinfo/$fishId",
-      ),
-    );
   }
 }

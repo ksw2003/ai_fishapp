@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+import 'package:ai_fishapp/api/api_client.dart';
 import 'package:flutter/material.dart';
 
 class MakeProfileScreen extends StatefulWidget {
@@ -25,8 +28,10 @@ class _MakeProfileScreenState
     super.dispose();
   }
 
-  void makeProfile() {
-    // TODO : 회원가입 API
+  void makeProfile(BuildContext context) async{
+    final data = await ApiClient.post('/api/auth/profile',jsonEncode({'nickname':nicknameController.text}),token: true);
+    print(data);
+    Navigator.pushNamed(context, "/home");
   }
 
   void checkNickname() {
@@ -227,7 +232,7 @@ class _MakeProfileScreenState
 
                   onPressed: canUseNickname
                       ? () {
-                    Navigator.pushNamed(context, "/home");
+                    makeProfile(context);
                   }
                       : null,
 

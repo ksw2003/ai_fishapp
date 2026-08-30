@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+import 'package:ai_fishapp/api/api_client.dart';
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 
@@ -73,6 +76,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
     ];
 
     return monthNames[month];
+  }
+
+  Future<void> getDailyData(DateTime selected)async{
+    final response = await ApiClient.get('/api/daily/$selected',token: true);
+    print(response.body);
   }
 
   @override
@@ -171,6 +179,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     selectedDay = selected;
                     focusedDay = focused;
                   });
+                  getDailyData(selected);
                 },
                 onPageChanged: (focused) {
                   setState(() {

@@ -1,8 +1,13 @@
+import 'dart:convert';
+
+import 'package:ai_fishapp/api/api_client.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart';
 import '../../widgets/common_bottom_nav_bar.dart';
 
 class ChatbotScreen extends StatefulWidget {
-  const ChatbotScreen({super.key});
+  final int roomId;
+  const ChatbotScreen({super.key,required this.roomId});
 
   @override
   State<ChatbotScreen> createState() => _ChatbotScreenState();
@@ -24,10 +29,32 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    getMessage();
+
+  }
+
+  @override
   void dispose() {
     messageController.dispose();
     scrollController.dispose();
     super.dispose();
+  }
+
+  Future<void> getMessage()async{
+    final response = await ApiClient.get('/api/chatbot/rooms/${widget.roomId}',token: true);
+    final datas = jsonDecode(response.body);
+    final List<Map<String,dynamic>> getDatas = (datas as List).map<Map<String,dynamic>>((data){
+      return{
+        'text':data['message'],
+        'isUser':data['role'] == 'user' 
+      };
+    }).toList();
+    setState(() {
+      messages.clear();
+      messages.addAll(getDatas);
+    });
   }
 
   void scrollToBottom() {
@@ -42,9 +69,21 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     });
   }
 
-  void sendMessage() {
-    final String text = messageController.text.trim();
+  Future<void> generateMessage(String text)async{
+    final body = jsonEncode({'message':text});
+    final response = await ApiClient.post('/api/chatbot/rooms/${widget.roomId}/message',body,token: true);
+    final data = jsonDecode(response.body);
+    print(data);
+    setState(() {
+      messages.add({
+        'text':data['response'],
+        'isUser':false
+      });
+    });
+  }
 
+  Future<void> sendMessage() async{
+    final String text = messageController.text.trim();
     if (text.isEmpty) {
       return;
     }
@@ -54,15 +93,11 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
         'text': text,
         'isUser': true,
       });
-
-      messages.add({
-        'text': '입력하신 내용을 바탕으로 답변을 준비할게요.',
-        'isUser': false,
-      });
     });
 
     messageController.clear();
     scrollToBottom();
+    await generateMessage(text);
   }
 
   @override

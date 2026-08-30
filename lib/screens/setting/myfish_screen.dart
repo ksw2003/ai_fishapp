@@ -117,47 +117,26 @@ class _MyFishScreenState extends State<MyFishScreen> {
                   const Spacer(),
 
                   GestureDetector(
-  onTap: () async {
+                    onTap: () async {
 
-  if (isEdit) {
+                      if (isEdit) {
+                         final fishlist = fishes.map((fish){
+                          return{
+                            'fish_id':fish.fishId,
+                            'fish_type':fish.speciesController.text.trim(),
+                            'fish_count':int.tryParse(fish.countController.text) ?? 0,
+                          };
+                         }).where((fish)=>fish['fish_type']!='').toList();
 
-  for (final fish in fishes) {
+                          await FishService.postFishList(fishes: fishlist);
 
-  final fishType =
-  fish.speciesController.text.trim();
+                          await loadFish();
+                    }
 
-  final fishCount =
-  int.tryParse(
-  fish.countController.text,
-  ) ??
-  0;
-
-  if (fishType.isEmpty) continue;
-
-  if (fish.isNew) {
-
-  await FishService.addFish(
-  fishType: fishType,
-  fishCount: fishCount,
-  );
-
-  } else {
-
-  await FishService.updateFish(
-  fishId: fish.fishId!,
-  fishType: fishType,
-  fishCount: fishCount,
-  );
-  }
-  }
-
-  await loadFish();
-  }
-
-  setState(() {
-  isEdit = !isEdit;
-  });
-  },
+                    setState(() {
+                        isEdit = !isEdit;
+                    });
+                    },
                     child: Text(
                       isEdit ? "저장" : "수정",
                       style: const TextStyle(
@@ -196,31 +175,22 @@ class _MyFishScreenState extends State<MyFishScreen> {
                   ...List.generate(
                     fishes.length,
                         (index) => Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: FishRowWidget(
-                        data: fishes[index],
-                        isEdit: isEdit,
-  onDelete: () async {
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: FishRowWidget(
+                          data: fishes[index],
+                          isEdit: isEdit,
+                          onDelete: () async {
+                            final fish = fishes[index];
+                            setState(() {
 
-  final fish = fishes[index];
+                            fish.speciesController.dispose();
+                            fish.countController.dispose();
 
-  if (fish.fishId != null) {
+                            fishes.removeAt(index);
 
-  await FishService.deleteFish(
-  fish.fishId!,
-  );
-  }
+                          });
 
-  setState(() {
-
-  fish.speciesController.dispose();
-  fish.countController.dispose();
-
-  fishes.removeAt(index);
-
-  });
-
-  },
+                        },
                       ),
                     ),
                   ),
@@ -236,6 +206,7 @@ class _MyFishScreenState extends State<MyFishScreen> {
 
                           fishes.add(
                             FishRowData(
+                              fishId: null,
                               species: "",
                               count: 0,
                               isNew: true,

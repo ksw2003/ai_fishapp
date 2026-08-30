@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+import 'package:ai_fishapp/api/api_client.dart';
 import 'package:flutter/material.dart';
 import '../../models/post.dart';
 import '../../services/community_service.dart';
@@ -125,8 +128,14 @@ class _CommunityListScreenState extends State<CommunityListScreen> {
               elevation: 4,
               backgroundColor: Colors.transparent,
               onPressed: () async{
-                Navigator.pushNamed(
-                    context, '/chatbot');
+                final response = await ApiClient.post('/api/chatbot', null,token:true);
+                final data = jsonDecode(response.body);
+                final int roomId = data['chatid'];
+                if(response.statusCode != 200){
+                  print("생성 실패");
+                }else{
+                  Navigator.pushNamed(context, '/chatbot',arguments: roomId);
+                }
               },
 
               child: Container(

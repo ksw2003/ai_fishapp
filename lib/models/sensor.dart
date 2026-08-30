@@ -16,6 +16,7 @@ class SensorData {
   });
 
   factory SensorData.fromJson(Map<String, dynamic> json) {
+
     
     return SensorData(
       temperature: (json['temperature'] as num).toDouble(),
