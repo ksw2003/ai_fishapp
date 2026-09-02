@@ -1,8 +1,59 @@
+import 'dart:convert';
 import 'dart:math';
+
+import 'package:ai_fishapp/api/motor_api.dart';
 import 'package:flutter/material.dart';
 
-class WaterChangeLoadingScreen extends StatelessWidget {
+class WaterChangeLoadingScreen extends StatefulWidget {
   const WaterChangeLoadingScreen({super.key});
+
+  @override
+  State<WaterChangeLoadingScreen> createState() =>
+      _WaterChangeLoadingScreenState();
+}
+
+class _WaterChangeLoadingScreenState
+    extends State<WaterChangeLoadingScreen> {
+  bool _isCompleted = false;
+  bool _isError = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _startWaterChange();
+  }
+
+  Future<void> _startWaterChange() async {
+    try {
+      final response = await MotorApi.waterChange();
+
+      if (!mounted) return;
+
+      if (response.statusCode == 200) {
+        setState(() {
+          _isCompleted = true;
+        });
+
+        Future.delayed(const Duration(seconds: 5), () {
+          if (!mounted) return;
+
+          Navigator.pop(context, true);
+        });
+      } else {
+        setState(() {
+          _isError = true;
+        });
+      }
+    } catch (e) {
+      print('환수 오류 : $e');
+
+      if (!mounted) return;
+
+      setState(() {
+        _isError = true;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -20,14 +71,54 @@ class WaterChangeLoadingScreen extends StatelessWidget {
                   size: 18,
                   color: Color(0xFF8FA8D8),
                 ),
-                onPressed: () {
+                onPressed: _isCompleted || _isError
+                    ? () {
                   Navigator.pop(context);
-                },
+                }
+                    : null,
               ),
             ),
 
-            const Center(
-              child: Column(
+            Center(
+              child: _isError
+                  ? const Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.error_outline,
+                    size: 70,
+                    color: Colors.redAccent,
+                  ),
+                  SizedBox(height: 20),
+                  Text(
+                    '환수에 실패했습니다.',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              )
+                  : _isCompleted
+                  ? const Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.check_circle_outline,
+                    size: 70,
+                    color: Colors.green,
+                  ),
+                  SizedBox(height: 20),
+                  Text(
+                    '환수가 완료되었습니다.',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              )
+                  : const Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   WaterChangeRotatingLoadingIcon(),
@@ -123,6 +214,7 @@ class WaterChangeLoadingArcPainter extends CustomPainter {
     );
 
     final double dotAngle = pi * 0.25;
+
     final Offset dotOffset = Offset(
       center.dx + cos(dotAngle) * radius,
       center.dy + sin(dotAngle) * radius,

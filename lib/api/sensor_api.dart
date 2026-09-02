@@ -1,14 +1,12 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../models/sensor.dart';
-import 'api_client.dart';
 
 class SensorApi {
   Stream<Map<String, dynamic>> connect() async* {
     final request = http.Request(
       'GET',
       Uri.parse(
-        'http://172.20.10.3:3000/api/tank/data',
+        'http://192.168.45.165:3000/api/tank/data',
       ),
     );
 

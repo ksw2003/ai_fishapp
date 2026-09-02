@@ -20,12 +20,15 @@ class _WaterTempDetailScreenState extends State<WaterTempDetailScreen> {
   @override
   void initState() {
     super.initState();
+
     SensorApi().connect().listen((data) {
       if (!mounted) return;
 
-      setState(() {
-        sensor = SensorData.fromJson(data);
-      });
+      if (data["type"] == "sensor") {
+        setState(() {
+          sensor = SensorData.fromJson(data["data"]);
+        });
+      }
     });
   }
 
@@ -46,8 +49,6 @@ class _WaterTempDetailScreenState extends State<WaterTempDetailScreen> {
     }
 
     final double currentTemp = sensor!.temperature;
-
-    // 아직 API가 없으므로 임시
     final double maxTemp = sensor!.maxTemp;
     final double minTemp = sensor!.minTemp;
 

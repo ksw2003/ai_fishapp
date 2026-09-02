@@ -3,13 +3,13 @@ import 'dart:convert';
 import 'package:ai_fishapp/api/api_client.dart';
 import 'package:flutter/material.dart';
 import '../widgets/common_bottom_nav_bar.dart';
+import '../widgets/yes_or_no.dart';
 import '../api/sensor_api.dart';
 import '../models/sensor.dart';
 import 'dart:async';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
-
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
@@ -17,7 +17,9 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
 
   final SensorApi _sensorApi = SensorApi();
-
+  String fishCondition = '매우 좋음';
+  bool waterChangeDone = false;
+  bool feedingDone = false;
   SensorData? sensor;
   Timer? _timer;
 
@@ -64,15 +66,6 @@ class _HomeScreenState extends State<HomeScreen> {
     // ===============================
 
     // 로그인한 사용자 이름
-
-    // AI 분석 결과 또는 백엔드에서 받아올 오늘의 물고기 상태
-    const String fishCondition = '매우 좋음';
-
-    // 백엔드에서 받아올 오늘 환수 완료 여부
-    const bool waterChangeDone = false;
-
-    // 백엔드에서 받아올 오늘 먹이 급여 완료 여부
-    const bool feedingDone = true;
 
     final DateTime now = DateTime.now();
     final String todayText =
@@ -243,24 +236,53 @@ class _HomeScreenState extends State<HomeScreen> {
                           child: HomeActionCard(
                             title: '환수하기',
                             isDone: waterChangeDone,
-                            onTap: () {
-                              Navigator.pushNamed(
-                                context,
-                                '/water-change-loading',
+                            onTap: () async {
+                              final result = await showDialog<bool>(
+                                context: context,
+                                barrierDismissible: true,
+                                builder: (_) => const YesOrNoDialog(
+                                  message: '정말 환수하시겠습니까?',
+                                ),
                               );
-                            },
+
+                              if (result == true && context.mounted) {
+                                final completed = await Navigator.pushNamed(
+                                  context,
+                                  '/water-change-loading',
+                                );
+                                if (result == true) {
+                                  setState(() {
+                                    waterChangeDone = true;
+                                    });
+                                  }
+                                }
+                              },
+                            ),
                           ),
-                        ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: HomeActionCard(
                             title: '먹이주기',
                             isDone: feedingDone,
-                            onTap: () {
-                              Navigator.pushNamed(
-                                context,
-                                '/feeding-loading',
+                            onTap: () async {
+                              final result = await showDialog<bool>(
+                                context: context,
+                                barrierDismissible: true,
+                                builder: (_) => const YesOrNoDialog(
+                                  message: '정말 급여하시겠습니까?',
+                                ),
                               );
+                              if (result == true && context.mounted) {
+                                final completed = await Navigator.pushNamed(
+                                  context,
+                                  '/feeding-loading',
+                                );
+                                if (result == true) {
+                                  setState(() {
+                                    feedingDone = true;
+                                  });
+                                }
+                              }
                             },
                           ),
                         ),

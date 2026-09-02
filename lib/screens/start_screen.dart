@@ -93,12 +93,15 @@ class _StartScreenState extends State<StartScreen> {
         jsonEncode({'accesstoken':accesstoken,'provider':provider})
     );
     print(response.body);
+    print('statusCode: ${response.statusCode}');
+    print('body: ${response.body}');
     if(response.statusCode == 200){
       final data = jsonDecode(response.body);
       TokenStorage.saveTokens(data['accesstoken'],data['refreshtoken']);
       return (true,data['exNickname']);
     }else{
       print('로그인 실패');
+      print(response.body);
       return (false,false);
     }
 
