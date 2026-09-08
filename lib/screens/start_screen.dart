@@ -30,7 +30,9 @@ class _StartScreenState extends State<StartScreen> {
 
   Future<void> kakaoLogin(BuildContext context)async{
     try{
+      print(1);
       final data = await UserApi.instance.loginWithKakaoAccount();
+      print(2);
       final (success,hasUsernickname) = await getToken(data.accessToken,'kakao');
       if(success){
         if(hasUsernickname){

@@ -27,32 +27,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
   // 날짜별 어항 기록 데이터
   // 이 데이터가 있는 날짜는 달력에 파란 점으로 표시됨
   // 나중에 백엔드에서 날짜별 평균 수온, 수질, 환수 여부, 먹이 여부를 받아와서 연결
-  final Map<String, Map<String, dynamic>> dailyRecords = {
-    '2026-06-09': {
-      'avgTemp': 25.3,
-      'waterQuality': '정상',
-      'waterChangeDone': false,
-      'feedingDone': true,
-    },
-    '2026-06-14': {
-      'avgTemp': 24.8,
-      'waterQuality': '정상',
-      'waterChangeDone': true,
-      'feedingDone': true,
-    },
-    '2026-06-20': {
-      'avgTemp': 26.1,
-      'waterQuality': '주의',
-      'waterChangeDone': false,
-      'feedingDone': true,
-    },
-    '2026-06-26': {
-      'avgTemp': 25.0,
-      'waterQuality': '정상',
-      'waterChangeDone': false,
-      'feedingDone': false,
-    },
-  };
+  Map<String, dynamic>? dailyRecords;
 
   String dateKey(DateTime date) {
     return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
@@ -80,22 +55,55 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   Future<void> getDailyData(DateTime selected)async{
     final response = await ApiClient.get('/api/daily/$selected',token: true);
-    print(response.body);
+    if(response.statusCode == 200){
+      final data = jsonDecode(response.body);
+      setState(() {
+        if (data['exist'] != true) {
+          dailyRecords = {
+            'exist': false,
+            'avgTemp': '-',
+            'maxTemp': '-',
+            'minTemp': '-',
+            'waterQuality': '기록 없음',
+            'waterChangeDone': false,
+            'feedingDone': false,
+          };
+          return;
+      }
+      final waterQuality = data['daily']['water_quality'];
+        dailyRecords = {
+          'exist': true,
+          'avgTemp':(data['daily']['avg_temperature'] as num?)?.toDouble() ?? 0.0,
+          'maxTemp':(data['daily']['max_temperature'] as num?)?.toDouble() ?? 0.0,
+          'minTemp':(data['daily']['min_temperature'] as num?)?.toDouble() ?? 0.0,
+          'waterQuality': waterQuality > 600
+            ? '위험'
+            : waterQuality > 300
+                ? '주의'
+                : '정상',
+          'waterChangeDone':(data?['waterChange']?.length ?? 0) > 0,
+          'feedingDone':(data?['Feeding']?.length ?? 0) > 0
+        };
+      });
+      print(dailyRecords);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final String selectedKey = dateKey(selectedDay);
-
+    print(dailyRecords);
     // 선택한 날짜의 데이터
     // 기록 없는 날짜는 기본값 표시
-    final Map<String, dynamic> selectedData = dailyRecords[selectedKey] ??
-        {
-          'avgTemp': '-',
-          'waterQuality': '기록 없음',
-          'waterChangeDone': false,
-          'feedingDone': false,
-        };
+    final Map<String, dynamic> selectedData = dailyRecords ?? {
+      'exist': false,
+      'avgTemp': '-',
+      'maxTemp': '-',
+      'minTemp': '-',
+      'waterQuality': '기록 없음',
+      'waterChangeDone': false,
+      'feedingDone': false,
+    };
 
     return Scaffold(
       backgroundColor: Colors.white,

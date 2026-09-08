@@ -10,9 +10,11 @@ class FishService {
     await ApiClient.get("/api/fishinfo",token: true);
 
     final data = jsonDecode(response.body);
+    print(data);
 
     final List fishList =
         data["fishInfo"] ?? [];
+
 
     return fishList
         .map((e) => Fish.fromJson(e))

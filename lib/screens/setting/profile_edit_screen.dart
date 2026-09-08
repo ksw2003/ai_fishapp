@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+import 'package:ai_fishapp/api/api_client.dart';
 import 'package:flutter/material.dart';
 
 class ProfileEditScreen extends StatefulWidget {
@@ -19,6 +22,13 @@ class _ProfileEditScreenState
   TextEditingController(
     text: "한경이",
   );
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    getUserInfo();
+  }
 
   bool canUseNickname = true;
 
@@ -45,6 +55,24 @@ class _ProfileEditScreenState
 
     });
 
+  }
+
+  void makeProfile(BuildContext context) async{
+    final data = await ApiClient.post('/api/auth/profile',jsonEncode({'nickname':nicknameController.text}),token: true);
+    print(data);
+    Navigator.pushNamed(context, "/home");
+  }
+
+  Future<void> getUserInfo()async{
+    final response = await ApiClient.get('/api/auth/myinfo',token: true);
+    if(response.statusCode == 200){
+      final data = jsonDecode(response.body);
+      if (!mounted) return;
+      setState(() {
+        nicknameController.text = data["user"]["nickname"];
+        profileImage = data["image"];
+      });
+    }
   }
 
   @override
@@ -282,8 +310,7 @@ class _ProfileEditScreenState
         child: ElevatedButton(
           onPressed: canUseNickname
               ? () {
-            // TODO : 저장 API
-            Navigator.pop(context);
+            makeProfile(context);
           }
               : null,
           style: ElevatedButton.styleFrom(

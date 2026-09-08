@@ -28,15 +28,22 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     getUserName();
     _sensorApi.connect().listen((data) {
+      print(data);
       if (!mounted) return;
       if(data["type"]=='sensor'){
         setState(() {
           sensor = SensorData.fromJson(data["data"]);
         });
-      }else if(data["type"] == 'warning'){
-        print(data["data"]);
+      }else if(data["type"] == 'temp'){
+        print("들어감");
+        if(data['data'] == 'high'){
+          showAlert("온도가 너무 높습니다.");
+        }else if(data['data'] == 'low'){
+          showAlert("온도가 너무 낮습니다.");
+        }
+      }else if(data['type'] == 'waterquality'){
+        showAlert("수질이 좋지 않습니다.");
       }
-
     });
   }
   @override
@@ -44,6 +51,17 @@ class _HomeScreenState extends State<HomeScreen> {
     _timer?.cancel();
     super.dispose();
   }
+
+  void showAlert(String message) {
+  if (!mounted) return;
+
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(message),
+      duration: const Duration(seconds: 3),
+    ),
+  );
+}
 
   Future<void> getUserName()async{
     final response = await ApiClient.get('/api/auth/myinfo',token: true);

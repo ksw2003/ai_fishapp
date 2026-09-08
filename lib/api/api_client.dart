@@ -101,5 +101,79 @@ class ApiClient {
     return response;
   }
 
+  static Future<http.Response> delete(int postId,String endpoint,{token = false,retry = false}) async{
+    final accesstoken = await TokenStorage.getAccessToken();
+    final response = await http.delete(
+      Uri.parse(
+        "$baseUrl$endpoint$postId",
+      ),
+      headers: {"authorization":"Bearer $accesstoken"} 
+    );
+    if(token && !retry && response.statusCode == 401){
+      final data = jsonDecode(response.body);
+        if(data["code"] == "ACCESS_TOKEN_EXPIRED"){
+          final success = await _refreshtoken();
+          if(success){
+            return delete(postId,endpoint,token:true,retry: true);
+          }
+      }
+    }
+    return response;
+  }
+
+  static Future<http.Response> postMultipart(
+  String endpoint, {
+  Map<String, String>? fields,
+  List<http.MultipartFile>? files,
+  bool token = false,
+  bool retry = false,
+}) async {
+  final request = http.MultipartRequest(
+    'POST',
+    Uri.parse('$baseUrl$endpoint'),
+  );
+
+  if (token) {
+    final accessToken = await TokenStorage.getAccessToken();
+
+    if (accessToken != null) {
+      request.headers['authorization'] = 'Bearer $accessToken';
+    }
+  }
+
+  if (fields != null) {
+    request.fields.addAll(fields);
+  }
+
+  if (files != null) {
+    request.files.addAll(files);
+  }
+
+  final streamedResponse = await request.send();
+
+  // StreamedResponse → Response 변환
+  final response = await http.Response.fromStream(streamedResponse);
+
+  if (token && !retry && response.statusCode == 401) {
+    final data = jsonDecode(response.body);
+
+    if (data['code'] == 'ACCESS_TOKEN_EXPIRED') {
+      final success = await _refreshtoken();
+
+      if (success) {
+        return postMultipart(
+          endpoint,
+          fields: fields,
+          files: files,
+          token: true,
+          retry: true,
+        );
+      }
+    }
+  }
+
+  return response;
+}
+
 
 }

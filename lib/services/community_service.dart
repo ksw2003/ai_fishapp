@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:ai_fishapp/services/token_storage.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
@@ -10,8 +11,8 @@ class CommunityService {
 
   /// 게시글 목록
   static Future<List<Post>> getPosts() async {
-    final response = await http.get(
-      Uri.parse("${ApiClient.baseUrl}/api/community/list"),
+    final response = await ApiClient.get(
+      "/api/community/list",token: true
     );
     if (response.statusCode != 200) {
       throw Exception("게시글 목록 조회 실패");
@@ -48,29 +49,26 @@ class CommunityService {
     required String fishType,
     required List<XFile> images,
   }) async {
-    final request = http.MultipartRequest(
-      "POST",
-      Uri.parse(
-        "${ApiClient.baseUrl}/api/community/posts",
-      ),
+    final files = <http.MultipartFile>[];
+
+      for (final image in images) {
+        files.add(
+          await http.MultipartFile.fromPath(
+            'images',
+            image.path,
+          ),
+        );
+      }
+    final response = await ApiClient.postMultipart(
+      "/api/community/posts",fields: {
+        'title':title,
+        'content':content,
+        'fish_type':fishType
+      },files: files,
+      token: true
     );
 
-    request.fields["title"] = title;
-    request.fields["content"] = content;
-    request.fields["fish_type"] = fishType;
 
-    for (final image in images) {
-      request.files.add(
-        await http.MultipartFile.fromPath(
-          "images",
-          image.path,
-        ),
-      );
-    }
-
-    final streamedResponse = await request.send();
-    final response =
-    await http.Response.fromStream(streamedResponse);
 
     if (response.statusCode != 200 &&
         response.statusCode != 201) {
@@ -85,18 +83,13 @@ class CommunityService {
     required String content,
     int? parentId,
   }) async {
-    final response = await http.post(
-      Uri.parse(
-        "${ApiClient.baseUrl}/api/community/comment",
-      ),
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: jsonEncode({
+    final response = await ApiClient.post(
+      "/api/community/comment",
+      jsonEncode({
         "post_id": postId,
         "content": content,
         "commentId": parentId,
-      }),
+      }),token: true
     );
 
     if (response.statusCode != 200) {
@@ -105,12 +98,8 @@ class CommunityService {
   }
 
   /// 게시글 삭제
-  static Future<void> deletePost(int postId) async {
-    final response = await http.delete(
-      Uri.parse(
-        "${ApiClient.baseUrl}/api/community/posts/$postId",
-      ),
-    );
+  static Future<void> deletePost(int postId,{bool retry = false}) async {
+    final response = await ApiClient.delete(postId, '/api/community/posts/');
 
     if (response.statusCode != 204 &&
         response.statusCode != 200) {
@@ -126,34 +115,25 @@ class CommunityService {
     required List<XFile> images,
     required List<int> deletedImageIds,
   }) async {
+    final files = <http.MultipartFile>[];
 
-    final request = http.MultipartRequest(
-      "POST",
-      Uri.parse(
-        "${ApiClient.baseUrl}/api/community/update/$postId",
-      ),
+      for (final image in images) {
+        files.add(
+          await http.MultipartFile.fromPath(
+            'images',
+            image.path,
+          ),
+        );
+      }
+    final response = await ApiClient.postMultipart(
+      "/api/community/posts",fields: {
+        'title':title,
+        'content':content,
+        'fish_type':fishType,
+        'deleteImageId':jsonEncode(deletedImageIds)
+      },files: files,
+      token: true
     );
-
-    request.fields["title"] = title;
-    request.fields["content"] = content;
-    request.fields["fish_type"] = fishType;
-    request.fields["deleteImageId"] =
-        jsonEncode(deletedImageIds);
-
-    for (final image in images) {
-      request.files.add(
-        await http.MultipartFile.fromPath(
-          "images",
-          image.path,
-          contentType: MediaType("image", "png"),
-        ),
-      );
-    }
-
-    final streamedResponse = await request.send();
-    final response =
-    await http.Response.fromStream(streamedResponse);
-
     if (response.statusCode != 200 &&
         response.statusCode != 204) {
       throw Exception(
@@ -166,10 +146,8 @@ class CommunityService {
       int commentId,
       ) async {
 
-    final response = await http.post(
-      Uri.parse(
-        "${ApiClient.baseUrl}/api/community/deletecomment/$commentId",
-      ),
+    final response = await ApiClient.post(
+      "/api/community/deletecomment/$commentId",null,token: true
     );
 
     if (response.statusCode != 200) {
@@ -183,16 +161,13 @@ class CommunityService {
     required String content,
   }) async {
 
-    final response = await http.post(
-      Uri.parse(
-        "${ApiClient.baseUrl}/api/community/comment/$commentId",
-      ),
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: jsonEncode({
+    final response = await ApiClient.post(
+      "/api/community/comment/$commentId",
+      
+      jsonEncode({
         "update": content,
       }),
+      token: true
     );
 
     if (response.statusCode != 204) {
@@ -204,10 +179,10 @@ class CommunityService {
       int commentId,
       ) async {
 
-    final response = await http.post(
-      Uri.parse(
-        "${ApiClient.baseUrl}/api/community/commentLike/$commentId",
-      ),
+    final response = await ApiClient.post(
+      
+      "/api/community/commentLike/$commentId",null,token: true
+      
     );
     if (response.statusCode != 200) {
       throw Exception("추천 실패");
