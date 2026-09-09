@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 class ApiClient {
   // 백엔드 주소
   //서원 핫스팟: 172.20.10.3, 집: 192.168.56.1
-  static const String baseUrl = "http://192.168.45.165:3000";
+  static const String baseUrl = "http://192.168.45.23:3000";
 
   static Future<bool> _refreshtoken() async{
     final exrefreshtoken = await TokenStorage.getRefreshToken();

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
-
 import '../widgets/common_bottom_nav_bar.dart';
+import '../api/dairy_api.dart';
 
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});
@@ -11,45 +11,48 @@ class CalendarScreen extends StatefulWidget {
 }
 
 class _CalendarScreenState extends State<CalendarScreen> {
-  // ===============================
-  // 화면 구현용 임시 데이터
-  // 나중에 백엔드/API 응답값으로 교체할 부분
-  // ===============================
-  // 현재 보고 있는 달
+  String _getWaterQualityText(int tds) {
+    if (tds <= 300) {
+      return '좋음';
+    } else if (tds <= 600) {
+      return '보통';
+    } else {
+      return '나쁨';
+    }
+  }
   DateTime focusedDay = DateTime.now();
 
   // 사용자가 선택한 날짜
   DateTime selectedDay = DateTime.now();
+  Map<String, dynamic>? selectedData;
+  bool isLoading = false;
 
-  // 날짜별 어항 기록 데이터
-  // 이 데이터가 있는 날짜는 달력에 파란 점으로 표시됨
-  // 나중에 백엔드에서 날짜별 평균 수온, 수질, 환수 여부, 먹이 여부를 받아와서 연결
-  final Map<String, Map<String, dynamic>> dailyRecords = {
-    '2026-06-09': {
-      'avgTemp': 25.3,
-      'waterQuality': '정상',
-      'waterChangeDone': false,
-      'feedingDone': true,
-    },
-    '2026-06-14': {
-      'avgTemp': 24.8,
-      'waterQuality': '정상',
-      'waterChangeDone': true,
-      'feedingDone': true,
-    },
-    '2026-06-20': {
-      'avgTemp': 26.1,
-      'waterQuality': '주의',
-      'waterChangeDone': false,
-      'feedingDone': true,
-    },
-    '2026-06-26': {
-      'avgTemp': 25.0,
-      'waterQuality': '정상',
-      'waterChangeDone': false,
-      'feedingDone': false,
-    },
-  };
+  Future<void> loadDiary() async {
+    try {
+      setState(() {
+        isLoading = true;
+      });
+      final response = await DiaryApi.getDiary(selectedDay);
+
+      if (response != null && response['exist'] == true) {
+        setState(() {
+          selectedData = response;
+        });
+      } else {
+        setState(() {
+          selectedData = null;
+        });
+      }
+    } catch (e) {
+      print('일지 조회 실패 : $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
+    }
+  }
 
   String dateKey(DateTime date) {
     return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
@@ -76,18 +79,15 @@ class _CalendarScreenState extends State<CalendarScreen> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    loadDiary();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final String selectedKey = dateKey(selectedDay);
-
-    // 선택한 날짜의 데이터
-    // 기록 없는 날짜는 기본값 표시
-    final Map<String, dynamic> selectedData = dailyRecords[selectedKey] ??
-        {
-          'avgTemp': '-',
-          'waterQuality': '기록 없음',
-          'waterChangeDone': false,
-          'feedingDone': false,
-        };
+    final data = selectedData;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -166,11 +166,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 daysOfWeekHeight: 50,
                 rowHeight: 50,
                 sixWeekMonthsEnforced: false,
-                onDaySelected: (selected, focused) {
+                onDaySelected: (selected, focused) async {
                   setState(() {
                     selectedDay = selected;
                     focusedDay = focused;
                   });
+                  await loadDiary();
                 },
                 onPageChanged: (focused) {
                   setState(() {
@@ -253,9 +254,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   Expanded(
                     child: CalendarInfoCard(
                       title: '평균 수온',
-                      value: selectedData['avgTemp'] == '-'
+                      value: data == null
                           ? '-'
-                          : '${selectedData['avgTemp']}˚C',
+                          : '${data?['daily']?['temp_avg']}˚C',
                       valueColor: const Color(0xFF9CB8E8),
                       onTap: () {
                         Navigator.pushNamed(
@@ -263,11 +264,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
                           '/daily-temp-detail',
                           arguments: {
                             'selectedDate': selectedDay,
-                            'averageTemp': selectedData['avgTemp'] == '-'
-                                ? 0.0
-                                : selectedData['avgTemp'],
-                            'maxTemp': selectedData['maxTemp'] ?? 25.0,
-                            'minTemp': selectedData['minTemp'] ?? 23.0,
+                            'averageTemp': data?['daily']['temp_avg'] ?? 0.0,
+                            'maxTemp': data?['daily']['temp_max'] ?? 0.0,
+                            'minTemp': data?['daily']['temp_min'] ?? 0.0,
                           },
                         );
                       },
@@ -277,7 +276,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   Expanded(
                     child: CalendarInfoCard(
                       title: '수질',
-                      value: selectedData['waterQuality'],
+                      value: data == null
+                          ? '기록 없음'
+                          : _getWaterQualityText(
+                        data?['daily']?['water_quality'] ?? 0,
+                      ),
                       valueColor: const Color(0xFF00BDF2),
                       onTap: () {
                         print('수질 카드 클릭');
@@ -294,7 +297,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   Expanded(
                     child: CalendarActionCard(
                       title: '환수하기',
-                      isDone: selectedData['waterChangeDone'],
+                      isDone: (data?['waterChange'] as List?)?.isNotEmpty ?? false,
                       onTap: () {
                         Navigator.pushNamed(
                           context,
@@ -307,7 +310,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   Expanded(
                     child: CalendarActionCard(
                       title: '먹이주기',
-                      isDone: selectedData['feedingDone'],
+                      isDone: (data?['Feeding'] as List?)?.isNotEmpty ?? false,
                       onTap: () {
                         Navigator.pushNamed(
                           context,
@@ -359,6 +362,8 @@ class _CalendarInfoCardState extends State<CalendarInfoCard> {
       isPressed = value;
     });
   }
+
+
 
   @override
   Widget build(BuildContext context) {

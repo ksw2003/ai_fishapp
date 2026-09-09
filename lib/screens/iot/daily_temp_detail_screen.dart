@@ -11,9 +11,12 @@ class DailyTempDetailScreen extends StatelessWidget {
         ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
 
     final DateTime selectedDate = args?['selectedDate'] ?? DateTime.now();
-    final double averageTemp = args?['averageTemp'] ?? 24.0;
-    final double maxTemp = args?['maxTemp'] ?? 25.0;
-    final double minTemp = args?['minTemp'] ?? 23.0;
+    final double averageTemp =
+        (args?['averageTemp'] as num?)?.toDouble() ?? 24.0;
+    final double maxTemp =
+        (args?['maxTemp'] as num?)?.toDouble() ?? 25.0;
+    final double minTemp =
+        (args?['minTemp'] as num?)?.toDouble() ?? 23.0;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -79,7 +82,7 @@ class DailyTempDetailScreen extends StatelessWidget {
                                     ),
                                   ),
                                   Text(
-                                    '${averageTemp.toStringAsFixed(0)}˚C',
+                                    '${averageTemp.toStringAsFixed(1)}˚C',
                                     style: const TextStyle(
                                       fontSize: 24,
                                       fontWeight: FontWeight.w900,
@@ -98,7 +101,7 @@ class DailyTempDetailScreen extends StatelessWidget {
                                     ),
                                   ),
                                   Text(
-                                    '${maxTemp.toStringAsFixed(0)}˚C',
+                                    '${maxTemp.toStringAsFixed(1)}˚C',
                                     style: const TextStyle(
                                       fontSize: 15,
                                       fontWeight: FontWeight.w900,
@@ -117,7 +120,7 @@ class DailyTempDetailScreen extends StatelessWidget {
                                     ),
                                   ),
                                   Text(
-                                    '${minTemp.toStringAsFixed(0)}˚C',
+                                    '${minTemp.toStringAsFixed(1)}˚C',
                                     style: const TextStyle(
                                       fontSize: 15,
                                       fontWeight: FontWeight.w900,
@@ -215,7 +218,7 @@ class DailyTemperatureBar extends StatelessWidget {
           Positioned(
             bottom: getTemperatureTextBottom(fillHeight, barHeight),
             child: Text(
-              '${temperature.toStringAsFixed(0)}˚C',
+              '${temperature.toStringAsFixed(1)}˚C',
               style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w900,

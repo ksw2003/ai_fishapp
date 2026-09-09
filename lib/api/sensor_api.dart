@@ -6,7 +6,7 @@ class SensorApi {
     final request = http.Request(
       'GET',
       Uri.parse(
-        'http://192.168.45.165:3000/api/tank/data',
+        'http://192.168.45.23:3000/api/tank/data',
       ),
     );
 

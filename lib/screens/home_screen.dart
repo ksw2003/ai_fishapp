@@ -1,5 +1,5 @@
 import 'dart:convert';
-
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ai_fishapp/api/api_client.dart';
 import 'package:flutter/material.dart';
 import '../widgets/common_bottom_nav_bar.dart';
@@ -29,6 +29,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     getUserName();
+    _loadTodayStatus();
     _sensorApi.connect().listen((data) {
       if (!mounted) return;
       if(data["type"]=='sensor'){
@@ -56,6 +57,42 @@ class _HomeScreenState extends State<HomeScreen> {
       });
 
     }
+  }
+  Future<void> _loadTodayStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    final today =
+    DateTime.now().toString().substring(0, 10);
+
+    final savedDate =
+    prefs.getString('last_action_date');
+
+    if (savedDate != today) {
+      await prefs.setBool(
+        'waterChangeDone',
+        false,
+      );
+
+      await prefs.setBool(
+        'feedingDone',
+        false,
+      );
+
+      await prefs.setString(
+        'last_action_date',
+        today,
+      );
+    }
+
+    if (!mounted) return;
+
+    setState(() {
+      waterChangeDone =
+          prefs.getBool('waterChangeDone') ?? false;
+
+      feedingDone =
+          prefs.getBool('feedingDone') ?? false;
+    });
   }
 
   @override
@@ -250,7 +287,13 @@ class _HomeScreenState extends State<HomeScreen> {
                                   context,
                                   '/water-change-loading',
                                 );
-                                if (result == true) {
+                                if (completed == true) {
+                                  final prefs =
+                                  await SharedPreferences.getInstance();
+                                  await prefs.setBool(
+                                    'waterChangeDone',
+                                    true,
+                                  );
                                   setState(() {
                                     waterChangeDone = true;
                                     });
@@ -277,7 +320,14 @@ class _HomeScreenState extends State<HomeScreen> {
                                   context,
                                   '/feeding-loading',
                                 );
-                                if (result == true) {
+                                if (completed == true) {
+                                  final prefs =
+                                  await SharedPreferences.getInstance();
+
+                                  await prefs.setBool(
+                                    'feedingDone',
+                                    true,
+                                  );
                                   setState(() {
                                     feedingDone = true;
                                   });
