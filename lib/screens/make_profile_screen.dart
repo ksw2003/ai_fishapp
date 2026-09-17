@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:ai_fishapp/api/api_client.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 
 class MakeProfileScreen extends StatefulWidget {
   const MakeProfileScreen({super.key});
@@ -22,6 +24,10 @@ class _MakeProfileScreenState
   String profileImage =
       "https://i.pravatar.cc/300";
 
+  final ImagePicker _picker = ImagePicker();
+
+    XFile? selectedImage; 
+
   @override
   void dispose() {
     nicknameController.dispose();
@@ -38,6 +44,20 @@ class _MakeProfileScreenState
     setState(() {
       canUseNickname =
           nicknameController.text.trim().length >= 2;
+    });
+  }
+
+  Future<void> pickImage() async {
+  final XFile? image = await _picker.pickImage(
+    source: ImageSource.gallery,
+  );
+
+    if (image == null) {
+      return;
+    }
+
+    setState(() {
+      selectedImage = image;
     });
   }
 
@@ -107,8 +127,12 @@ class _MakeProfileScreenState
 
                       child: CircleAvatar(
                         radius: 72,
-                        backgroundImage:
-                        NetworkImage(profileImage),
+                        backgroundImage: selectedImage != null
+                          ? FileImage(
+                              File(selectedImage!.path),
+                            )
+                          : NetworkImage(profileImage)
+                              as ImageProvider,
                       ),
                     ),
 
@@ -117,8 +141,8 @@ class _MakeProfileScreenState
                       bottom: 0,
 
                       child: GestureDetector(
-                        onTap: () {
-                          // TODO : 이미지 선택
+                        onTap: () async {
+                          await pickImage();
                         },
 
                         child: Container(

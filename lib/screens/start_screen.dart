@@ -94,10 +94,16 @@ class _StartScreenState extends State<StartScreen> {
     final response = await ApiClient.post('/api/auth/login',
       jsonEncode({'accesstoken':accesstoken,'provider':provider})
     );
-    print(response.body);
+    await TokenStorage.deleteDeviceId();
+    final tankid = await TokenStorage.getdeviceId();
+    print(tankid); 
     if(response.statusCode == 200){
       final data = jsonDecode(response.body);
       TokenStorage.saveTokens(data['accesstoken'],data['refreshtoken']);
+      if(data['device_id']!=null){
+        print("들어감");
+        TokenStorage.savedeviceId(data['device_id']);
+      }
       return (true,data['exNickname']);
     }else{
       print('로그인 실패');

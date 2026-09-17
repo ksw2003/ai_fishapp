@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:ai_fishapp/api/api_client.dart';
+import 'package:ai_fishapp/services/token_storage.dart';
 import 'package:flutter/material.dart';
 import '../widgets/common_bottom_nav_bar.dart';
 import '../api/sensor_api.dart';
@@ -22,11 +23,18 @@ class _HomeScreenState extends State<HomeScreen> {
   Timer? _timer;
 
   String userName = '';
+  bool settingTank = false; 
 
+  final minTempController = TextEditingController();
+  final maxTempController = TextEditingController();
+  final minWaterController = TextEditingController();
+  final maxWaterController = TextEditingController();
+  final tankName = TextEditingController();
   @override
   void initState() {
     super.initState();
     getUserName();
+    getTankId();
     _sensorApi.connect().listen((data) {
       print(data);
       if (!mounted) return;
@@ -52,6 +60,16 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
+  Future<void> getTankId()async{
+    final getdeviceid = await TokenStorage.getdeviceId();
+    print('여기$getdeviceid');
+    if(getdeviceid == null){
+      settingTank = false;
+    }else{
+      settingTank = true;
+    }
+  }
+
   void showAlert(String message) {
   if (!mounted) return;
 
@@ -72,6 +90,40 @@ class _HomeScreenState extends State<HomeScreen> {
       });
 
     }
+  }
+
+  Future<bool> getDeviceId()async{
+    String deviceId = 'SS505';
+    await TokenStorage.savedeviceId(deviceId);
+    return true;//나중에 연결 하는 함수 만들 예정
+  }
+
+  Future<bool>checkDevice()async{
+    final ID = await getDeviceId();
+    if(ID){
+      return true;
+    }else{
+      return false;
+    }
+    
+  }
+
+  Future<void> saveTank()async{
+    final minTemp = double.tryParse(minTempController.text);
+    final maxTemp = double.tryParse(maxTempController.text);
+    final normalWater = int.tryParse(minWaterController.text);
+    final maxWater = int.tryParse(maxWaterController.text);
+    final String name = tankName.text;
+    final deviceid = await TokenStorage.getdeviceId();
+    final response = await ApiClient.post('/api/tank/setting',
+                                          jsonEncode({
+                                          'device_id':deviceid,
+                                          'tank_name':name,
+                                          'min_temp':minTemp,
+                                          'max_temp':maxTemp,
+                                          'normal_waterquality':normalWater,
+                                          'warning_waterquality':maxWater}),token: true);
+    print(response.body);
   } 
 
   @override
@@ -99,7 +151,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: Column(
+        child:Column(
           children: [
             Expanded(
               child: SingleChildScrollView(
@@ -132,7 +184,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(height: 28),
 
                     // 날짜 + 카메라 + 오늘의 물고기 상태 카드
-                    Material(
+                    if(settingTank)...[
+                      Material(
                       color: Colors.transparent,
                       borderRadius: BorderRadius.circular(22.5),
                       child: InkWell(
@@ -284,8 +337,135 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ],
                     ),
+                  ]else...[
+                    const Center(
+                      child: Text(
+                        '어항을 등록해주세요',
+                        style: TextStyle(
+                          fontSize: 24,
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    Center(
+                      child: ElevatedButton(
+                        onPressed: () async{
+                          final deviceId = await checkDevice();
+
+                          if (!context.mounted) return;
+
+                          if (!deviceId) {
+                                showDialog(
+                                  context: context,
+                                  builder: (context) {
+                                    return AlertDialog(
+                                      title: const Text('입력 실패'),
+                                      content: const Text('기기 정보를 가져오지 못했습니다.'),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () {
+                                            Navigator.pop(context);
+                                          },
+                                          child: const Text('확인'),
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                );
+
+                                return;
+                              }
+                          showDialog(
+                            context: context,
+                            builder: (context) {
+                              return AlertDialog(
+                                title: const Text('어항 등록'),
+                                content: SingleChildScrollView(
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      TextField(
+                                        controller: tankName,
+                                        keyboardType: TextInputType.text,
+                                        decoration: const InputDecoration(
+                                          labelText: '어항 이름'
+                                        ),
+                                      ),
+                                      TextField(
+                                        controller: minTempController,
+                                        keyboardType: const TextInputType.numberWithOptions(
+                                          decimal: true,
+                                        ),
+                                        decoration: const InputDecoration(
+                                          labelText: '최저 온도',
+                                          hintText: '예: 23.0',
+                                        ),
+                                      ),
+
+                                      const SizedBox(height: 10),
+
+                                      TextField(
+                                        controller: maxTempController,
+                                        keyboardType: const TextInputType.numberWithOptions(
+                                          decimal: true,
+                                        ),
+                                        decoration: const InputDecoration(
+                                          labelText: '최고 온도',
+                                          hintText: '예: 26.0',
+                                        ),
+                                      ),
+
+                                      const SizedBox(height: 10),
+
+                                      TextField(
+                                        controller: minWaterController,
+                                        keyboardType: TextInputType.number,
+                                        decoration: const InputDecoration(
+                                          labelText: '수질 최저',
+                                          hintText: '예: 250',
+                                        ),
+                                      ),
+
+                                      const SizedBox(height: 10),
+
+                                      TextField(
+                                        controller: maxWaterController,
+                                        keyboardType: TextInputType.number,
+                                        decoration: const InputDecoration(
+                                          labelText: '수질 최고',
+                                          hintText: '예: 700',
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.pop(context);
+                                    },
+                                    child: const Text('취소'),
+                                  ),
+
+                                  ElevatedButton(
+                                    onPressed: () {
+                                      saveTank();
+                                      Navigator.pop(context);
+                                    },
+                                    child: const Text('등록'),
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                        },
+                        child: const Text('어항 등록하기'),
+                      )
+                    ),
                   ],
-                ),
+                ]),
               ),
             ),
           ],

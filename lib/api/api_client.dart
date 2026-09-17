@@ -3,7 +3,11 @@ import 'dart:convert';
 
 import 'package:ai_fishapp/services/token_storage.dart';
 import 'package:http/http.dart' as http;
+import 'package:http/http.dart';
+import 'package:image_picker/image_picker.dart' show XFile;
 
+//http://192.168.56.1:3000
+//127.0.0.1:3000
 class ApiClient {
   // 백엔드 주소
   static const String baseUrl = "http://192.168.56.1:3000";
@@ -124,7 +128,8 @@ class ApiClient {
   static Future<http.Response> postMultipart(
   String endpoint, {
   Map<String, String>? fields,
-  List<http.MultipartFile>? files,
+  List<XFile>? images,
+  String imageField = 'images',
   bool token = false,
   bool retry = false,
 }) async {
@@ -145,14 +150,28 @@ class ApiClient {
     request.fields.addAll(fields);
   }
 
-  if (files != null) {
-    request.files.addAll(files);
+  if (images != null) {
+    for (final image in images) {
+
+      final multipartFile =
+          await http.MultipartFile.fromPath(
+        imageField,
+        image.path,
+        contentType:
+            getImageContentType(image.path),
+      );
+
+      request.files.add(multipartFile);
+    }
   }
 
-  final streamedResponse = await request.send();
+  final streamedResponse =
+      await request.send();
 
-  // StreamedResponse → Response 변환
-  final response = await http.Response.fromStream(streamedResponse);
+  final response =
+      await http.Response.fromStream(
+        streamedResponse,
+      );
 
   if (token && !retry && response.statusCode == 401) {
     final data = jsonDecode(response.body);
@@ -164,7 +183,8 @@ class ApiClient {
         return postMultipart(
           endpoint,
           fields: fields,
-          files: files,
+          images: images,
+          imageField: imageField,
           token: true,
           retry: true,
         );
@@ -175,5 +195,23 @@ class ApiClient {
   return response;
 }
 
+static MediaType getImageContentType(String path) {
+  final extension = path.split('.').last.toLowerCase();
+
+  switch (extension) {
+    case 'jpg':
+    case 'jpeg':
+      return MediaType('image', 'jpeg');
+
+    case 'png':
+      return MediaType('image', 'png');
+
+    case 'webp':
+      return MediaType('image', 'webp');
+
+    default:
+      throw Exception('지원하지 않는 이미지 형식입니다.');
+  }
+}
 
 }

@@ -694,6 +694,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
       ),
     child: Column(
       children: post.images.map((image) {
+        print(image);
     return Padding(
     padding:
     const EdgeInsets.only(
@@ -705,7 +706,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
     15,
     ),
     child: Image.network(
-      "${ApiClient.baseUrl}${image["Image_url"]}",
+      "${image["Image_url"]}",
     width: double.infinity,
     height: 250,
     fit: BoxFit.cover,

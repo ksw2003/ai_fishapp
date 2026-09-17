@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:ai_fishapp/api/api_client.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 
 class ProfileEditScreen extends StatefulWidget {
   const ProfileEditScreen({super.key});
@@ -35,6 +37,10 @@ class _ProfileEditScreenState
   String profileImage =
       "https://i.pravatar.cc/300";
 
+  final ImagePicker _picker = ImagePicker();
+
+    XFile? selectedImage;
+
   @override
   void dispose() {
     nicknameController.dispose();
@@ -58,9 +64,21 @@ class _ProfileEditScreenState
   }
 
   void makeProfile(BuildContext context) async{
-    final data = await ApiClient.post('/api/auth/profile',jsonEncode({'nickname':nicknameController.text}),token: true);
-    print(data);
-    Navigator.pushNamed(context, "/home");
+    try{
+      final response = await ApiClient.postMultipart('/api/auth/profile',fields: {'nickname':nicknameController.text},
+      images: selectedImage != null ? [selectedImage!]: null,imageField: 'image',token: true);
+      print(response.body);
+      if (response.statusCode == 200) {
+        Navigator.pushReplacementNamed(
+          context,
+          '/home',
+        );
+      } else {
+        print('프로필 등록 실패: ${response.statusCode}');
+      }
+    }catch(e){
+      print(e);
+    }
   }
 
   Future<void> getUserInfo()async{
@@ -74,6 +92,21 @@ class _ProfileEditScreenState
       });
     }
   }
+
+  Future<void> pickImage() async {
+  final XFile? image = await _picker.pickImage(
+    source: ImageSource.gallery,
+  );
+
+    if (image == null) {
+      return;
+    }
+
+    setState(() {
+      selectedImage = image;
+    });
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -163,8 +196,12 @@ class _ProfileEditScreenState
 
     radius: 72,
 
-    backgroundImage:
-    NetworkImage(profileImage),
+    backgroundImage: selectedImage != null
+              ? FileImage(
+                  File(selectedImage!.path),
+                )
+              : NetworkImage(profileImage)
+                  as ImageProvider,
 
     ),
     ),
@@ -176,11 +213,9 @@ class _ProfileEditScreenState
 
     child: GestureDetector(
 
-    onTap: () {
-
-    // 2/2에서 구현
-
-    },
+    onTap: () async {
+            await pickImage();
+          },
 
     child: Container(
 

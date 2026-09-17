@@ -49,22 +49,12 @@ class CommunityService {
     required String fishType,
     required List<XFile> images,
   }) async {
-    final files = <http.MultipartFile>[];
-
-      for (final image in images) {
-        files.add(
-          await http.MultipartFile.fromPath(
-            'images',
-            image.path,
-          ),
-        );
-      }
     final response = await ApiClient.postMultipart(
       "/api/community/posts",fields: {
         'title':title,
         'content':content,
         'fish_type':fishType
-      },files: files,
+      },images: images,
       token: true
     );
 
@@ -115,23 +105,13 @@ class CommunityService {
     required List<XFile> images,
     required List<int> deletedImageIds,
   }) async {
-    final files = <http.MultipartFile>[];
-
-      for (final image in images) {
-        files.add(
-          await http.MultipartFile.fromPath(
-            'images',
-            image.path,
-          ),
-        );
-      }
     final response = await ApiClient.postMultipart(
       "/api/community/posts",fields: {
         'title':title,
         'content':content,
         'fish_type':fishType,
         'deleteImageId':jsonEncode(deletedImageIds)
-      },files: files,
+      },images: images,
       token: true
     );
     if (response.statusCode != 200 &&

@@ -76,7 +76,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     print(data);
     setState(() {
       messages.add({
-        'text':data['response'],
+        'text':data['message'],
         'isUser':false
       });
     });
