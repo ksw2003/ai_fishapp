@@ -104,6 +104,7 @@ class _PostWritingScreenState
           print("title = ${titleController.text}");
           print("content = ${contentController.text}");
           print("tag = $selectedTag");
+          print(widget.post);
           try {
             if (widget.post == null) {
 
@@ -420,7 +421,7 @@ class _PostWritingScreenState
                           ),
                           clipBehavior: Clip.hardEdge,
                           child: Image.network(
-                            "${ApiClient.baseUrl}${oldImages[index]["Image_url"]}",
+                            "${oldImages[index]["Image_url"]}",
                             fit: BoxFit.cover,
                             loadingBuilder: (context, child, loadingProgress) {
                               if (loadingProgress == null) return child;

@@ -1,8 +1,71 @@
+import 'dart:async';
 import 'dart:math';
+import 'package:ai_fishapp/api/sensor_api.dart';
 import 'package:flutter/material.dart';
 
-class FeedingLoadingScreen extends StatelessWidget {
+class FeedingLoadingScreen extends StatefulWidget {
   const FeedingLoadingScreen({super.key});
+
+  @override
+  State<FeedingLoadingScreen> createState() =>
+      _FeedingLoadingScreenState();
+}
+
+class _FeedingLoadingScreenState
+    extends State<FeedingLoadingScreen> {
+
+  final SensorApi _sensorApi = SensorApi();
+
+  StreamSubscription<Map<String, dynamic>>? _subscription;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _connectFeedResult();
+  }
+
+  void _connectFeedResult() {
+    _subscription = _sensorApi
+        .connect('/api/tank/event?event=feed')
+        .listen(
+      (data) {
+        print('먹이 지급 결과: $data');
+
+        if (!mounted) return;
+
+        if (data['type'] == 'feed') {
+
+          if (data['data'] == 'success') {
+            Navigator.pop(context);
+
+          } else if (data['data'] == 'failed') {
+
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('먹이 지급에 실패했습니다.'),
+              ),
+            );
+
+            Navigator.pop(context);
+          }
+        }
+      },
+      onError: (error) {
+        print('SSE 연결 오류: $error');
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    print('먹이 SSE 연결 종료');
+
+    _subscription?.cancel();
+
+    super.dispose();
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -61,11 +124,12 @@ class FeedingRotatingLoadingIcon extends StatefulWidget {
 class _FeedingRotatingLoadingIconState extends State<FeedingRotatingLoadingIcon>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
+  StreamSubscription<Map<String, dynamic>>? _subscription;
+  final SensorApi _sensorApi = SensorApi();
 
   @override
   void initState() {
     super.initState();
-
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1100),

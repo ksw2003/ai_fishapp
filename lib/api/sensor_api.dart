@@ -5,12 +5,12 @@ import '../models/sensor.dart';
 import 'api_client.dart';
 
 class SensorApi {
-  Stream<Map<String, dynamic>> connect() async* {
+  Stream<Map<String, dynamic>> connect(String accout) async* {
     final token = await TokenStorage.getAccessToken();
     final request = http.Request(
       'GET',
       Uri.parse(
-        'http://192.168.56.1:3000/api/tank/data',
+        'http://192.168.56.1:3000$accout',
       ),
     );
     request.headers['Authorization'] = 'Bearer $token';

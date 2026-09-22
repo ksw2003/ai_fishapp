@@ -106,7 +106,7 @@ class CommunityService {
     required List<int> deletedImageIds,
   }) async {
     final response = await ApiClient.postMultipart(
-      "/api/community/posts",fields: {
+      "/api/community/update/$postId",fields: {
         'title':title,
         'content':content,
         'fish_type':fishType,

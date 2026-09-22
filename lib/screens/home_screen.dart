@@ -18,9 +18,14 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
 
   final SensorApi _sensorApi = SensorApi();
-
+  StreamSubscription<Map<String, dynamic>>? _sensorSubscription;
   SensorData? sensor;
   Timer? _timer;
+  // 백엔드에서 받아올 오늘 환수 완료 여부
+  bool waterChangeDone = false;
+
+  // 백엔드에서 받아올 오늘 먹이 급여 완료 여부
+  bool feedingDone = true;
 
   String userName = '';
   bool settingTank = false; 
@@ -35,7 +40,8 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     getUserName();
     getTankId();
-    _sensorApi.connect().listen((data) {
+    getFeedAndWaterChange();
+    _sensorSubscription = _sensorApi.connect('/api/tank/data').listen((data) {
       print(data);
       if (!mounted) return;
       if(data["type"]=='sensor'){
@@ -43,7 +49,6 @@ class _HomeScreenState extends State<HomeScreen> {
           sensor = SensorData.fromJson(data["data"]);
         });
       }else if(data["type"] == 'temp'){
-        print("들어감");
         if(data['data'] == 'high'){
           showAlert("온도가 너무 높습니다.");
         }else if(data['data'] == 'low'){
@@ -52,11 +57,23 @@ class _HomeScreenState extends State<HomeScreen> {
       }else if(data['type'] == 'waterquality'){
         showAlert("수질이 좋지 않습니다.");
       }
+      else if(data['type'] == 'feed'){
+        print('들어옴');
+        setState(() {
+          feedingDone = data['data'] == 'success' ? true : false;
+        });
+      }
+      else if(data['type'] == 'waterChange'){
+        setState(() {
+          waterChangeDone = data['data'] == 'success' ? true : false;
+        });
+      }
     });
   }
   @override
   void dispose() {
     _timer?.cancel();
+    _sensorSubscription?.cancel();
     super.dispose();
   }
 
@@ -83,6 +100,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> getUserName()async{
     final response = await ApiClient.get('/api/auth/myinfo',token: true);
+    if (!mounted) return;
     if(response.statusCode == 200){
       final data = jsonDecode(response.body);
       setState(() {
@@ -99,13 +117,26 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<bool>checkDevice()async{
-    final ID = await getDeviceId();
-    if(ID){
+    final id = await getDeviceId();
+    if(id){
       return true;
     }else{
       return false;
     }
     
+  }
+
+  Future<void> getFeedAndWaterChange()async{
+    final response = await ApiClient.get('/api/tank/logdata',token: true);
+    final data = jsonDecode(response.body);
+
+    print(data);
+    print("변경 전: $feedingDone / $waterChangeDone");
+    setState(() {
+      feedingDone = data['feed'];
+      waterChangeDone = data['waterchange'];
+    });
+    print("변경 후: $feedingDone / $waterChangeDone");
   }
 
   Future<void> saveTank()async{
@@ -124,7 +155,90 @@ class _HomeScreenState extends State<HomeScreen> {
                                           'normal_waterquality':normalWater,
                                           'warning_waterquality':maxWater}),token: true);
     print(response.body);
-  } 
+  }
+
+  Future<void> feed() async {
+  try {
+    final response = await ApiClient.post(
+      '/api/tank/feed',
+      null,
+      token: true,
+    );
+
+    if (!mounted) return;
+
+    if (response.statusCode == 202) {
+      Navigator.pushNamed(
+        context,
+        '/feeding-loading',
+      );
+    }else if(response.statusCode == 409){
+      print(response.body);
+      final data = jsonDecode(response.body);
+      String? message = data["message"];
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('$message'),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('먹이 지급 요청에 실패했습니다.'),
+        ),
+      );
+    }
+  } catch (e) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('오류가 발생했습니다: $e'),
+      ),
+    );
+  }
+}
+
+Future<void> waterchange() async {
+  try {
+    final response = await ApiClient.post(
+      '/api/tank/waterchange',
+      null,
+      token: true,
+    );
+
+    if (!mounted) return;
+
+    if (response.statusCode == 202) {
+      Navigator.pushNamed(
+        context,
+        '/water-change-loading',
+      );
+    }else if(response.statusCode == 409){
+      final data = jsonDecode(response.body);
+      String? message = data["message"];
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('$message'),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('환수 요청에 실패했습니다.'),
+        ),
+      );
+    }
+  } catch (e) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('오류가 발생했습니다: $e'),
+      ),
+    );
+  }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -138,11 +252,6 @@ class _HomeScreenState extends State<HomeScreen> {
     // AI 분석 결과 또는 백엔드에서 받아올 오늘의 물고기 상태
     const String fishCondition = '매우 좋음';
 
-    // 백엔드에서 받아올 오늘 환수 완료 여부
-    const bool waterChangeDone = false;
-
-    // 백엔드에서 받아올 오늘 먹이 급여 완료 여부
-    const bool feedingDone = true;
 
     final DateTime now = DateTime.now();
     final String todayText =
@@ -315,10 +424,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             title: '환수하기',
                             isDone: waterChangeDone,
                             onTap: () {
-                              Navigator.pushNamed(
-                                context,
-                                '/water-change-loading',
-                              );
+                              waterchange();
                             },
                           ),
                         ),
@@ -328,10 +434,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             title: '먹이주기',
                             isDone: feedingDone,
                             onTap: () {
-                              Navigator.pushNamed(
-                                context,
-                                '/feeding-loading',
-                              );
+                              feed();
                             },
                           ),
                         ),

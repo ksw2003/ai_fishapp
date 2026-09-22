@@ -1,8 +1,66 @@
+import 'dart:async';
 import 'dart:math';
+import 'package:ai_fishapp/api/sensor_api.dart';
 import 'package:flutter/material.dart';
 
-class WaterChangeLoadingScreen extends StatelessWidget {
+class WaterChangeLoadingScreen extends StatefulWidget {
   const WaterChangeLoadingScreen({super.key});
+
+  @override
+  State<WaterChangeLoadingScreen> createState()=>
+    _WaterChangeLoadingScreenState();
+}
+
+class _WaterChangeLoadingScreenState extends State<WaterChangeLoadingScreen>{
+  final SensorApi _sensorApi = SensorApi();
+
+  StreamSubscription<Map<String, dynamic>>? _subscription;
+ @override
+  void initState() {
+    super.initState();
+    _connectWCResult();
+  }
+
+  void _connectWCResult(){
+    _subscription = _sensorApi
+        .connect('/api/tank/event?event=waterquality')
+        .listen(
+      (data) {
+        print('환수 결과: $data');
+
+        if (!mounted) return;
+
+        if (data['type'] == 'waterChange') {
+
+          if (data['data'] == 'success') {
+            Navigator.pop(context);
+
+          } else if (data['data'] == 'failed') {
+
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('환수 실패했습니다.'),
+              ),
+            );
+
+            Navigator.pop(context);
+          }
+        }
+      },
+      onError: (error) {
+        print('SSE 연결 오류: $error');
+      },
+    );
+  }
+
+   @override
+  void dispose() {
+    print('환수 SSE 연결 종료');
+
+    _subscription?.cancel();
+
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
