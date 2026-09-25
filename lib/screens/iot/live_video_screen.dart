@@ -1,5 +1,6 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:webview_flutter/webview_flutter.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class LiveVideoScreen extends StatelessWidget {
   const LiveVideoScreen({super.key});
@@ -9,6 +10,12 @@ class LiveVideoScreen extends StatelessWidget {
     // 지금은 화면 구현용 가짜 사용자 이름
     // 나중에 로그인 정보 or 백엔드에서 받은 이름으로 교체
     const String userName = '한경이';
+
+    // .env에서 AWS Public IP 가져오기
+    final String awsPublicIp = dotenv.env['AWS_PUBLIC_IP'] ?? '';
+
+    // AWS MediaMTX WebRTC 주소
+    final String videoUrl = 'http://$awsPublicIp:8889/cam';
 
     final DateTime now = DateTime.now();
     final String todayText =
@@ -102,8 +109,8 @@ class LiveVideoScreen extends StatelessWidget {
               const SizedBox(height: 32),
 
               // 실시간 영상 영역
-              const RealtimeVideoBox(
-                videoUrl: null,
+              RealtimeVideoBox(
+                videoUrl: videoUrl,
               ),
 
               const SizedBox(height: 18),
@@ -126,137 +133,50 @@ class LiveVideoScreen extends StatelessWidget {
   }
 }
 
-class RealtimeVideoBox extends StatelessWidget {
-  final String? videoUrl;
+class RealtimeVideoBox extends StatefulWidget {
+  final String videoUrl;
 
   const RealtimeVideoBox({
     super.key,
-    this.videoUrl,
+    required this.videoUrl,
   });
 
   @override
-  Widget build(BuildContext context) {
-    // 지금은 실제 영상 주소가 없으니까 로딩 표시
-    if (videoUrl == null || videoUrl!.isEmpty) {
-      return Container(
-        width: double.infinity,
-        height: 155,
-        decoration: BoxDecoration(
-          color: const Color(0xFFD9D9D9),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: const Center(
-          child: LiveVideoRotatingLoadingIcon(),
-        ),
-      );
-    }
-
-    // 나중에 실제 영상 붙일 자리
-    return Container(
-      width: double.infinity,
-      height: 155,
-      decoration: BoxDecoration(
-        color: Colors.black,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: const Center(
-        child: Text(
-          '실시간 영상 연결 예정',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
-    );
-  }
+  State<RealtimeVideoBox> createState() =>
+      _RealtimeVideoBoxState();
 }
 
-class LiveVideoRotatingLoadingIcon extends StatefulWidget {
-  const LiveVideoRotatingLoadingIcon({super.key});
-
-  @override
-  State<LiveVideoRotatingLoadingIcon> createState() =>
-      _LiveVideoRotatingLoadingIconState();
-}
-
-class _LiveVideoRotatingLoadingIconState
-    extends State<LiveVideoRotatingLoadingIcon>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
+class _RealtimeVideoBoxState extends State<RealtimeVideoBox> {
+  late final WebViewController _controller;
 
   @override
   void initState() {
     super.initState();
 
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1100),
-    )..repeat();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
+    _controller = WebViewController()
+      ..setJavaScriptMode(
+        JavaScriptMode.unrestricted,
+      )
+      ..setBackgroundColor(
+        Colors.black,
+      )
+      ..loadRequest(
+        Uri.parse(widget.videoUrl),
+      );
   }
 
   @override
   Widget build(BuildContext context) {
-    return RotationTransition(
-      turns: _controller,
-      child: CustomPaint(
-        size: const Size(46, 46),
-        painter: LiveVideoLoadingArcPainter(),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: SizedBox(
+        width: double.infinity,
+        height: 155,
+        child: WebViewWidget(
+          controller: _controller,
+        ),
       ),
     );
-  }
-}
-
-class LiveVideoLoadingArcPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final Rect rect = Offset.zero & size;
-
-    final Paint arcPaint = Paint()
-      ..shader = const LinearGradient(
-        colors: [
-          Color(0xFF7BA4FF),
-          Color(0xFF5BC8FF),
-        ],
-      ).createShader(rect)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.5
-      ..strokeCap = StrokeCap.round;
-
-    final Paint dotPaint = Paint()
-      ..color = const Color(0xFF5BC8FF)
-      ..style = PaintingStyle.fill;
-
-    final Offset center = Offset(size.width / 2, size.height / 2);
-    final double radius = size.width / 2 - 8;
-
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius),
-      pi * 0.25,
-      pi * 1.45,
-      false,
-      arcPaint,
-    );
-
-    final double dotAngle = pi * 0.25;
-    final Offset dotOffset = Offset(
-      center.dx + cos(dotAngle) * radius,
-      center.dy + sin(dotAngle) * radius,
-    );
-
-    canvas.drawCircle(dotOffset, 3.5, dotPaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant LiveVideoLoadingArcPainter oldDelegate) {
-    return false;
   }
 }
 
@@ -264,18 +184,25 @@ String getKoreanWeekday(int weekday) {
   switch (weekday) {
     case DateTime.monday:
       return '월';
+
     case DateTime.tuesday:
       return '화';
+
     case DateTime.wednesday:
       return '수';
+
     case DateTime.thursday:
       return '목';
+
     case DateTime.friday:
       return '금';
+
     case DateTime.saturday:
       return '토';
+
     case DateTime.sunday:
       return '일';
+
     default:
       return '';
   }
