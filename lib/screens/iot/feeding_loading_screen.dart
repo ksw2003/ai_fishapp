@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:math';
 import 'package:ai_fishapp/api/sensor_api.dart';
+import 'package:ai_fishapp/services/socket_service.dart';
 import 'package:flutter/material.dart';
 
 class FeedingLoadingScreen extends StatefulWidget {
@@ -16,46 +18,31 @@ class _FeedingLoadingScreenState
 
   final SensorApi _sensorApi = SensorApi();
 
-  StreamSubscription<Map<String, dynamic>>? _subscription;
+   StreamSubscription? _subscription;
 
   @override
   void initState() {
     super.initState();
+    SocketService.instance.send({
+      'type':'feed'
+    });
+    _subscription =
+        SocketService.instance.stream?.listen((data) {
+          print(data);
+      if(data['type'] == 'feedResult'){
 
-    _connectFeedResult();
+          if (!mounted) return;
+
+          final bool success = data['success'] == true;
+          final String message = data['message'];
+          Navigator.pop(context, {
+          'success': success,
+          'message': message,});
+      }
+  });
   }
+  
 
-  void _connectFeedResult() {
-    _subscription = _sensorApi
-        .connect('/api/tank/event?event=feed')
-        .listen(
-      (data) {
-        print('먹이 지급 결과: $data');
-
-        if (!mounted) return;
-
-        if (data['type'] == 'feed') {
-
-          if (data['data'] == 'success') {
-            Navigator.pop(context);
-
-          } else if (data['data'] == 'failed') {
-
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('먹이 지급에 실패했습니다.'),
-              ),
-            );
-
-            Navigator.pop(context);
-          }
-        }
-      },
-      onError: (error) {
-        print('SSE 연결 오류: $error');
-      },
-    );
-  }
 
   @override
   void dispose() {
@@ -112,6 +99,7 @@ class _FeedingLoadingScreenState
     );
   }
 }
+    
 
 class FeedingRotatingLoadingIcon extends StatefulWidget {
   const FeedingRotatingLoadingIcon({super.key});

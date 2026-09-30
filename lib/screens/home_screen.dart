@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:ai_fishapp/api/api_client.dart';
+import 'package:ai_fishapp/services/socket_service.dart';
 import 'package:ai_fishapp/services/token_storage.dart';
 import 'package:flutter/material.dart';
 import '../widgets/common_bottom_nav_bar.dart';
@@ -26,6 +27,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // 백엔드에서 받아올 오늘 먹이 급여 완료 여부
   bool feedingDone = true;
+  // AI 분석 결과 또는 백엔드에서 받아올 오늘의 물고기 상태
+  String fishCondition = '매우 좋음';
 
   String userName = '';
   bool settingTank = false; 
@@ -35,6 +38,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final minWaterController = TextEditingController();
   final maxWaterController = TextEditingController();
   final tankName = TextEditingController();
+  StreamSubscription<Map<String, dynamic>>? _subscription;
   @override
   void initState() {
     super.initState();
@@ -57,16 +61,13 @@ class _HomeScreenState extends State<HomeScreen> {
       }else if(data['type'] == 'waterquality'){
         showAlert("수질이 좋지 않습니다.");
       }
-      else if(data['type'] == 'feed'){
-        print('들어옴');
-        setState(() {
-          feedingDone = data['data'] == 'success' ? true : false;
-        });
+    });
+    _subscription = SocketService.instance.stream.listen((data){
+      if(data['type']=='fishStatus'){
+        print(data);
       }
-      else if(data['type'] == 'waterChange'){
-        setState(() {
-          waterChangeDone = data['data'] == 'success' ? true : false;
-        });
+      if(data['type'] == 'activity_result'){
+        print(data['data']['activity']);
       }
     });
   }
@@ -74,6 +75,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void dispose() {
     _timer?.cancel();
     _sensorSubscription?.cancel();
+    _subscription?.cancel();
     super.dispose();
   }
 
@@ -158,86 +160,39 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> feed() async {
-  try {
-    final response = await ApiClient.post(
-      '/api/tank/feed',
-      null,
-      token: true,
-    );
+    final result = await Navigator.pushNamed(context, '/feeding-loading');
 
     if (!mounted) return;
+    print(result);
 
-    if (response.statusCode == 202) {
-      Navigator.pushNamed(
-        context,
-        '/feeding-loading',
-      );
-    }else if(response.statusCode == 409){
-      print(response.body);
-      final data = jsonDecode(response.body);
-      String? message = data["message"];
+    if (result != null&&result is Map) {
+      final bool success = result['success'];
+      feedingDone = success;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('$message'),
-        ),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('먹이 지급 요청에 실패했습니다.'),
+          content: Text(
+            result['message'],
+          ),
         ),
       );
     }
-  } catch (e) {
-    if (!mounted) return;
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('오류가 발생했습니다: $e'),
-      ),
-    );
-  }
 }
 
 Future<void> waterchange() async {
-  try {
-    final response = await ApiClient.post(
-      '/api/tank/waterchange',
-      null,
-      token: true,
-    );
-
+    final result = await Navigator.pushNamed(context, '/water-change-loading');
     if (!mounted) return;
-
-    if (response.statusCode == 202) {
-      Navigator.pushNamed(
-        context,
-        '/water-change-loading',
-      );
-    }else if(response.statusCode == 409){
-      final data = jsonDecode(response.body);
-      String? message = data["message"];
+    print(result);
+    if (result != null&&result is Map) {
+      final bool success = result['success'];
+      waterChangeDone = success;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('$message'),
-        ),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('환수 요청에 실패했습니다.'),
+          content: Text(
+            result['message'],
+          ),
         ),
       );
     }
-  } catch (e) {
-    if (!mounted) return;
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('오류가 발생했습니다: $e'),
-      ),
-    );
-  }
 }
 
   @override
@@ -249,8 +204,6 @@ Future<void> waterchange() async {
 
     // 로그인한 사용자 이름
 
-    // AI 분석 결과 또는 백엔드에서 받아올 오늘의 물고기 상태
-    const String fishCondition = '매우 좋음';
 
 
     final DateTime now = DateTime.now();

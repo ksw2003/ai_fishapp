@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:ai_fishapp/api/sensor_api.dart';
+import 'package:ai_fishapp/services/socket_service.dart';
 import 'package:flutter/material.dart';
 
 class WaterChangeLoadingScreen extends StatefulWidget {
@@ -14,44 +15,29 @@ class WaterChangeLoadingScreen extends StatefulWidget {
 class _WaterChangeLoadingScreenState extends State<WaterChangeLoadingScreen>{
   final SensorApi _sensorApi = SensorApi();
 
-  StreamSubscription<Map<String, dynamic>>? _subscription;
+  StreamSubscription? _subscription;
  @override
   void initState() {
     super.initState();
-    _connectWCResult();
+    SocketService.instance.send({
+      'type':'waterChange'
+    });
+    _subscription =
+        SocketService.instance.stream?.listen((data) {
+          print(data);
+      if(data['type'] == 'waterChangeResult'){
+
+          if (!mounted) return;
+
+          final bool success = data['success'] == true;
+          final String message = data['message'];
+          Navigator.pop(context, {
+          'success': success,
+          'message': message,});
+      }
+    });
   }
 
-  void _connectWCResult(){
-    _subscription = _sensorApi
-        .connect('/api/tank/event?event=waterquality')
-        .listen(
-      (data) {
-        print('환수 결과: $data');
-
-        if (!mounted) return;
-
-        if (data['type'] == 'waterChange') {
-
-          if (data['data'] == 'success') {
-            Navigator.pop(context);
-
-          } else if (data['data'] == 'failed') {
-
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('환수 실패했습니다.'),
-              ),
-            );
-
-            Navigator.pop(context);
-          }
-        }
-      },
-      onError: (error) {
-        print('SSE 연결 오류: $error');
-      },
-    );
-  }
 
    @override
   void dispose() {

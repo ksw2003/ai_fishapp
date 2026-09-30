@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:ai_fishapp/api/api_client.dart';
 import 'package:ai_fishapp/screens/start_screen.dart';
+import 'package:ai_fishapp/services/socket_service.dart';
 import 'package:ai_fishapp/services/token_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -46,6 +47,7 @@ class _MyPageScreenState extends State<MyPageScreen>{
     if(response.statusCode == 204){
       await TokenStorage.deleteTokens();
       await TokenStorage.deleteTokens();
+      SocketService.instance.disconnect();
       if (!mounted) return;
 
       Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context)=> const StartScreen()),(route)=>false);

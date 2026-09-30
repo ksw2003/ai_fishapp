@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:ai_fishapp/services/socket_service.dart';
 import 'package:flutter/material.dart';
 import '../../widgets/common_bottom_nav_bar.dart';
 import '../../services/fishinfo_service.dart';
@@ -36,12 +39,34 @@ class MyFishScreen extends StatefulWidget {
 
 class _MyFishScreenState extends State<MyFishScreen> {
   bool isEdit = false;
+  StreamSubscription? _subscription;
 
   final List<FishRowData> fishes = [];
   bool isLoading = true;
   @override
   void initState() {
     super.initState();
+    _subscription =
+        SocketService.instance.stream?.listen((data) {
+      if (data['type'] == 'species_result') {
+        print(data['data']['data']);
+        final List<dynamic> result = data['data']['data'];
+
+        setState(() {
+          fishes.clear();
+
+          fishes.addAll(
+            result.map(
+              (fish) => FishRowData(
+                species: fish['species'],
+                count: fish['count'],
+              ),
+            ),
+          );
+        });
+      }
+      print('WebSocket 수신: $data');
+  });
     loadFish();
   }
 
@@ -73,12 +98,15 @@ class _MyFishScreenState extends State<MyFishScreen> {
     }
   }
 
+  
+
   @override
   void dispose() {
     for (final fish in fishes) {
       fish.speciesController.dispose();
       fish.countController.dispose();
     }
+    _subscription?.cancel();
     super.dispose();
   }
 
@@ -247,7 +275,11 @@ class _MyFishScreenState extends State<MyFishScreen> {
                   SizedBox(
                     height: 44,
                     child: ElevatedButton(
-                      onPressed: loadFish,
+                      onPressed: (){
+                        SocketService.instance.send({
+                          'type':'species',
+                        });
+                      },
                       style:
                       ElevatedButton.styleFrom(
                         elevation: 0,

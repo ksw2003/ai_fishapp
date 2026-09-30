@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:ai_fishapp/api/api_client.dart';
+import 'package:ai_fishapp/services/socket_service.dart';
 import 'package:ai_fishapp/services/token_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -100,6 +101,7 @@ class _StartScreenState extends State<StartScreen> {
     if(response.statusCode == 200){
       final data = jsonDecode(response.body);
       TokenStorage.saveTokens(data['accesstoken'],data['refreshtoken']);
+      await SocketService.instance.connect(data['user_id']);
       if(data['device_id']!=null){
         print("들어감");
         TokenStorage.savedeviceId(data['device_id']);
