@@ -21,7 +21,7 @@ class _WaterTempDetailScreenState extends State<WaterTempDetailScreen> {
   void initState() {
     super.initState();
 
-    SensorApi().connect().listen((data) {
+    SensorApi().connect('/api/tank/data').listen((data) {
       if (!mounted) return;
 
       if (data["type"] == "sensor") {

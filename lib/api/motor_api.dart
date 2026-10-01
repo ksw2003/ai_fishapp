@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 
 class MotorApi {
   static const String baseUrl =
-      'http://192.168.45.23:3000';
+      'http://13.239.199.189:3000';
 
   static Future<http.Response> waterChange() {
     return http.post(

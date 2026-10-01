@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ai_fishapp/api/api_client.dart';
+import 'package:ai_fishapp/services/socket_service.dart';
+import 'package:ai_fishapp/services/token_storage.dart';
 import 'package:flutter/material.dart';
 import '../widgets/common_bottom_nav_bar.dart';
 import '../widgets/yes_or_no.dart';
@@ -15,6 +17,15 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  bool settingTank = false;
+  final minTempController = TextEditingController();
+  final maxTempController = TextEditingController();
+  final minWaterController = TextEditingController();
+  final maxWaterController = TextEditingController();
+  final tankName = TextEditingController();
+
+  StreamSubscription<Map<String, dynamic>>? _subscription;
+  StreamSubscription<Map<String, dynamic>>? _sensorSubscription;
 
   final SensorApi _sensorApi = SensorApi();
   String fishCondition = '매우 좋음';
@@ -29,23 +40,62 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     getUserName();
+    getTankId();
+    getFeedAndWaterChange();
     _loadTodayStatus();
-    _sensorApi.connect().listen((data) {
+    _sensorSubscription = _sensorApi.connect('/api/tank/data').listen((data) {
+      print(data);
       if (!mounted) return;
       if(data["type"]=='sensor'){
         setState(() {
           sensor = SensorData.fromJson(data["data"]);
         });
-      }else if(data["type"] == 'warning'){
-        print(data["data"]);
+      }else if(data["type"] == 'temp'){
+        if(data['data'] == 'high'){
+          showAlert("온도가 너무 높습니다.");
+        }else if(data['data'] == 'low'){
+          showAlert("온도가 너무 낮습니다.");
+        }
+      }else if(data['type'] == 'waterquality'){
+        showAlert("수질이 좋지 않습니다.");
       }
-
+    });
+    _subscription = SocketService.instance.stream.listen((data){
+      if(data['type']=='fishStatus'){
+        print(data);
+      }
+      if(data['type'] == 'activity_result'){
+        print(data['data']['activity']);
+      }
     });
   }
   @override
   void dispose() {
     _timer?.cancel();
+    _sensorSubscription?.cancel();
+    _subscription?.cancel();
     super.dispose();
+  }
+
+  void showAlert(String message) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
+  Future<void> getTankId()async{
+    final getdeviceid = await TokenStorage.getdeviceId();
+    print('여기$getdeviceid');
+    if(getdeviceid == null){
+      settingTank = false;
+    }else{
+      settingTank = true;
+    }
   }
 
   Future<void> getUserName()async{
@@ -58,6 +108,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     }
   }
+
   Future<void> _loadTodayStatus() async {
     final prefs = await SharedPreferences.getInstance();
 
@@ -95,14 +146,90 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  Future<bool> getDeviceId()async{
+    String deviceId = 'SS505';
+    await TokenStorage.savedeviceId(deviceId);
+    return true;//나중에 연결 하는 함수 만들 예정
+  }
+
+  Future<bool>checkDevice()async{
+    final id = await getDeviceId();
+    if(id){
+      return true;
+    }else{
+      return false;
+    }
+    
+  }
+
+  Future<void> getFeedAndWaterChange() async {
+    final response =
+        await ApiClient.get('/api/tank/logdata', token: true);
+
+    final data = jsonDecode(response.body);
+
+    setState(() {
+      feedingDone = data['feed'];
+      waterChangeDone = data['waterchange'];
+    });
+  }
+
+    Future<void> saveTank()async{
+    final minTemp = double.tryParse(minTempController.text);
+    final maxTemp = double.tryParse(maxTempController.text);
+    final normalWater = int.tryParse(minWaterController.text);
+    final maxWater = int.tryParse(maxWaterController.text);
+    final String name = tankName.text;
+    final deviceid = await TokenStorage.getdeviceId();
+    final response = await ApiClient.post('/api/tank/setting',
+                                          jsonEncode({
+                                          'device_id':deviceid,
+                                          'tank_name':name,
+                                          'min_temp':minTemp,
+                                          'max_temp':maxTemp,
+                                          'normal_waterquality':normalWater,
+                                          'warning_waterquality':maxWater}),token: true);
+    print(response.body);
+  }
+
+    Future<void> feed() async {
+    final result = await Navigator.pushNamed(context, '/feeding-loading');
+
+    if (!mounted) return;
+    print(result);
+
+    if (result != null&&result is Map) {
+      final bool success = result['success'];
+      feedingDone = success;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            result['message'],
+          ),
+        ),
+      );
+    }
+}
+
+  Future<void> waterchange() async {
+    final result = await Navigator.pushNamed(context, '/water-change-loading');
+    if (!mounted) return;
+    print(result);
+    if (result != null&&result is Map) {
+      final bool success = result['success'];
+      waterChangeDone = success;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            result['message'],
+          ),
+        ),
+      );
+    }
+}
+
   @override
   Widget build(BuildContext context) {
-    // ===============================
-    // 화면 구현용 임시 데이터
-    // 나중에 로그인/백엔드/API 응답값으로 교체할 부분
-    // ===============================
-
-    // 로그인한 사용자 이름
 
     final DateTime now = DateTime.now();
     final String todayText =
@@ -119,31 +246,54 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // 상단 환영 문구
-                    RichText(
-                      text: TextSpan(
-                        style: TextStyle(
-                          fontSize: 26.19,
-                          fontWeight: FontWeight.w700,
-                          height: 1.09,
-                          color: Color(0xFF2D3E5F),
-                        ),
-                        children: [
-                          TextSpan(text: '환영합니다 '),
-                          TextSpan(
-                            text: userName,
-                            style: TextStyle(
-                              color: Color(0xFF008DF2),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+
+                        Expanded(
+                          child: RichText(
+                            text: TextSpan(
+                              style: const TextStyle(
+                                fontSize: 26.19,
+                                fontWeight: FontWeight.w700,
+                                height: 1.09,
+                                color: Color(0xFF2D3E5F),
+                              ),
+                              children: [
+                                const TextSpan(text: '환영합니다 '),
+                                TextSpan(
+                                  text: userName,
+                                  style: const TextStyle(
+                                    color: Color(0xFF008DF2),
+                                  ),
+                                ),
+                                const TextSpan(text: '님'),
+                              ],
                             ),
                           ),
-                          TextSpan(text: '님'),
-                        ],
-                      ),
+                        ),
+
+                        IconButton(
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          onPressed: () {
+                            Navigator.pushNamed(
+                              context,
+                              '/alert',
+                            );
+                          },
+                          icon: const Icon(
+                            Icons.notifications_none,
+                            size: 28,
+                            color: Color(0xFF2D3E5F),
+                          ),
+                        ),
+                      ],
                     ),
 
                     const SizedBox(height: 28),
-
                     // 날짜 + 카메라 + 오늘의 물고기 상태 카드
+                    if(settingTank)...[
                     Material(
                       color: Colors.transparent,
                       borderRadius: BorderRadius.circular(22.5),
@@ -274,31 +424,26 @@ class _HomeScreenState extends State<HomeScreen> {
                             title: '환수하기',
                             isDone: waterChangeDone,
                             onTap: () async {
-                              final result = await showDialog<bool>(
-                                context: context,
-                                barrierDismissible: true,
-                                builder: (_) => const YesOrNoDialog(
-                                  message: '정말 환수하시겠습니까?',
-                                ),
+                              final result = await Navigator.pushNamed(
+                              context,
+                              '/water-change-loading',
                               );
 
-                              if (result == true && context.mounted) {
-                                final completed = await Navigator.pushNamed(
-                                  context,
-                                  '/water-change-loading',
-                                );
-                                if (completed == true) {
-                                  final prefs =
-                                  await SharedPreferences.getInstance();
-                                  await prefs.setBool(
-                                    'waterChangeDone',
-                                    true,
-                                  );
-                                  setState(() {
-                                    waterChangeDone = true;
-                                    });
-                                  }
-                                }
+                              if (result is Map &&
+                              result['success'] == true) {
+
+                              final prefs =
+                              await SharedPreferences.getInstance();
+
+                              await prefs.setBool(
+                              'waterChangeDone',
+                              true,
+                              );
+
+                              setState(() {
+                              waterChangeDone = true;
+                              });
+                              }
                               },
                             ),
                           ),
@@ -308,48 +453,168 @@ class _HomeScreenState extends State<HomeScreen> {
                             title: '먹이주기',
                             isDone: feedingDone,
                             onTap: () async {
-                              final result = await showDialog<bool>(
-                                context: context,
-                                barrierDismissible: true,
-                                builder: (_) => const YesOrNoDialog(
-                                  message: '정말 급여하시겠습니까?',
-                                ),
-                              );
-                              if (result == true && context.mounted) {
-                                final completed = await Navigator.pushNamed(
-                                  context,
-                                  '/feeding-loading',
+                                final result = await Navigator.pushNamed(
+                                context,
+                                '/feeding-loading',
                                 );
-                                if (completed == true) {
-                                  final prefs =
-                                  await SharedPreferences.getInstance();
 
-                                  await prefs.setBool(
-                                    'feedingDone',
-                                    true,
-                                  );
-                                  setState(() {
-                                    feedingDone = true;
-                                  });
-                                }
+                                if (result is Map &&
+                                result['success'] == true) {
+
+                                final prefs =
+                                await SharedPreferences.getInstance();
+
+                                await prefs.setBool(
+                                'feedingDone',
+                                true,
+                                );
+
+                                setState(() {
+                                feedingDone = true;
+                                });
                               }
                             },
                           ),
                         ),
-                      ],
+    ],
+                    ),
+                        ] else...[
+                      const Center(
+                        child: Text(
+                          '어항을 등록해주세요',
+                          style: TextStyle(
+                            fontSize: 24,
+                          ),
+                        ),
+                      ),
+                 const SizedBox(height: 20),
+
+                    Center(
+                      child: ElevatedButton(
+                        onPressed: () async{
+                          final deviceId = await checkDevice();
+
+                          if (!context.mounted) return;
+
+                          if (!deviceId) {
+                                showDialog(
+                                  context: context,
+                                  builder: (context) {
+                                    return AlertDialog(
+                                      title: const Text('입력 실패'),
+                                      content: const Text('기기 정보를 가져오지 못했습니다.'),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () {
+                                            Navigator.pop(context);
+                                          },
+                                          child: const Text('확인'),
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                );
+
+                                return;
+                              }
+                          showDialog(
+                            context: context,
+                            builder: (context) {
+                              return AlertDialog(
+                                title: const Text('어항 등록'),
+                                content: SingleChildScrollView(
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      TextField(
+                                        controller: tankName,
+                                        keyboardType: TextInputType.text,
+                                        decoration: const InputDecoration(
+                                          labelText: '어항 이름'
+                                        ),
+                                      ),
+                                      TextField(
+                                        controller: minTempController,
+                                        keyboardType: const TextInputType.numberWithOptions(
+                                          decimal: true,
+                                        ),
+                                        decoration: const InputDecoration(
+                                          labelText: '최저 온도',
+                                          hintText: '예: 23.0',
+                                        ),
+                                      ),
+
+                                      const SizedBox(height: 10),
+
+                                      TextField(
+                                        controller: maxTempController,
+                                        keyboardType: const TextInputType.numberWithOptions(
+                                          decimal: true,
+                                        ),
+                                        decoration: const InputDecoration(
+                                          labelText: '최고 온도',
+                                          hintText: '예: 26.0',
+                                        ),
+                                      ),
+
+                                      const SizedBox(height: 10),
+
+                                      TextField(
+                                        controller: minWaterController,
+                                        keyboardType: TextInputType.number,
+                                        decoration: const InputDecoration(
+                                          labelText: '수질 최저',
+                                          hintText: '예: 250',
+                                        ),
+                                      ),
+
+                                      const SizedBox(height: 10),
+
+                                      TextField(
+                                        controller: maxWaterController,
+                                        keyboardType: TextInputType.number,
+                                        decoration: const InputDecoration(
+                                          labelText: '수질 최고',
+                                          hintText: '예: 700',
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.pop(context);
+                                    },
+                                    child: const Text('취소'),
+                                  ),
+
+                                  ElevatedButton(
+                                    onPressed: () {
+                                      saveTank();
+                                      Navigator.pop(context);
+                                    },
+                                    child: const Text('등록'),
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                        },
+                        child: const Text('어항 등록하기'),
+                      ),
                     ),
                   ],
+                ],
                 ),
               ),
             ),
           ],
         ),
       ),
-
-      // 공통 하단 네비게이션바
-      bottomNavigationBar: const CommonBottomNavBar(
-        selectedIndex: 0,
-      ),
+    bottomNavigationBar: const CommonBottomNavBar(
+    selectedIndex: 0,
+    ),
     );
   }
 }

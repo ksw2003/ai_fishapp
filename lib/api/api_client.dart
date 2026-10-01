@@ -1,11 +1,11 @@
+
 import 'dart:convert';
 import 'package:ai_fishapp/services/token_storage.dart';
 import 'package:http/http.dart' as http;
 
 class ApiClient {
   // 백엔드 주소
-  //서원 핫스팟: 172.20.10.3, 집: 192.168.56.1
-  static const String baseUrl = "http://192.168.45.23:3000";
+  static const String baseUrl = "http://13.239.199.189:3000";
 
   static Future<bool> _refreshtoken() async{
     final exrefreshtoken = await TokenStorage.getRefreshToken();
@@ -93,6 +93,80 @@ class ApiClient {
         final success = await _refreshtoken();
         if(success){
           return post(endpoint,body,token:true,retry: true);
+        }
+      }
+    }
+
+    return response;
+  }
+
+  static Future<http.Response> delete(int postId,String endpoint,{token = false,retry = false}) async{
+    final accesstoken = await TokenStorage.getAccessToken();
+    final response = await http.delete(
+        Uri.parse(
+          "$baseUrl$endpoint$postId",
+        ),
+        headers: {"authorization":"Bearer $accesstoken"}
+    );
+    if(token && !retry && response.statusCode == 401){
+      final data = jsonDecode(response.body);
+      if(data["code"] == "ACCESS_TOKEN_EXPIRED"){
+        final success = await _refreshtoken();
+        if(success){
+          return delete(postId,endpoint,token:true,retry: true);
+        }
+      }
+    }
+    return response;
+  }
+
+  static Future<http.Response> postMultipart(
+      String endpoint, {
+        Map<String, String>? fields,
+        List<http.MultipartFile>? files,
+        bool token = false,
+        bool retry = false,
+      }) async {
+    final request = http.MultipartRequest(
+      'POST',
+      Uri.parse('$baseUrl$endpoint'),
+    );
+
+    if (token) {
+      final accessToken = await TokenStorage.getAccessToken();
+
+      if (accessToken != null) {
+        request.headers['authorization'] = 'Bearer $accessToken';
+      }
+    }
+
+    if (fields != null) {
+      request.fields.addAll(fields);
+    }
+
+    if (files != null) {
+      request.files.addAll(files);
+    }
+
+    final streamedResponse = await request.send();
+
+    // StreamedResponse → Response 변환
+    final response = await http.Response.fromStream(streamedResponse);
+
+    if (token && !retry && response.statusCode == 401) {
+      final data = jsonDecode(response.body);
+
+      if (data['code'] == 'ACCESS_TOKEN_EXPIRED') {
+        final success = await _refreshtoken();
+
+        if (success) {
+          return postMultipart(
+            endpoint,
+            fields: fields,
+            files: files,
+            token: true,
+            retry: true,
+          );
         }
       }
     }

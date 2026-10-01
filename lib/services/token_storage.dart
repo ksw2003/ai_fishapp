@@ -19,6 +19,20 @@ class TokenStorage {
     );
   }
 
+  static Future<void> savedeviceId(String deviceId) async{
+    return await storage.write(key: 'device_id', value: deviceId);
+  }
+
+  static Future<String?> getdeviceId() async{
+    return await storage.read(key: 'device_id');
+  }
+
+  static Future<void> deleteDeviceId() async {
+    await storage.delete(
+      key: 'device_id',
+    );
+  }
+
   static Future<String?> getAccessToken() async {
     return await storage.read(key: 'accessToken');
   }

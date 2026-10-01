@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 
 class DiaryService {
   static const String baseUrl =
-      'http://192.168.45.165:3000';
+      'http://13.239.199.189:3000';
 
   static Future<Map<String, dynamic>> getDiary(
       DateTime day) async {

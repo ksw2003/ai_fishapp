@@ -1,14 +1,18 @@
 import 'dart:convert';
+import 'package:ai_fishapp/services/token_storage.dart';
 import 'package:http/http.dart' as http;
 
 class SensorApi {
-  Stream<Map<String, dynamic>> connect() async* {
+  Stream<Map<String, dynamic>> connect(String accout) async* {
+    final token = await TokenStorage.getAccessToken();
     final request = http.Request(
       'GET',
       Uri.parse(
-        'http://192.168.45.23:3000/api/tank/data',
+        'http://13.239.199.189:3000$accout',
       ),
     );
+    request.headers['Authorization'] = 'Bearer $token';
+    request.headers['Accept'] = 'text/event-stream';
 
     final response =
     await http.Client().send(request);

@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:ai_fishapp/services/socket_service.dart';
 import 'package:flutter/material.dart';
 import '../../widgets/common_bottom_nav_bar.dart';
 import '../../services/fishinfo_service.dart';
@@ -36,12 +39,34 @@ class MyFishScreen extends StatefulWidget {
 
 class _MyFishScreenState extends State<MyFishScreen> {
   bool isEdit = false;
+  StreamSubscription? _subscription;
 
   final List<FishRowData> fishes = [];
   bool isLoading = true;
   @override
   void initState() {
     super.initState();
+    _subscription =
+        SocketService.instance.stream?.listen((data) {
+      if (data['type'] == 'species_result') {
+        print(data['data']['data']);
+        final List<dynamic> result = data['data']['data'];
+
+        setState(() {
+          fishes.clear();
+
+          fishes.addAll(
+            result.map(
+              (fish) => FishRowData(
+                species: fish['species'],
+                count: fish['count'],
+              ),
+            ),
+          );
+        });
+      }
+      print('WebSocket 수신: $data');
+  });
     loadFish();
   }
 
@@ -73,12 +98,15 @@ class _MyFishScreenState extends State<MyFishScreen> {
     }
   }
 
+  
+
   @override
   void dispose() {
     for (final fish in fishes) {
       fish.speciesController.dispose();
       fish.countController.dispose();
     }
+    _subscription?.cancel();
     super.dispose();
   }
 
@@ -117,47 +145,26 @@ class _MyFishScreenState extends State<MyFishScreen> {
                   const Spacer(),
 
                   GestureDetector(
-  onTap: () async {
+                    onTap: () async {
 
-  if (isEdit) {
+                      if (isEdit) {
+                         final fishlist = fishes.map((fish){
+                          return{
+                            'fish_id':fish.fishId,
+                            'fish_type':fish.speciesController.text.trim(),
+                            'fish_count':int.tryParse(fish.countController.text) ?? 0,
+                          };
+                         }).where((fish)=>fish['fish_type']!='').toList();
 
-  for (final fish in fishes) {
+                          await FishService.postFishList(fishes: fishlist);
 
-  final fishType =
-  fish.speciesController.text.trim();
+                          await loadFish();
+                    }
 
-  final fishCount =
-  int.tryParse(
-  fish.countController.text,
-  ) ??
-  0;
-
-  if (fishType.isEmpty) continue;
-
-  if (fish.isNew) {
-
-  await FishService.addFish(
-  fishType: fishType,
-  fishCount: fishCount,
-  );
-
-  } else {
-
-  await FishService.updateFish(
-  fishId: fish.fishId!,
-  fishType: fishType,
-  fishCount: fishCount,
-  );
-  }
-  }
-
-  await loadFish();
-  }
-
-  setState(() {
-  isEdit = !isEdit;
-  });
-  },
+                    setState(() {
+                        isEdit = !isEdit;
+                    });
+                    },
                     child: Text(
                       isEdit ? "저장" : "수정",
                       style: const TextStyle(
@@ -196,31 +203,22 @@ class _MyFishScreenState extends State<MyFishScreen> {
                   ...List.generate(
                     fishes.length,
                         (index) => Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: FishRowWidget(
-                        data: fishes[index],
-                        isEdit: isEdit,
-  onDelete: () async {
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: FishRowWidget(
+                          data: fishes[index],
+                          isEdit: isEdit,
+                          onDelete: () async {
+                            final fish = fishes[index];
+                            setState(() {
 
-  final fish = fishes[index];
+                            fish.speciesController.dispose();
+                            fish.countController.dispose();
 
-  if (fish.fishId != null) {
+                            fishes.removeAt(index);
 
-  await FishService.deleteFish(
-  fish.fishId!,
-  );
-  }
+                          });
 
-  setState(() {
-
-  fish.speciesController.dispose();
-  fish.countController.dispose();
-
-  fishes.removeAt(index);
-
-  });
-
-  },
+                        },
                       ),
                     ),
                   ),
@@ -236,6 +234,7 @@ class _MyFishScreenState extends State<MyFishScreen> {
 
                           fishes.add(
                             FishRowData(
+                              fishId: null,
                               species: "",
                               count: 0,
                               isNew: true,
@@ -276,7 +275,11 @@ class _MyFishScreenState extends State<MyFishScreen> {
                   SizedBox(
                     height: 44,
                     child: ElevatedButton(
-                      onPressed: loadFish,
+                      onPressed: (){
+                        SocketService.instance.send({
+                          'type':'species',
+                        });
+                      },
                       style:
                       ElevatedButton.styleFrom(
                         elevation: 0,

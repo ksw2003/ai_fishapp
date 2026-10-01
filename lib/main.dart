@@ -19,6 +19,7 @@ import 'screens/iot/daily_temp_detail_screen.dart';
 import 'screens/iot/water_change_loading_screen.dart';
 import 'screens/iot/feeding_loading_screen.dart';
 import 'screens/iot/fish_info_management_screen.dart';
+import 'screens/iot/alert_screen.dart';
 
 import 'screens/mypage_screen.dart';
 import 'screens/setting/myfish_screen.dart';
@@ -52,7 +53,10 @@ class MyApp extends StatelessWidget {
         '/community': (context) => const CommunityListScreen(),
         //post-writing:글쓰기 화면
         '/post-writing': (context) => const PostWritingScreen(),
-        '/chatbot': (context) => const ChatbotScreen(),
+        '/chatbot': (context){
+          final roomId = ModalRoute.of(context)!.settings.arguments as int;
+          return ChatbotScreen(roomId:roomId);
+        },
 
         // 설정 화면에서 이동되는 화면
         '/fish-info': (context) => const FishInfoManagementScreen(),
@@ -68,6 +72,7 @@ class MyApp extends StatelessWidget {
         '/water-change-loading': (context) =>
         const WaterChangeLoadingScreen(),
         '/feeding-loading': (context) => const FeedingLoadingScreen(),
+        '/alert': (context) => const AlertScreen(),
 
         //설정변경
         '/settings': (context) => const MyPageScreen(),

@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
+import 'package:ai_fishapp/api/sensor_api.dart';
+import 'package:ai_fishapp/services/socket_service.dart';
 import 'package:flutter/material.dart';
-import '../../api/motor_api.dart';
 
 class FeedingLoadingScreen extends StatefulWidget {
   const FeedingLoadingScreen({super.key});
@@ -14,112 +16,46 @@ class FeedingLoadingScreen extends StatefulWidget {
 class _FeedingLoadingScreenState
     extends State<FeedingLoadingScreen> {
 
-  bool _isCompleted = false;
-  bool _isError = false;
+  final SensorApi _sensorApi = SensorApi();
+
+   StreamSubscription? _subscription;
 
   @override
   void initState() {
     super.initState();
-    _startFeeding();
-  }
+    SocketService.instance.send({
+      'type':'feed'
+    });
+    _subscription =
+        SocketService.instance.stream?.listen((data) {
+          print(data);
+      if(data['type'] == 'feedResult'){
 
-  Future<void> _startFeeding() async {
-    try {
-      final response = await MotorApi.feed();
-
-      if (!mounted) return;
-
-      if (response.statusCode == 200 ||
-          response.statusCode == 201) {
-
-        setState(() {
-          _isCompleted = true;
-        });
-
-        Future.delayed(const Duration(seconds: 5), () {
           if (!mounted) return;
 
-          Navigator.pop(context, true);
-        });
-
-      } else {
-        setState(() {
-          _isError = true;
-        });
+          final bool success = data['success'] == true;
+          final String message = data['message'];
+          Navigator.pop(context, {
+          'success': success,
+          'message': message,});
       }
-    } catch (e) {
-      print('급여 오류 : $e');
-
-      if (!mounted) return;
-
-      setState(() {
-        _isError = true;
-      });
-    }
+  });
   }
+  
+
+
+  @override
+  void dispose() {
+    print('먹이 SSE 연결 종료');
+
+    _subscription?.cancel();
+
+    super.dispose();
+  }
+
 
   @override
   Widget build(BuildContext context) {
-    Widget content;
-
-    if (_isError) {
-      content = const Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.error_outline,
-            size: 64,
-            color: Colors.red,
-          ),
-          SizedBox(height: 20),
-          Text(
-            '먹이 급여에 실패했습니다.',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: Colors.red,
-            ),
-          ),
-        ],
-      );
-    } else if (_isCompleted) {
-      content = const Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.check_circle_outline,
-            size: 64,
-            color: Color(0xFF00BDF2),
-          ),
-          SizedBox(height: 20),
-          Text(
-            '먹이 급여가 완료되었습니다.',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF00BDF2),
-            ),
-          ),
-        ],
-      );
-    } else {
-      content = const Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          FeedingRotatingLoadingIcon(),
-          SizedBox(height: 24),
-          Text(
-            '먹이 급여중입니다...',
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF9CB8E8),
-            ),
-          ),
-        ],
-      );
-    }
-
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -140,8 +76,22 @@ class _FeedingLoadingScreenState
               ),
             ),
 
-            Center(
-              child: content,
+            const Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  FeedingRotatingLoadingIcon(),
+                  SizedBox(height: 24),
+                  Text(
+                    '먹이 급여중입니다...',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF9CB8E8),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -149,6 +99,7 @@ class _FeedingLoadingScreenState
     );
   }
 }
+    
 
 class FeedingRotatingLoadingIcon extends StatefulWidget {
   const FeedingRotatingLoadingIcon({super.key});
@@ -158,16 +109,15 @@ class FeedingRotatingLoadingIcon extends StatefulWidget {
       _FeedingRotatingLoadingIconState();
 }
 
-class _FeedingRotatingLoadingIconState
-    extends State<FeedingRotatingLoadingIcon>
+class _FeedingRotatingLoadingIconState extends State<FeedingRotatingLoadingIcon>
     with SingleTickerProviderStateMixin {
-
   late final AnimationController _controller;
+  StreamSubscription<Map<String, dynamic>>? _subscription;
+  final SensorApi _sensorApi = SensorApi();
 
   @override
   void initState() {
     super.initState();
-
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1100),
@@ -209,19 +159,14 @@ class FeedingLoadingArcPainter extends CustomPainter {
       ..strokeCap = StrokeCap.round;
 
     final Paint dotPaint = Paint()
-      ..color = const Color(0xFF5BC8FF);
+      ..color = const Color(0xFF5BC8FF)
+      ..style = PaintingStyle.fill;
 
-    final Offset center =
-    Offset(size.width / 2, size.height / 2);
-
-    final double radius =
-        size.width / 2 - 10;
+    final Offset center = Offset(size.width / 2, size.height / 2);
+    final double radius = size.width / 2 - 10;
 
     canvas.drawArc(
-      Rect.fromCircle(
-        center: center,
-        radius: radius,
-      ),
+      Rect.fromCircle(center: center, radius: radius),
       pi * 0.25,
       pi * 1.45,
       false,
@@ -229,22 +174,16 @@ class FeedingLoadingArcPainter extends CustomPainter {
     );
 
     final double dotAngle = pi * 0.25;
-
     final Offset dotOffset = Offset(
       center.dx + cos(dotAngle) * radius,
       center.dy + sin(dotAngle) * radius,
     );
 
-    canvas.drawCircle(
-      dotOffset,
-      4,
-      dotPaint,
-    );
+    canvas.drawCircle(dotOffset, 4, dotPaint);
   }
 
   @override
-  bool shouldRepaint(
-      covariant FeedingLoadingArcPainter oldDelegate) {
+  bool shouldRepaint(covariant FeedingLoadingArcPainter oldDelegate) {
     return false;
   }
 }

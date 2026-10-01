@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:ai_fishapp/api/api_client.dart';
+import 'package:ai_fishapp/services/socket_service.dart';
 import 'package:ai_fishapp/services/token_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -30,7 +31,9 @@ class _StartScreenState extends State<StartScreen> {
 
   Future<void> kakaoLogin(BuildContext context)async{
     try{
+      print(1);
       final data = await UserApi.instance.loginWithKakaoAccount();
+      print(2);
       final (success,hasUsernickname) = await getToken(data.accessToken,'kakao');
       if(success){
         if(hasUsernickname){
@@ -79,29 +82,35 @@ class _StartScreenState extends State<StartScreen> {
         print('로그인 실패');
       }
     } on GoogleSignInException catch (e) {
-      print('===== GoogleSignInException =====');
-      print('code: ${e.code}');
-      print('description: ${e.description}');
-      print('details: ${e.details}');
-    }catch(e){
+        print('===== GoogleSignInException =====');
+        print('code: ${e.code}');
+        print('description: ${e.description}');
+        print('details: ${e.details}');
+      }catch(e){
       print('구글 로그인 오류: $e');
     }
   }
 
   Future<(bool, dynamic)> getToken(String accesstoken,provider) async{
     final response = await ApiClient.post('/api/auth/login',
-        jsonEncode({'accesstoken':accesstoken,'provider':provider})
+      jsonEncode({'accesstoken':accesstoken,'provider':provider})
     );
-    print(response.body);
-    print('statusCode: ${response.statusCode}');
-    print('body: ${response.body}');
+    print("상태코드: ${response.statusCode}");
+    print("응답본문: ${response.body}");
+    await TokenStorage.deleteDeviceId();
+    final tankid = await TokenStorage.getdeviceId();
+    print(tankid); 
     if(response.statusCode == 200){
       final data = jsonDecode(response.body);
       TokenStorage.saveTokens(data['accesstoken'],data['refreshtoken']);
+      await SocketService.instance.connect(data['user_id']);
+      if(data['device_id']!=null){
+        print("들어감");
+        TokenStorage.savedeviceId(data['device_id']);
+      }
       return (true,data['exNickname']);
     }else{
       print('로그인 실패');
-      print(response.body);
       return (false,false);
     }
 

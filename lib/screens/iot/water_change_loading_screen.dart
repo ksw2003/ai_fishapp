@@ -1,58 +1,51 @@
-import 'dart:convert';
+import 'dart:async';
 import 'dart:math';
-
-import 'package:ai_fishapp/api/motor_api.dart';
+import 'package:ai_fishapp/api/sensor_api.dart';
+import 'package:ai_fishapp/services/socket_service.dart';
 import 'package:flutter/material.dart';
 
 class WaterChangeLoadingScreen extends StatefulWidget {
   const WaterChangeLoadingScreen({super.key});
 
   @override
-  State<WaterChangeLoadingScreen> createState() =>
-      _WaterChangeLoadingScreenState();
+  State<WaterChangeLoadingScreen> createState()=>
+    _WaterChangeLoadingScreenState();
 }
 
-class _WaterChangeLoadingScreenState
-    extends State<WaterChangeLoadingScreen> {
-  bool _isCompleted = false;
-  bool _isError = false;
+class _WaterChangeLoadingScreenState extends State<WaterChangeLoadingScreen>{
+  final SensorApi _sensorApi = SensorApi();
 
-  @override
+  StreamSubscription? _subscription;
+ @override
   void initState() {
     super.initState();
-    _startWaterChange();
-  }
+    SocketService.instance.send({
+      'type':'waterChange'
+    });
+    _subscription =
+        SocketService.instance.stream?.listen((data) {
+          print(data);
+      if(data['type'] == 'waterChangeResult'){
 
-  Future<void> _startWaterChange() async {
-    try {
-      final response = await MotorApi.waterChange();
-
-      if (!mounted) return;
-
-      if (response.statusCode == 200) {
-        setState(() {
-          _isCompleted = true;
-        });
-
-        Future.delayed(const Duration(seconds: 5), () {
           if (!mounted) return;
 
-          Navigator.pop(context, true);
-        });
-      } else {
-        setState(() {
-          _isError = true;
-        });
+          final bool success = data['success'] == true;
+          final String message = data['message'];
+          Navigator.pop(context, {
+          'success': success,
+          'message': message,});
       }
-    } catch (e) {
-      print('환수 오류 : $e');
+    });
+  }
 
-      if (!mounted) return;
 
-      setState(() {
-        _isError = true;
-      });
-    }
+   @override
+  void dispose() {
+    print('환수 SSE 연결 종료');
+
+    _subscription?.cancel();
+
+    super.dispose();
   }
 
   @override
@@ -71,54 +64,14 @@ class _WaterChangeLoadingScreenState
                   size: 18,
                   color: Color(0xFF8FA8D8),
                 ),
-                onPressed: _isCompleted || _isError
-                    ? () {
+                onPressed: () {
                   Navigator.pop(context);
-                }
-                    : null,
+                },
               ),
             ),
 
-            Center(
-              child: _isError
-                  ? const Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.error_outline,
-                    size: 70,
-                    color: Colors.redAccent,
-                  ),
-                  SizedBox(height: 20),
-                  Text(
-                    '환수에 실패했습니다.',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              )
-                  : _isCompleted
-                  ? const Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.check_circle_outline,
-                    size: 70,
-                    color: Colors.green,
-                  ),
-                  SizedBox(height: 20),
-                  Text(
-                    '환수가 완료되었습니다.',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              )
-                  : const Column(
+            const Center(
+              child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   WaterChangeRotatingLoadingIcon(),
@@ -214,7 +167,6 @@ class WaterChangeLoadingArcPainter extends CustomPainter {
     );
 
     final double dotAngle = pi * 0.25;
-
     final Offset dotOffset = Offset(
       center.dx + cos(dotAngle) * radius,
       center.dy + sin(dotAngle) * radius,
