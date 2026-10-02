@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+
+import '../../api/api_client.dart';
+import '../../services/websocket_ai_service.dart';
 import '../../widgets/common_bottom_nav_bar.dart';
+
 
 class FishInfoManagementScreen extends StatefulWidget {
   const FishInfoManagementScreen({super.key});
@@ -9,39 +13,155 @@ class FishInfoManagementScreen extends StatefulWidget {
       _FishInfoManagementScreenState();
 }
 
-class _FishInfoManagementScreenState extends State<FishInfoManagementScreen> {
+
+class _FishInfoManagementScreenState
+    extends State<FishInfoManagementScreen> {
+
+  // ==========================================
+  // 물고기 목록
+  // ==========================================
+
   List<Map<String, dynamic>> fishList = [
     {'name': '구피', 'count': 10},
     {'name': '네온 테트라', 'count': 5},
     {'name': '금붕어', 'count': 3},
   ];
 
+
   bool isLoading = false;
+
+
+  // ==========================================
+  // WebSocket
+  // ==========================================
+
+  late final WebSocketService webSocketService;
+
+
+  @override
+  void initState() {
+    super.initState();
+
+    // 기존 HTTP 백엔드 주소의
+    // http:// 부분만 ws:// 로 변경해서 사용
+    final wsUrl = ApiClient.baseUrl.replaceFirst(
+      'http://',
+      'ws://',
+    );
+
+    webSocketService = WebSocketService(
+      wsUrl: wsUrl,
+    );
+
+    _connectWebSocket();
+  }
+
+
+  // ==========================================
+  // WebSocket 연결
+  // ==========================================
+
+  Future<void> _connectWebSocket() async {
+    try {
+      await webSocketService.connect();
+
+      // Node.js에서 오는 메시지 수신
+      webSocketService.listen(
+        onMessage: (message) {
+          final type = message['type'];
+
+          // ==================================
+          // 어종 분석 결과
+          // ==================================
+          if (type == 'species_result') {
+            final data = message['data'];
+
+            if (data == null) {
+              return;
+            }
+
+            final speciesCount = data['speciesCount'];
+
+            if (speciesCount is Map) {
+              final newFishList =
+                  <Map<String, dynamic>>[];
+
+              speciesCount.forEach(
+                (species, count) {
+                  newFishList.add({
+                    'name': species.toString(),
+                    'count': count,
+                  });
+                },
+              );
+
+              if (!mounted) {
+                return;
+              }
+
+              setState(() {
+                fishList = newFishList;
+                isLoading = false;
+              });
+
+              print(
+                '어종 분석 결과 화면 반영 완료: $newFishList',
+              );
+            }
+          }
+        },
+      );
+    } catch (e) {
+      print(
+        'FishInfo WebSocket 연결 오류: $e',
+      );
+    }
+  }
+
+
+  // ==========================================
+  // 갱신하기
+  // ==========================================
 
   Future<void> refreshFishInfo() async {
     setState(() {
       isLoading = true;
     });
 
-    // 지금은 화면 구현용 가짜 대기
-    // 나중에 여기를 백엔드 API 호출로 바꾸면 됨
-    await Future.delayed(const Duration(seconds: 2));
+    print('어종 갱신 요청');
 
-    setState(() {
-      fishList = [
-        {'name': '구피', 'count': 11},
-        {'name': '네온 테트라', 'count': 5},
-        {'name': '금붕어', 'count': 2},
-      ];
-
-      isLoading = false;
-    });
+    // Flutter → Node.js
+    //
+    // {
+    //   "type": "species"
+    // }
+    //
+    // 전송
+    webSocketService.requestSpecies();
   }
+
+
+  // ==========================================
+  // 수정 버튼
+  // ==========================================
 
   void onEditTap() {
     // 나중에 수정 화면 이동 or 수정모드 켜기
     print('수정 버튼 클릭');
   }
+
+
+  // ==========================================
+  // 화면 종료
+  // ==========================================
+
+  @override
+  void dispose() {
+    webSocketService.disconnect();
+
+    super.dispose();
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -51,11 +171,16 @@ class _FishInfoManagementScreenState extends State<FishInfoManagementScreen> {
       body: SafeArea(
         child: Column(
           children: [
+
+            // ==================================
             // 상단 버튼 영역
+            // ==================================
+
             SizedBox(
               height: 76,
               child: Stack(
                 children: [
+
                   Positioned(
                     top: 18,
                     left: 18,
@@ -77,24 +202,35 @@ class _FishInfoManagementScreenState extends State<FishInfoManagementScreen> {
                     child: Material(
                       color: Colors.transparent,
                       shape: const CircleBorder(),
+
                       child: InkResponse(
                         radius: 24,
                         containedInkWell: false,
+
                         splashColor:
-                            const Color(0xFF8FA8D8).withOpacity(0.18),
+                            const Color(0xFF8FA8D8)
+                                .withOpacity(0.18),
+
                         highlightColor:
-                            const Color(0xFF8FA8D8).withOpacity(0.08),
+                            const Color(0xFF8FA8D8)
+                                .withOpacity(0.08),
+
                         onTap: onEditTap,
+
                         child: const SizedBox(
                           width: 48,
                           height: 48,
+
                           child: Center(
                             child: Text(
                               '수정',
+
                               style: TextStyle(
                                 fontSize: 14,
-                                color: Color(0xFF8FA8D8),
-                                fontWeight: FontWeight.w600,
+                                color:
+                                    Color(0xFF8FA8D8),
+                                fontWeight:
+                                    FontWeight.w600,
                               ),
                             ),
                           ),
@@ -106,16 +242,33 @@ class _FishInfoManagementScreenState extends State<FishInfoManagementScreen> {
               ),
             ),
 
+
+            // ==================================
             // 본문
+            // ==================================
+
             Expanded(
               child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(28, 22, 28, 28),
+                physics:
+                    const BouncingScrollPhysics(),
+
+                padding:
+                    const EdgeInsets.fromLTRB(
+                  28,
+                  22,
+                  28,
+                  28,
+                ),
+
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment:
+                      CrossAxisAlignment.start,
+
                   children: [
+
                     const Text(
                       '나의 물고기',
+
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w900,
@@ -125,9 +278,18 @@ class _FishInfoManagementScreenState extends State<FishInfoManagementScreen> {
 
                     const SizedBox(height: 18),
 
+
+                    // ==================================
+                    // 물고기 목록
+                    // ==================================
+
                     ...fishList.map(
                       (fish) => Padding(
-                        padding: const EdgeInsets.only(bottom: 10),
+                        padding:
+                            const EdgeInsets.only(
+                          bottom: 10,
+                        ),
+
                         child: FishInfoRow(
                           name: fish['name'],
                           count: fish['count'],
@@ -135,37 +297,76 @@ class _FishInfoManagementScreenState extends State<FishInfoManagementScreen> {
                       ),
                     ),
 
+
                     const SizedBox(height: 4),
+
+
+                    // ==================================
+                    // 갱신하기 버튼
+                    // ==================================
 
                     SizedBox(
                       width: double.infinity,
                       height: 48,
+
                       child: ElevatedButton(
-                        onPressed: isLoading ? null : refreshFishInfo,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFC7E5FF),
-                          disabledBackgroundColor: const Color(0xFFC7E5FF),
-                          foregroundColor: const Color(0xFF2D3E5F),
-                          disabledForegroundColor: const Color(0xFF2D3E5F),
+                        onPressed:
+                            isLoading
+                                ? null
+                                : refreshFishInfo,
+
+                        style:
+                            ElevatedButton.styleFrom(
+                          backgroundColor:
+                              const Color(
+                            0xFFC7E5FF,
+                          ),
+
+                          disabledBackgroundColor:
+                              const Color(
+                            0xFFC7E5FF,
+                          ),
+
+                          foregroundColor:
+                              const Color(
+                            0xFF2D3E5F,
+                          ),
+
+                          disabledForegroundColor:
+                              const Color(
+                            0xFF2D3E5F,
+                          ),
+
                           elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(13),
+
+                          shape:
+                              RoundedRectangleBorder(
+                            borderRadius:
+                                BorderRadius.circular(
+                              13,
+                            ),
                           ),
                         ),
+
                         child: isLoading
                             ? const SizedBox(
                                 width: 22,
                                 height: 22,
-                                child: CircularProgressIndicator(
+
+                                child:
+                                    CircularProgressIndicator(
                                   strokeWidth: 2.5,
-                                  color: Color(0xFF6CAAEF),
+                                  color:
+                                      Color(0xFF6CAAEF),
                                 ),
                               )
                             : const Text(
                                 '갱신하기',
+
                                 style: TextStyle(
                                   fontSize: 15,
-                                  fontWeight: FontWeight.w800,
+                                  fontWeight:
+                                      FontWeight.w800,
                                 ),
                               ),
                       ),
@@ -178,13 +379,19 @@ class _FishInfoManagementScreenState extends State<FishInfoManagementScreen> {
         ),
       ),
 
+
+      // ==========================================
       // 공통 하단 네비게이션바
-      bottomNavigationBar: const CommonBottomNavBar(
+      // ==========================================
+
+      bottomNavigationBar:
+          const CommonBottomNavBar(
         selectedIndex: 3,
       ),
     );
   }
 }
+
 
 class FishInfoRow extends StatelessWidget {
   final String name;
@@ -200,29 +407,49 @@ class FishInfoRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
+
+        // ======================================
         // 물고기 이름 박스
+        // ======================================
+
         Expanded(
           child: Container(
             height: 42,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+
+            padding:
+                const EdgeInsets.symmetric(
+              horizontal: 16,
+            ),
+
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(13),
+
+              borderRadius:
+                  BorderRadius.circular(13),
+
               border: Border.all(
-                color: const Color(0xFFE8EEF7),
+                color:
+                    const Color(0xFFE8EEF7),
                 width: 1.2,
               ),
+
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.03),
+                  color:
+                      Colors.black.withOpacity(
+                    0.03,
+                  ),
                   blurRadius: 4,
                   offset: const Offset(0, 2),
                 ),
               ],
             ),
+
             alignment: Alignment.centerLeft,
+
             child: Text(
               name,
+
               style: const TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w700,
@@ -232,30 +459,47 @@ class FishInfoRow extends StatelessWidget {
           ),
         ),
 
+
         const SizedBox(width: 12),
 
+
+        // ======================================
         // 개수 박스
+        // ======================================
+
         Container(
           width: 66,
           height: 42,
+
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(13),
+
+            borderRadius:
+                BorderRadius.circular(13),
+
             border: Border.all(
-              color: const Color(0xFFE8EEF7),
+              color:
+                  const Color(0xFFE8EEF7),
               width: 1.2,
             ),
+
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.03),
+                color:
+                    Colors.black.withOpacity(
+                  0.03,
+                ),
                 blurRadius: 4,
                 offset: const Offset(0, 2),
               ),
             ],
           ),
+
           alignment: Alignment.center,
+
           child: Text(
             '$count',
+
             style: const TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w800,

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+
 import 'package:ai_fishapp/api/api_client.dart';
 import 'package:ai_fishapp/services/socket_service.dart';
 import 'package:ai_fishapp/services/token_storage.dart';
@@ -23,100 +24,196 @@ class _StartScreenState extends State<StartScreen> {
     super.initState();
 
     Timer(const Duration(seconds: 2), () {
+      if (!mounted) return;
+
       setState(() {
         isLoading = false;
       });
     });
   }
 
-  Future<void> kakaoLogin(BuildContext context)async{
-    try{
-      print(1);
-      final data = await UserApi.instance.loginWithKakaoAccount();
-      print(2);
-      final (success,hasUsernickname) = await getToken(data.accessToken,'kakao');
-      if(success){
-        if(hasUsernickname){
-          //관찰화면으로 이동 /home
-          if (!context.mounted) return;
-          Navigator.pushReplacementNamed(context, '/home');
-        }else{
-          //설정 화면으로 이동 /make-profile
-          if (!context.mounted) return;
-          Navigator.pushReplacementNamed(context, '/make-profile');
-        }
-      }else{
-        print('로그인 실패');
+  // =========================================================
+  // 카카오 로그인
+  // =========================================================
+  Future<void> kakaoLogin(BuildContext context) async {
+    try {
+      print('카카오 로그인 시작');
+
+      final data =
+          await UserApi.instance.loginWithKakaoAccount();
+
+      final (success, hasUserNickname) =
+          await getToken(
+        data.accessToken,
+        'kakao',
+      );
+
+      if (!success) {
+        print('카카오 로그인 실패');
+        return;
       }
-    }catch(e){
+
+      if (!context.mounted) return;
+
+      if (hasUserNickname) {
+        Navigator.pushReplacementNamed(
+          context,
+          '/home',
+        );
+      } else {
+        Navigator.pushReplacementNamed(
+          context,
+          '/make-profile',
+        );
+      }
+    } catch (e) {
       print('카카오 로그인 오류: $e');
     }
   }
 
-  Future<void> googleLogin(BuildContext context)async{
-    try{
-      final GoogleSignInAccount googleUser = await GoogleSignIn.instance.authenticate();
+  // =========================================================
+  // 구글 로그인
+  // =========================================================
+  Future<void> googleLogin(
+    BuildContext context,
+  ) async {
+    try {
+      final GoogleSignInAccount googleUser =
+          await GoogleSignIn.instance.authenticate();
+
       print(googleUser);
-      final authorization = await googleUser.authorizationClient.authorizationForScopes([
+
+      final authorization =
+          await googleUser.authorizationClient
+              .authorizationForScopes([
         'openid',
         'email',
         'profile',
       ]);
-      final accesstoken = authorization?.accessToken;
-      if (accesstoken == null) {
-        print('구글 ID Token 없음');
+
+      final accessToken =
+          authorization?.accessToken;
+
+      if (accessToken == null) {
+        print('구글 Access Token 없음');
         return;
       }
-      final (success,hasUsernickname) = await getToken(accesstoken,'google');
-      if(success){
-        if(hasUsernickname){
-          //관찰화면으로 이동 /home
-          if (!context.mounted) return;
-          Navigator.pushReplacementNamed(context, '/home');
-        }else{
-          //설정 화면으로 이동 /make-profile
-          if (!context.mounted) return;
-          Navigator.pushReplacementNamed(context, '/make-profile');
-        }
-      }else{
-        print('로그인 실패');
+
+      final (success, hasUserNickname) =
+          await getToken(
+        accessToken,
+        'google',
+      );
+
+      if (!success) {
+        print('구글 로그인 실패');
+        return;
+      }
+
+      if (!context.mounted) return;
+
+      if (hasUserNickname) {
+        Navigator.pushReplacementNamed(
+          context,
+          '/home',
+        );
+      } else {
+        Navigator.pushReplacementNamed(
+          context,
+          '/make-profile',
+        );
       }
     } on GoogleSignInException catch (e) {
-        print('===== GoogleSignInException =====');
-        print('code: ${e.code}');
-        print('description: ${e.description}');
-        print('details: ${e.details}');
-      }catch(e){
+      print('===== GoogleSignInException =====');
+      print('code: ${e.code}');
+      print('description: ${e.description}');
+      print('details: ${e.details}');
+    } catch (e) {
       print('구글 로그인 오류: $e');
     }
   }
 
-  Future<(bool, dynamic)> getToken(String accesstoken,provider) async{
-    final response = await ApiClient.post('/api/auth/login',
-      jsonEncode({'accesstoken':accesstoken,'provider':provider})
+  // =========================================================
+  // Node.js 로그인 API
+  // =========================================================
+  Future<(bool, dynamic)> getToken(
+    String accessToken,
+    String provider,
+  ) async {
+    final response = await ApiClient.post(
+      '/api/auth/login',
+      jsonEncode({
+        'accesstoken': accessToken,
+        'provider': provider,
+      }),
     );
-    print("상태코드: ${response.statusCode}");
-    print("응답본문: ${response.body}");
+
+    print('상태코드: ${response.statusCode}');
+    print('응답본문: ${response.body}');
+
     await TokenStorage.deleteDeviceId();
-    final tankid = await TokenStorage.getdeviceId();
-    print(tankid); 
-    if(response.statusCode == 200){
-      final data = jsonDecode(response.body);
-      TokenStorage.saveTokens(data['accesstoken'],data['refreshtoken']);
-      await SocketService.instance.connect(data['user_id']);
-      if(data['device_id']!=null){
-        print("들어감");
-        TokenStorage.savedeviceId(data['device_id']);
+
+    final tankId =
+        await TokenStorage.getdeviceId();
+
+    print('기존 device_id: $tankId');
+
+    if (response.statusCode == 200) {
+      final data =
+          jsonDecode(response.body);
+
+      // ==========================================
+      // accessToken / refreshToken 저장
+      // ==========================================
+      await TokenStorage.saveTokens(
+        data['accesstoken'],
+        data['refreshtoken'],
+      );
+
+      // ==========================================
+      // user_id 저장
+      // ==========================================
+      await TokenStorage.saveUserId(
+        data['user_id'],
+      );
+
+      // ==========================================
+      // Flutter -> Node 공용 WebSocket 연결
+      // ==========================================
+      await SocketService.instance.connect(
+        data['user_id'],
+      );
+
+      // ==========================================
+      // device_id가 있으면 저장
+      // ==========================================
+      if (data['device_id'] != null) {
+        print(
+          'device_id 저장: ${data['device_id']}',
+        );
+
+        await TokenStorage.savedeviceId(
+          data['device_id'],
+        );
       }
-      return (true,data['exNickname']);
-    }else{
-      print('로그인 실패');
-      return (false,false);
+
+      return (
+        true,
+        data['exNickname'],
+      );
     }
 
+    print('로그인 실패');
+
+    return (
+      false,
+      false,
+    );
   }
 
-
+  // =========================================================
+  // 로그인 패널 열기
+  // =========================================================
   void openLoginPanel() {
     if (isLoading) return;
 
@@ -130,7 +227,9 @@ class _StartScreenState extends State<StartScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          /// 배경
+          // ==========================================
+          // 배경
+          // ==========================================
           Container(
             width: double.infinity,
             height: double.infinity,
@@ -146,7 +245,9 @@ class _StartScreenState extends State<StartScreen> {
             ),
           ),
 
-          /// 로고 영역
+          // ==========================================
+          // 로고 영역
+          // ==========================================
           Center(
             child: GestureDetector(
               onTap: openLoginPanel,
@@ -168,13 +269,16 @@ class _StartScreenState extends State<StartScreen> {
                     ),
                   ),
 
-                  const SizedBox(height: 30),
+                  const SizedBox(
+                    height: 30,
+                  ),
 
                   if (isLoading)
                     const SizedBox(
                       width: 35,
                       height: 35,
-                      child: CircularProgressIndicator(
+                      child:
+                          CircularProgressIndicator(
                         color: Colors.white,
                         strokeWidth: 3,
                       ),
@@ -193,103 +297,131 @@ class _StartScreenState extends State<StartScreen> {
             ),
           ),
 
-          /// 로그인 패널
+          // ==========================================
+          // 로그인 패널
+          // ==========================================
           AnimatedPositioned(
-            duration: const Duration(milliseconds: 500),
-
+            duration:
+                const Duration(milliseconds: 500),
             left: 0,
             right: 0,
-
             bottom: showLogin ? 0 : -450,
-
             child: Container(
               height: 400,
-
               decoration: const BoxDecoration(
                 color: Colors.white,
-
                 borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(40),
-                  topRight: Radius.circular(40),
+                  topLeft:
+                      Radius.circular(40),
+                  topRight:
+                      Radius.circular(40),
                 ),
-
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black12,
                     blurRadius: 15,
-                    offset: Offset(0, -3),
+                    offset: Offset(
+                      0,
+                      -3,
+                    ),
                   ),
                 ],
               ),
-
               child: Padding(
-                padding: const EdgeInsets.symmetric(
+                padding:
+                    const EdgeInsets.symmetric(
                   horizontal: 30,
                   vertical: 30,
                 ),
-
                 child: Column(
                   children: [
                     const Text(
                       'Login',
                       style: TextStyle(
-                        color: Color(0xFF0342AB),
+                        color:
+                            Color(0xFF0342AB),
                         fontSize: 36,
-                        fontWeight: FontWeight.bold,
+                        fontWeight:
+                            FontWeight.bold,
                       ),
                     ),
 
-                    const SizedBox(height: 40),
+                    const SizedBox(
+                      height: 40,
+                    ),
 
                     const Text(
                       'SNS로 간편 가입하기',
                       style: TextStyle(
-                        color: Color(0xFF50576B),
+                        color:
+                            Color(0xFF50576B),
                         fontSize: 18,
                       ),
                     ),
 
-                    const SizedBox(height: 30),
+                    const SizedBox(
+                      height: 30,
+                    ),
 
+                    // ==================================
+                    // 카카오 로그인
+                    // ==================================
                     SizedBox(
                       width: double.infinity,
                       height: 50,
-
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFFEE500),
-                          foregroundColor: Colors.black,
+                      child:
+                          ElevatedButton(
+                        style:
+                            ElevatedButton
+                                .styleFrom(
+                          backgroundColor:
+                              const Color(
+                            0xFFFEE500,
+                          ),
+                          foregroundColor:
+                              Colors.black,
                         ),
-
                         onPressed: () {
-                          kakaoLogin(context);
+                          kakaoLogin(
+                            context,
+                          );
                         },
-
                         child: const Text(
                           '카카오 로그인',
-                          style: TextStyle(
+                          style:
+                              TextStyle(
                             fontSize: 16,
-                            fontWeight: FontWeight.bold,
+                            fontWeight:
+                                FontWeight
+                                    .bold,
                           ),
                         ),
                       ),
                     ),
 
-                    const SizedBox(height: 15),
+                    const SizedBox(
+                      height: 15,
+                    ),
 
+                    // ==================================
+                    // 구글 로그인
+                    // ==================================
                     SizedBox(
                       width: double.infinity,
                       height: 50,
-
-                      child: OutlinedButton(
+                      child:
+                          OutlinedButton(
                         onPressed: () {
-                          googleLogin(context);
+                          googleLogin(
+                            context,
+                          );
                         },
-
                         child: const Text(
                           '구글 로그인',
-                          style: TextStyle(
-                            color: Colors.black,
+                          style:
+                              TextStyle(
+                            color:
+                                Colors.black,
                             fontSize: 16,
                           ),
                         ),
