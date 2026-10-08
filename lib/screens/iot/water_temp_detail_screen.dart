@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../api/sensor_api.dart';
 import '../../models/sensor.dart';
-
+import '../../services/tank_service.dart';
 class WaterTempDetailScreen extends StatefulWidget {
   const WaterTempDetailScreen({super.key});
 
@@ -13,14 +13,24 @@ class WaterTempDetailScreen extends StatefulWidget {
 
 class _WaterTempDetailScreenState extends State<WaterTempDetailScreen> {
   final SensorApi _sensorApi = SensorApi();
-
   SensorData? sensor;
   Timer? _timer;
+  double? minTemp;
+  double? maxTemp;
+
+  Future<void> loadTankSetting() async {
+    final setting = await TankService.getTankSetting();
+
+    setState(() {
+      minTemp = (setting['min_temp'] as num).toDouble();
+      maxTemp = (setting['max_temp'] as num).toDouble();
+    });
+  }
 
   @override
   void initState() {
     super.initState();
-
+    loadTankSetting();
     SensorApi().connect('/api/tank/data').listen((data) {
       if (!mounted) return;
 
@@ -49,8 +59,8 @@ class _WaterTempDetailScreenState extends State<WaterTempDetailScreen> {
     }
 
     final double currentTemp = sensor!.temperature;
-    final double maxTemp = sensor!.maxTemp;
-    final double minTemp = sensor!.minTemp;
+    final double currentmaxTemp = sensor!.maxTemp;
+    final double currentminTemp = sensor!.minTemp;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -131,7 +141,7 @@ class _WaterTempDetailScreenState extends State<WaterTempDetailScreen> {
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    '${maxTemp.toInt()}°C',
+                                    '${currentmaxTemp.toInt()}°C',
                                     style: const TextStyle(
                                       fontSize: 15,
                                       fontWeight: FontWeight.w900,
@@ -149,7 +159,7 @@ class _WaterTempDetailScreenState extends State<WaterTempDetailScreen> {
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    '${minTemp.toInt()}°C',
+                                    '${currentminTemp.toInt()}°C',
                                     style: const TextStyle(
                                       fontSize: 15,
                                       fontWeight: FontWeight.w900,
@@ -166,8 +176,10 @@ class _WaterTempDetailScreenState extends State<WaterTempDetailScreen> {
                           // 오른쪽 수온 게이지
                           TemperatureBar(
                             temperature: currentTemp,
-                            minTemperature: 15,
-                            maxTemperature: 30,
+                            minTemperature: currentminTemp ?? 15,
+                            maxTemperature: currentmaxTemp ?? 30,
+                            minTemp : minTemp ?? 10,
+                            maxTemp: maxTemp ?? 30,
                             barHeight: gaugeHeight,
                           ),
                         ],
@@ -189,6 +201,9 @@ class TemperatureBar extends StatelessWidget {
   final double minTemperature;
   final double maxTemperature;
   final double barHeight;
+  final double minTemp;
+  final double maxTemp;
+
 
   const TemperatureBar({
     super.key,
@@ -196,15 +211,46 @@ class TemperatureBar extends StatelessWidget {
     required this.minTemperature,
     required this.maxTemperature,
     required this.barHeight,
+    required this.minTemp,
+    required this.maxTemp
   });
+
+  List<Color> getTemperatureGradient(double temp) {
+    if (minTemp == null || maxTemp == null) {
+      return const [
+        Color(0xFF18DDE8),
+        Color(0xFF00A8F5),
+        Color(0xFF006BF0),
+      ];
+    }
+
+    if (temp < minTemp!) {
+      return const [
+        Color(0xFF0083D5),
+        Color(0xFF0047CC),
+        Color(0xFF001392),
+      ];
+    } else if (temp > maxTemp!) {
+      return const [
+        Color(0xFFFF9A9A),
+        Color(0xFFFF5252),
+        Color(0xFFD50000),
+      ];
+    } else {
+      return const [
+        Color(0xFF18DDE8),
+        Color(0xFF00A8F5),
+        Color(0xFF006BF0),
+      ];
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     const double barWidth = 58;
 
     final double ratio =
-        ((temperature - minTemperature) / (maxTemperature - minTemperature))
-            .clamp(0.0, 1.0);
+    (temperature / 40.0).clamp(0.0, 1.0);
 
     final double fillHeight = barHeight * ratio;
 
@@ -271,38 +317,5 @@ class TemperatureBar extends StatelessWidget {
     }
 
     return position;
-  }
-}
-
-// 온도에 따라 게이지 색 바뀌는 부분
-List<Color> getTemperatureGradient(double temp) {
-  if (temp < 18) {
-    // 낮은 수온: 밝은 하늘색 ~ 파랑
-    return const [
-      Color(0xFFB8F3FF),
-      Color(0xFF48B8FF),
-      Color(0xFF006BF0),
-    ];
-  } else if (temp <= 22) {
-    // 적정 수온: 청록 ~ 파랑
-    return const [
-      Color(0xFF18DDE8),
-      Color(0xFF00A8F5),
-      Color(0xFF006BF0),
-    ];
-  } else if (temp <= 26) {
-    // 높은 수온: 노랑 ~ 주황
-    return const [
-      Color(0xFFFFE082),
-      Color(0xFFFFA726),
-      Color(0xFFFF7043),
-    ];
-  } else {
-    // 위험 수온: 빨강 계열
-    return const [
-      Color(0xFFFF9A9A),
-      Color(0xFFFF5252),
-      Color(0xFFD50000),
-    ];
   }
 }

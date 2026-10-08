@@ -8,6 +8,7 @@ import '../widgets/common_bottom_nav_bar.dart';
 import '../widgets/yes_or_no.dart';
 import '../api/sensor_api.dart';
 import '../models/sensor.dart';
+import '../services/tank_service.dart';
 import 'dart:async';
 
 class HomeScreen extends StatefulWidget {
@@ -17,6 +18,11 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+
+  int? normalWater;
+  int? warningWater;
+  double? minTemp;
+  double? maxTemp;
   bool settingTank = false;
   final minTempController = TextEditingController();
   final maxTempController = TextEditingController();
@@ -36,12 +42,50 @@ class _HomeScreenState extends State<HomeScreen> {
 
   String userName = '';
 
+  String _getWaterQualityText(int tds) {
+    if (normalWater == null || warningWater == null) {
+      return '로딩중';
+    }
+
+    if (tds <= normalWater!) {
+      return '좋음';
+    } else if (tds <= warningWater!) {
+      return '보통';
+    } else {
+      return '나쁨';
+    }
+  }
+  Color _getWaterQualityColor(int tds) {
+    if (normalWater == null || warningWater == null) {
+      return const Color(0xFF00BDF2);
+    }
+
+    if (tds <= normalWater!) {
+      return Colors.blue; // 좋음
+    } else if (tds <= warningWater!) {
+      return Colors.orange; // 보통
+    } else {
+      return Colors.red; // 나쁨
+    }
+  }
+  Color _getTemperatureColor(double temp) {
+    if (minTemp == null || maxTemp == null) {
+      return const Color(0xFF9CB8E8);
+    }
+
+    if (temp < minTemp! || temp > maxTemp!) {
+      return Colors.red;
+    }
+
+    return Colors.blue;
+  }
   @override
   void initState() {
     super.initState();
     getUserName();
     getTankId();
     getFeedAndWaterChange();
+    loadTankSetting();
     _loadTodayStatus();
     _sensorSubscription = _sensorApi.connect('/api/tank/data').listen((data) {
       print(data);
@@ -109,6 +153,21 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Future<void> loadTankSetting() async {
+    try {
+      final setting = await TankService.getTankSetting();
+
+      setState(() {
+        normalWater = setting['normal_waterquality'];
+        warningWater = setting['warning_waterquality'];
+        minTemp = (setting['min_temp'] as num?)?.toDouble();
+        maxTemp = (setting['max_temp'] as num?)?.toDouble();
+      });
+    } catch (e) {
+      print('어항 설정 로드 실패: $e');
+    }
+  }
+
   Future<void> _loadTodayStatus() async {
     final prefs = await SharedPreferences.getInstance();
 
@@ -146,10 +205,15 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  Future<bool> getDeviceId()async{
-    String deviceId = 'SS505';
-    await TokenStorage.savedeviceId(deviceId);
-    return true;//나중에 연결 하는 함수 만들 예정
+  Future<bool> getDeviceId() async {
+    final savedDeviceId = await TokenStorage.getdeviceId();
+
+    if (savedDeviceId != null && savedDeviceId.isNotEmpty) {
+      print('저장된 device_id: $savedDeviceId');
+      return true;
+    }
+
+    return false;
   }
 
   Future<bool>checkDevice()async{
@@ -393,7 +457,8 @@ class _HomeScreenState extends State<HomeScreen> {
                             value: sensor == null
                                 ? '--℃'
                                 : '${sensor!.temperature.toInt()}℃',
-                            valueColor: const Color(0xFF9CB8E8),
+                            valueColor: sensor == null ? const Color(0xFF9CB8E8)
+                                : _getTemperatureColor(sensor!.temperature),
                             onTap: () {
                               Navigator.pushNamed(context, '/water-temp');
                             },
@@ -406,7 +471,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             value: sensor == null
                                 ? '--'
                                 : _getWaterQualityText(sensor!.water_quality),
-                            valueColor: const Color(0xFF00BDF2),
+                            valueColor: sensor == null
+                                ? const Color(0xFF00BDF2)
+                                : _getWaterQualityColor(sensor!.water_quality),
                             onTap: () {
                               print('수질 카드 클릭');
                             },
@@ -619,15 +686,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-String _getWaterQualityText(int tds) {
-  if (tds <= 300) {
-    return "좋음";
-  } else if (tds <= 600) {
-    return "보통";
-  } else {
-    return "나쁨";
-  }
-}
+
 
 class HomeInfoCard extends StatefulWidget {
   final String title;
