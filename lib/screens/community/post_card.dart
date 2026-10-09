@@ -7,6 +7,7 @@ class PostCard extends StatelessWidget {
   final String keyword;
   final String selectedTag;
 
+
   const PostCard({
     super.key,
     required this.post,
@@ -25,7 +26,6 @@ class PostCard extends StatelessWidget {
         ),
       );
     }
-
     final title = post.title;
     final lowerTitle = title.toLowerCase();
     final lowerKeyword = keyword.toLowerCase();
@@ -180,8 +180,8 @@ class PostCard extends StatelessWidget {
                       color: Color(0xff9BA9B0),
                     ),
                     const SizedBox(width: 5),
-                    const Text(
-                      "0",
+                    Text(
+                      post.commentCount,
                       style: TextStyle(
                         fontSize: 18,
                         color: Color(0xff9BA9B0),

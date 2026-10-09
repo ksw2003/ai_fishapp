@@ -112,21 +112,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Future<bool> getDeviceId()async{
-    String deviceId = 'SS505';
-    await TokenStorage.savedeviceId(deviceId);
-    return true;//나중에 연결 하는 함수 만들 예정
-  }
-
-  Future<bool>checkDevice()async{
-    final id = await getDeviceId();
-    if(id){
-      return true;
-    }else{
-      return false;
-    }
-    
-  }
+  
 
   Future<void> getFeedAndWaterChange()async{
     final response = await ApiClient.get('/api/tank/logdata',token: true);
@@ -147,16 +133,22 @@ class _HomeScreenState extends State<HomeScreen> {
     final normalWater = int.tryParse(minWaterController.text);
     final maxWater = int.tryParse(maxWaterController.text);
     final String name = tankName.text;
-    final deviceid = await TokenStorage.getdeviceId();
     final response = await ApiClient.post('/api/tank/setting',
                                           jsonEncode({
-                                          'device_id':deviceid,
-                                          'tank_name':name,
+                                          'device_id':name,
                                           'min_temp':minTemp,
                                           'max_temp':maxTemp,
                                           'normal_waterquality':normalWater,
                                           'warning_waterquality':maxWater}),token: true);
-    print(response.body);
+    if (response.statusCode == 204) {
+      await TokenStorage.savedeviceId(name);
+
+      if (!mounted) return;
+
+      setState(() {
+        settingTank = true;
+      });
+    }
   }
 
   Future<void> feed() async {
@@ -167,7 +159,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (result != null&&result is Map) {
       final bool success = result['success'];
-      feedingDone = success;
+      feedingDone = success || feedingDone;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -184,7 +176,7 @@ Future<void> waterchange() async {
     print(result);
     if (result != null&&result is Map) {
       final bool success = result['success'];
-      waterChangeDone = success;
+      waterChangeDone = success || waterChangeDone;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -408,31 +400,9 @@ Future<void> waterchange() async {
                     Center(
                       child: ElevatedButton(
                         onPressed: () async{
-                          final deviceId = await checkDevice();
 
                           if (!context.mounted) return;
 
-                          if (!deviceId) {
-                                showDialog(
-                                  context: context,
-                                  builder: (context) {
-                                    return AlertDialog(
-                                      title: const Text('입력 실패'),
-                                      content: const Text('기기 정보를 가져오지 못했습니다.'),
-                                      actions: [
-                                        TextButton(
-                                          onPressed: () {
-                                            Navigator.pop(context);
-                                          },
-                                          child: const Text('확인'),
-                                        ),
-                                      ],
-                                    );
-                                  },
-                                );
-
-                                return;
-                              }
                           showDialog(
                             context: context,
                             builder: (context) {
@@ -446,7 +416,7 @@ Future<void> waterchange() async {
                                         controller: tankName,
                                         keyboardType: TextInputType.text,
                                         decoration: const InputDecoration(
-                                          labelText: '어항 이름'
+                                          labelText: '어항 시리얼 번호'
                                         ),
                                       ),
                                       TextField(

@@ -57,6 +57,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
     final response = await ApiClient.get('/api/daily/$selected',token: true);
     if(response.statusCode == 200){
       final data = jsonDecode(response.body);
+      print(data);
       setState(() {
         if (data['exist'] != true) {
           dailyRecords = {

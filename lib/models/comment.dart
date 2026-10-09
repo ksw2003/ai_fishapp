@@ -26,7 +26,7 @@ class Comment {
       nickname: json['User']['nickname'],
       content: json['content'],
       likeCount: int.tryParse(json['likeCount'].toString()) ?? 0,
-      isLiked: json['isLiked'] ?? false,
+      isLiked: json['liked'] ?? false,
       isDeleted: json['is_deleted'] ?? false,
       parentId: json["parent_id"],
     );

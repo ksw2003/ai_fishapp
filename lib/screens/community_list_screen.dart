@@ -376,6 +376,7 @@ class _CommunityListScreenState extends State<CommunityListScreen> {
                       searchController
                           .text,
                       selectedTag: selectedTag,
+                      
                     ),
                   );
                 },

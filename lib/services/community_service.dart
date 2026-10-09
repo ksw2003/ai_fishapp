@@ -20,6 +20,7 @@ class CommunityService {
 
     final json = jsonDecode(response.body);
 
+    print(json);
     return (json["datas"] as List)
         .map((e) => Post.fromJson(e))
         .toList();

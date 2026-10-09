@@ -38,6 +38,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
     super.initState();
     futurePost =
         CommunityService.getPostDetail(widget.postId);
+    print(futurePost);
   }
 
 
@@ -51,6 +52,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
     required Comment comment,
     required bool isReply,
   }) {
+    print(comment.isLiked);
     return GestureDetector( //댓글 눌렀을 때 (답댓 위해)
       onTap: () {
         if (comment.isDeleted) return;
