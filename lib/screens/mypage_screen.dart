@@ -82,7 +82,6 @@ class _MyPageScreenState extends State<MyPageScreen>{
               children: [
                 TextField(
                   controller: tankNameController,
-                  readOnly: true,
                   keyboardType: TextInputType.text,
                   decoration: const InputDecoration(
                     labelText: '어항 이름'
