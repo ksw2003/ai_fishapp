@@ -1,12 +1,15 @@
+
 import 'dart:async';
 import 'dart:convert';
-import 'package:ai_fishapp/api/api_client.dart';
+
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 class SocketService {
   SocketService._();
 
   static final SocketService instance = SocketService._();
+
   WebSocketChannel? _channel;
 
   int? _userId;
@@ -32,8 +35,20 @@ class SocketService {
     _manualDisconnect = false;
 
     try {
+      // .env에서 API 서버 주소 가져오기
+      final String apiBaseUrl = dotenv.env['API_BASE_URL'] ?? '';
+
+      if (apiBaseUrl.isEmpty) {
+        throw Exception('API_BASE_URL이 .env에 설정되지 않았습니다.');
+      }
+
+      // HTTP 주소를 WebSocket 주소로 변환
+      final String wsUrl = apiBaseUrl
+          .replaceFirst('http://', 'ws://')
+          .replaceFirst('https://', 'wss://');
+
       final channel = WebSocketChannel.connect(
-        Uri.parse('ws://13.239.199.189:3000'),
+        Uri.parse(wsUrl),
       );
 
       await channel.ready;
@@ -85,19 +100,20 @@ class SocketService {
           if (_channel == channel) {
             _channel = null;
           }
-           _reconnect();
+
+          _reconnect();
         },
       );
     } catch (error) {
       print('WebSocket 연결 실패: $error');
 
       _channel = null;
-      
-       _reconnect();
+
+      _reconnect();
     }
   }
 
-   void _reconnect() {
+  void _reconnect() {
     // 사용자가 직접 disconnect 한 경우
     if (_manualDisconnect) {
       return;
@@ -137,7 +153,6 @@ class SocketService {
     );
   }
 
-
   void send(Map<String, dynamic> data) {
     final channel = _channel;
 
@@ -150,8 +165,8 @@ class SocketService {
       jsonEncode(data),
     );
   }
-  
-    Future<void> disconnect() async {
+
+  Future<void> disconnect() async {
     _manualDisconnect = true;
 
     _reconnectTimer?.cancel();

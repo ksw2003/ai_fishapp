@@ -60,7 +60,7 @@ class _MyPageScreenState extends State<MyPageScreen>{
     final tankId = await TokenStorage.getdeviceId();
     final response = await ApiClient.get('/api/tank/setting/$tankId',token: true);
     final data = jsonDecode(response.body);
-    final tankNameController = TextEditingController(text:data['tank_name'] ?? '');
+    final tankNameController = TextEditingController(text:data['device_id'] ?? '');
     final minTempController =
         TextEditingController(text: data['min_temp']?.toString() ?? '');
     final maxTempController =
@@ -431,3 +431,6 @@ class _MyPageButtonState extends State<MyPageButton> {
     );
   }
 }
+
+
+ 

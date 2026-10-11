@@ -1,9 +1,11 @@
+
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class DiaryService {
-  static const String baseUrl =
-      'http://13.239.199.189:3000';
+  // .env에서 API 서버 주소 가져오기
+  static String get baseUrl => dotenv.env['API_BASE_URL'] ?? '';
 
   static Future<Map<String, dynamic>> getDiary(
       DateTime day) async {

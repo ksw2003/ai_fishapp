@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import '../widgets/common_bottom_nav_bar.dart';
 import '../api/dairy_api.dart';
+import '../services/tank_service.dart';
 
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});
@@ -11,10 +12,18 @@ class CalendarScreen extends StatefulWidget {
 }
 
 class _CalendarScreenState extends State<CalendarScreen> {
+
+  int? normalWater;
+  int? warningWater;
+
   String _getWaterQualityText(int tds) {
-    if (tds <= 300) {
+    if (normalWater == null || warningWater == null) {
+      return '로딩중';
+    }
+
+    if (tds <= normalWater!) {
       return '좋음';
-    } else if (tds <= 600) {
+    } else if (tds <= warningWater!) {
       return '보통';
     } else {
       return '나쁨';
@@ -280,6 +289,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                           ? '기록 없음'
                           : _getWaterQualityText(
                         data?['daily']?['water_quality'] ?? 0,
+
                       ),
                       valueColor: const Color(0xFF00BDF2),
                       onTap: () {
