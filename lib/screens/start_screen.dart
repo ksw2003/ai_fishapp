@@ -91,6 +91,7 @@ class _StartScreenState extends State<StartScreen> {
         'profile',
       ]);
 
+      print(authorization?.accessToken);
       final accessToken =
           authorization?.accessToken;
 
@@ -104,6 +105,9 @@ class _StartScreenState extends State<StartScreen> {
         accessToken,
         'google',
       );
+
+      print(success);
+      print(hasUserNickname);
 
       if (!success) {
         print('구글 로그인 실패');
@@ -140,6 +144,10 @@ class _StartScreenState extends State<StartScreen> {
     String accessToken,
     String provider,
   ) async {
+
+    print('들어감');
+    print(accessToken);
+    print(provider);
     final response = await ApiClient.post(
       '/api/auth/login',
       jsonEncode({
@@ -152,11 +160,7 @@ class _StartScreenState extends State<StartScreen> {
     print('응답본문: ${response.body}');
 
     await TokenStorage.deleteDeviceId();
-
-    final tankId =
-        await TokenStorage.getdeviceId();
-
-    print('기존 device_id: $tankId');
+  
 
     if (response.statusCode == 200) {
       final data =

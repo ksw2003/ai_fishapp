@@ -7,7 +7,7 @@ import 'package:http/http.dart' as http;
 
 class ApiClient {
   // .env에서 AWS Node.js 백엔드 주소 가져오기
-  static String get baseUrl => dotenv.env['API_BASE_URL']!;
+  static String get baseUrl => dotenv.env['API_BASE_URI']!;
 
   // 액세스 토큰 갱신
   static Future<bool> _refreshtoken() async {
@@ -66,7 +66,6 @@ class ApiClient {
       }
     }
 
-    print(headers);
 
     final response = await http.get(
       Uri.parse("$baseUrl$endpoint"),
@@ -103,6 +102,7 @@ class ApiClient {
       "Content-Type": "application/json",
     };
 
+    print(baseUrl);
     if (token) {
       final accesstoken = await TokenStorage.getAccessToken();
 
@@ -110,6 +110,8 @@ class ApiClient {
         headers["authorization"] = "Bearer $accesstoken";
       }
     }
+
+
 
     final response = await http.post(
       Uri.parse("$baseUrl$endpoint"),

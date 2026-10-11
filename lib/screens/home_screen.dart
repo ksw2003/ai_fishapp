@@ -244,15 +244,19 @@ class _HomeScreenState extends State<HomeScreen> {
     final normalWater = int.tryParse(minWaterController.text);
     final maxWater = int.tryParse(maxWaterController.text);
     final String name = tankName.text;
-    final deviceid = await TokenStorage.getdeviceId();
     final response = await ApiClient.post('/api/tank/setting',
                                           jsonEncode({
-                                          'device_id':deviceid,
-                                          'tank_name':name,
+                                          'device_id':name,
                                           'min_temp':minTemp,
                                           'max_temp':maxTemp,
                                           'normal_waterquality':normalWater,
                                           'warning_waterquality':maxWater}),token: true);
+    
+    if(response.statusCode == 201){
+      final data = jsonDecode(response.body);
+      await TokenStorage.savedeviceId(data['device_id']);
+    }
+    
     print(response.body);
   }
 
@@ -597,7 +601,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                         controller: tankName,
                                         keyboardType: TextInputType.text,
                                         decoration: const InputDecoration(
-                                          labelText: '어항 이름'
+                                          labelText: '어항 시리얼 넘버'
                                         ),
                                       ),
                                       TextField(
