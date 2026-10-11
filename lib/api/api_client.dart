@@ -1,64 +1,90 @@
 
 import 'dart:convert';
+
 import 'package:ai_fishapp/services/token_storage.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 
 class ApiClient {
-  // 백엔드 주소
-  static const String baseUrl = "http://192.168.0.20:3000";
+  // .env에서 AWS Node.js 백엔드 주소 가져오기
+  static String get baseUrl => dotenv.env['API_BASE_URL']!;
 
-  static Future<bool> _refreshtoken() async{
+  // 액세스 토큰 갱신
+  static Future<bool> _refreshtoken() async {
     final exrefreshtoken = await TokenStorage.getRefreshToken();
-    if(exrefreshtoken == null){
+
+    if (exrefreshtoken == null) {
       return false;
     }
 
     final response = await http.post(
-        Uri.parse("$baseUrl/api/auth/refresh"),
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: jsonEncode({
-          "refreshToken": exrefreshtoken,
-        })
+      Uri.parse("$baseUrl/api/auth/refresh"),
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: jsonEncode({
+        "refreshToken": exrefreshtoken,
+      }),
     );
-    if(response.statusCode == 200){
+
+    if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
       final newAccessToken = data["accesstoken"];
 
       if (newAccessToken == null) {
         return false;
       }
-      await TokenStorage.saveTokens(data["accesstoken"], data["refreshtoken"]);
+
+      await TokenStorage.saveTokens(
+        data["accesstoken"],
+        data["refreshtoken"],
+      );
+
       return true;
     }
+
     return false;
   }
 
-  static Future<http.Response> get(String endpoint,{bool token = false, bool retry = false}) async {
+  // GET 요청
+  static Future<http.Response> get(
+    String endpoint, {
+    bool token = false,
+    bool retry = false,
+  }) async {
     final headers = {
-      "Content-Type": "application/json"
+      "Content-Type": "application/json",
     };
+
     print(token);
-    if(token){
+
+    if (token) {
       final accesstoken = await TokenStorage.getAccessToken();
-      if(accesstoken!=null){
+
+      if (accesstoken != null) {
         headers["authorization"] = "Bearer $accesstoken";
       }
     }
 
     print(headers);
+
     final response = await http.get(
       Uri.parse("$baseUrl$endpoint"),
       headers: headers,
     );
 
-    if(token&&!retry&&response.statusCode == 401){
+    if (token && !retry && response.statusCode == 401) {
       final data = jsonDecode(response.body);
-      if(data["code"] == "ACCESS_TOKEN_EXPIRED"){
+
+      if (data["code"] == "ACCESS_TOKEN_EXPIRED") {
         final success = await _refreshtoken();
-        if(success){
-          return get(endpoint,token:true,retry: true);
+
+        if (success) {
+          return get(
+            endpoint,
+            token: true,
+            retry: true,
+          );
         }
       }
     }
@@ -66,33 +92,44 @@ class ApiClient {
     return response;
   }
 
+  // POST 요청
   static Future<http.Response> post(
-      String endpoint,
-      String? body,
-      {token = false,
-        retry = false}
-      ) async {
+    String endpoint,
+    String? body, {
+    token = false,
+    retry = false,
+  }) async {
     final headers = {
-      "Content-Type": "application/json"
+      "Content-Type": "application/json",
     };
-    if(token){
+
+    if (token) {
       final accesstoken = await TokenStorage.getAccessToken();
-      if(accesstoken!=null){
+
+      if (accesstoken != null) {
         headers["authorization"] = "Bearer $accesstoken";
       }
     }
+
     final response = await http.post(
-        Uri.parse("$baseUrl$endpoint"),
-        headers: headers,
-        body: body
+      Uri.parse("$baseUrl$endpoint"),
+      headers: headers,
+      body: body,
     );
 
-    if(token&&!retry&&response.statusCode == 401){
+    if (token && !retry && response.statusCode == 401) {
       final data = jsonDecode(response.body);
-      if(data["code"] == "ACCESS_TOKEN_EXPIRED"){
+
+      if (data["code"] == "ACCESS_TOKEN_EXPIRED") {
         final success = await _refreshtoken();
-        if(success){
-          return post(endpoint,body,token:true,retry: true);
+
+        if (success) {
+          return post(
+            endpoint,
+            body,
+            token: true,
+            retry: true,
+          );
         }
       }
     }
@@ -100,33 +137,50 @@ class ApiClient {
     return response;
   }
 
-  static Future<http.Response> delete(int postId,String endpoint,{token = false,retry = false}) async{
+  // DELETE 요청
+  static Future<http.Response> delete(
+    int postId,
+    String endpoint, {
+    token = false,
+    retry = false,
+  }) async {
     final accesstoken = await TokenStorage.getAccessToken();
+
     final response = await http.delete(
-        Uri.parse(
-          "$baseUrl$endpoint$postId",
-        ),
-        headers: {"authorization":"Bearer $accesstoken"}
+      Uri.parse("$baseUrl$endpoint$postId"),
+      headers: {
+        "authorization": "Bearer $accesstoken",
+      },
     );
-    if(token && !retry && response.statusCode == 401){
+
+    if (token && !retry && response.statusCode == 401) {
       final data = jsonDecode(response.body);
-      if(data["code"] == "ACCESS_TOKEN_EXPIRED"){
+
+      if (data["code"] == "ACCESS_TOKEN_EXPIRED") {
         final success = await _refreshtoken();
-        if(success){
-          return delete(postId,endpoint,token:true,retry: true);
+
+        if (success) {
+          return delete(
+            postId,
+            endpoint,
+            token: true,
+            retry: true,
+          );
         }
       }
     }
+
     return response;
   }
 
+  // 이미지 및 파일 업로드
   static Future<http.Response> postMultipart(
-      String endpoint, {
-        Map<String, String>? fields,
-        List<http.MultipartFile>? files,
-        bool token = false,
-        bool retry = false,
-      }) async {
+    String endpoint, {
+    Map<String, String>? fields,
+    List<http.MultipartFile>? files,
+    bool token = false,
+    bool retry = false,
+  }) async {
     final request = http.MultipartRequest(
       'POST',
       Uri.parse('$baseUrl$endpoint'),
@@ -151,7 +205,9 @@ class ApiClient {
     final streamedResponse = await request.send();
 
     // StreamedResponse → Response 변환
-    final response = await http.Response.fromStream(streamedResponse);
+    final response = await http.Response.fromStream(
+      streamedResponse,
+    );
 
     if (token && !retry && response.statusCode == 401) {
       final data = jsonDecode(response.body);
@@ -173,6 +229,4 @@ class ApiClient {
 
     return response;
   }
-
-
 }

@@ -12,10 +12,10 @@ class LiveVideoScreen extends StatelessWidget {
     const String userName = '한경이';
 
     // .env에서 AWS Public IP 가져오기
-    final String awsPublicIp = dotenv.env['AWS_PUBLIC_IP'] ?? '';
+    final String videoBaseUrl = dotenv.env['VIDEO_BASE_URL'] ?? '';
 
     // AWS MediaMTX WebRTC 주소
-    final String videoUrl = 'http://$awsPublicIp:8889/cam';
+    final String videoUrl = '$videoBaseUrl/cam/';
 
     final DateTime now = DateTime.now();
     final String todayText =
