@@ -4,6 +4,7 @@ class Post {
   final String content;
   final String fishType;
   final String nickname;
+  final int commentCount;
 
   Post({
     required this.postId,
@@ -11,6 +12,7 @@ class Post {
     required this.content,
     required this.fishType,
     required this.nickname,
+    required this.commentCount
   });
 
   factory Post.fromJson(Map<String, dynamic> json) {
@@ -19,6 +21,7 @@ class Post {
       title: json['title'] ?? '',
       content: json['content'] ?? '',
       fishType: json['fish_type'] ?? '',
+      commentCount: json['comment_count'] ?? 0,
       nickname: json['User']?['nickname'] ?? '익명의 한경이',
     );
   }

@@ -705,7 +705,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
     15,
     ),
     child: Image.network(
-      "${ApiClient.baseUrl}${image["Image_url"]}",
+      "${image["Image_url"]}",
     width: double.infinity,
     height: 250,
     fit: BoxFit.cover,
@@ -714,6 +714,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
     (context,
     error,
     stackTrace) {
+      print(error);
     return Container(
     height: 250,
     color:

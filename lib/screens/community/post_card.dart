@@ -180,8 +180,8 @@ class PostCard extends StatelessWidget {
                       color: Color(0xff9BA9B0),
                     ),
                     const SizedBox(width: 5),
-                    const Text(
-                      "0",
+                    Text(
+                      post.commentCount.toString(),
                       style: TextStyle(
                         fontSize: 18,
                         color: Color(0xff9BA9B0),

@@ -251,10 +251,19 @@ class _HomeScreenState extends State<HomeScreen> {
                                           'max_temp':maxTemp,
                                           'normal_waterquality':normalWater,
                                           'warning_waterquality':maxWater}),token: true);
-    
+
+    final data = jsonDecode(response.body);
+    print(data);
     if(response.statusCode == 201){
-      final data = jsonDecode(response.body);
+      print(data['device_id']);
       await TokenStorage.savedeviceId(data['device_id']);
+      setState((){
+          settingTank = true;
+      });
+      print(settingTank);
+    }
+    else if(response.statusCode == 409){
+      showAlert("이미 등록된 기기입니다.");
     }
     
     print(response.body);
@@ -563,31 +572,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     Center(
                       child: ElevatedButton(
                         onPressed: () async{
-                          final deviceId = await checkDevice();
 
                           if (!context.mounted) return;
 
-                          if (!deviceId) {
-                                showDialog(
-                                  context: context,
-                                  builder: (context) {
-                                    return AlertDialog(
-                                      title: const Text('입력 실패'),
-                                      content: const Text('기기 정보를 가져오지 못했습니다.'),
-                                      actions: [
-                                        TextButton(
-                                          onPressed: () {
-                                            Navigator.pop(context);
-                                          },
-                                          child: const Text('확인'),
-                                        ),
-                                      ],
-                                    );
-                                  },
-                                );
-
-                                return;
-                              }
                           showDialog(
                             context: context,
                             builder: (context) {
