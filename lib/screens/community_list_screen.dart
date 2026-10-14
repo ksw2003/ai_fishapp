@@ -175,7 +175,9 @@ class _CommunityListScreenState extends State<CommunityListScreen> {
                   children: [
                     IconButton(
                       onPressed: () {
-                        Navigator.pop(context);
+                        setState(() {
+                          searchController.clear();
+                        });
                       },
                       icon: const Icon(
                           Icons.arrow_back_ios_new),

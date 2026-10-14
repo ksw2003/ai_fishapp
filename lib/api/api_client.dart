@@ -23,7 +23,7 @@ class _MultipartFileData {
 
 class ApiClient {
   // .env에서 AWS Node.js 백엔드 주소 가져오기
-  static String get baseUrl => dotenv.env['API_BASE_URI']!;
+  static String get baseUrl => dotenv.env['API_BASE_URL']!;
 
   // 액세스 토큰 갱신
   static Future<bool> _refreshtoken() async {

@@ -66,8 +66,9 @@ class _StartScreenState extends State<StartScreen> {
           '/make-profile',
         );
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
       print('카카오 로그인 오류: $e');
+      print(stackTrace);
     }
   }
 
