@@ -13,12 +13,12 @@ import 'dart:async';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-
   int? normalWater;
   int? warningWater;
   double? minTemp;
@@ -29,24 +29,22 @@ class _HomeScreenState extends State<HomeScreen> {
   final minWaterController = TextEditingController();
   final maxWaterController = TextEditingController();
   final tankName = TextEditingController();
-
   StreamSubscription<Map<String, dynamic>>? _subscription;
   StreamSubscription<Map<String, dynamic>>? _sensorSubscription;
-
   final SensorApi _sensorApi = SensorApi();
   String fishCondition = '매우 좋음';
   bool waterChangeDone = false;
   bool feedingDone = false;
   SensorData? sensor;
   Timer? _timer;
-
   String userName = '';
 
+  // 카메라 카드 터치 애니메이션 상태
+  bool isCameraPressed = false;
   String _getWaterQualityText(int tds) {
     if (normalWater == null || warningWater == null) {
       return '로딩중';
     }
-
     if (tds <= normalWater!) {
       return '좋음';
     } else if (tds <= warningWater!) {
@@ -59,7 +57,6 @@ class _HomeScreenState extends State<HomeScreen> {
     if (normalWater == null || warningWater == null) {
       return const Color(0xFF00BDF2);
     }
-
     if (tds <= normalWater!) {
       return Colors.blue; // 좋음
     } else if (tds <= warningWater!) {
@@ -72,11 +69,9 @@ class _HomeScreenState extends State<HomeScreen> {
     if (minTemp == null || maxTemp == null) {
       return const Color(0xFF9CB8E8);
     }
-
     if (temp < minTemp! || temp > maxTemp!) {
       return Colors.red;
     }
-
     return Colors.blue;
   }
   @override
@@ -120,10 +115,8 @@ class _HomeScreenState extends State<HomeScreen> {
     _subscription?.cancel();
     super.dispose();
   }
-
   void showAlert(String message) {
     if (!mounted) return;
-
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
@@ -131,7 +124,6 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-
   Future<void> getTankId()async{
     final getdeviceid = await TokenStorage.getdeviceId();
     print('여기$getdeviceid');
@@ -141,7 +133,6 @@ class _HomeScreenState extends State<HomeScreen> {
       settingTank = true;
     }
   }
-
   Future<void> getUserName()async{
     final response = await ApiClient.get('/api/auth/myinfo',token: true);
     if(response.statusCode == 200){
@@ -149,14 +140,11 @@ class _HomeScreenState extends State<HomeScreen> {
       setState(() {
         userName = data["user"]["nickname"];
       });
-
     }
   }
-
   Future<void> loadTankSetting() async {
     try {
       final setting = await TankService.getTankSetting();
-
       setState(() {
         normalWater = setting['normal_waterquality'];
         warningWater = setting['warning_waterquality'];
@@ -167,55 +155,42 @@ class _HomeScreenState extends State<HomeScreen> {
       print('어항 설정 로드 실패: $e');
     }
   }
-
   Future<void> _loadTodayStatus() async {
     final prefs = await SharedPreferences.getInstance();
-
     final today =
     DateTime.now().toString().substring(0, 10);
-
     final savedDate =
     prefs.getString('last_action_date');
-
     if (savedDate != today) {
       await prefs.setBool(
         'waterChangeDone',
         false,
       );
-
       await prefs.setBool(
         'feedingDone',
         false,
       );
-
       await prefs.setString(
         'last_action_date',
         today,
       );
     }
-
     if (!mounted) return;
-
     setState(() {
       waterChangeDone =
           prefs.getBool('waterChangeDone') ?? false;
-
       feedingDone =
           prefs.getBool('feedingDone') ?? false;
     });
   }
-
   Future<bool> getDeviceId() async {
     final savedDeviceId = await TokenStorage.getdeviceId();
-
     if (savedDeviceId != null && savedDeviceId.isNotEmpty) {
       print('저장된 device_id: $savedDeviceId');
       return true;
     }
-
     return false;
   }
-
   Future<bool>checkDevice()async{
     final id = await getDeviceId();
     if(id){
@@ -223,21 +198,16 @@ class _HomeScreenState extends State<HomeScreen> {
     }else{
       return false;
     }
-    
   }
-
   Future<void> getFeedAndWaterChange() async {
     final response =
         await ApiClient.get('/api/tank/logdata', token: true);
-
     final data = jsonDecode(response.body);
-
     setState(() {
       feedingDone = data['feed'];
       waterChangeDone = data['waterchange'];
     });
   }
-
     Future<void> saveTank()async{
     final minTemp = double.tryParse(minTempController.text);
     final maxTemp = double.tryParse(maxTempController.text);
@@ -251,7 +221,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                           'max_temp':maxTemp,
                                           'normal_waterquality':normalWater,
                                           'warning_waterquality':maxWater}),token: true);
-
     final data = jsonDecode(response.body);
     print(data);
     if(response.statusCode == 201){
@@ -265,16 +234,12 @@ class _HomeScreenState extends State<HomeScreen> {
     else if(response.statusCode == 409){
       showAlert("이미 등록된 기기입니다.");
     }
-    
     print(response.body);
   }
-
     Future<void> feed() async {
     final result = await Navigator.pushNamed(context, '/feeding-loading');
-
     if (!mounted) return;
     print(result);
-
     if (result != null&&result is Map) {
       final bool success = result['success'];
       feedingDone = success;
@@ -287,7 +252,6 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
 }
-
   Future<void> waterchange() async {
     final result = await Navigator.pushNamed(context, '/water-change-loading');
     if (!mounted) return;
@@ -304,14 +268,11 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
 }
-
   @override
   Widget build(BuildContext context) {
-
     final DateTime now = DateTime.now();
     final String todayText =
         '${now.year}년 ${now.month}월 ${now.day}일 (${getKoreanWeekday(now.weekday)})';
-
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -326,7 +287,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-
                         Expanded(
                           child: RichText(
                             text: TextSpan(
@@ -349,7 +309,6 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ),
                         ),
-
                         IconButton(
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints(),
@@ -361,17 +320,25 @@ class _HomeScreenState extends State<HomeScreen> {
                           },
                           icon: const Icon(
                             Icons.notifications_none,
-                            size: 28,
+                            size: 36,
                             color: Color(0xFF2D3E5F),
                           ),
                         ),
                       ],
                     ),
-
                     const SizedBox(height: 28),
+
                     // 날짜 + 카메라 + 오늘의 물고기 상태 카드
                     if(settingTank)...[
-                    Material(
+                    Listener(
+                      onPointerDown: (_) => setState(() => isCameraPressed = true),
+                      onPointerUp: (_) => setState(() => isCameraPressed = false),
+                      onPointerCancel: (_) => setState(() => isCameraPressed = false),
+                      child: AnimatedScale(
+                        scale: isCameraPressed ? 0.96 : 1.0,
+                        duration: const Duration(milliseconds: 90),
+                        curve: Curves.easeOut,
+                        child: Material(
                       color: Colors.transparent,
                       borderRadius: BorderRadius.circular(22.5),
                       child: InkWell(
@@ -415,7 +382,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ),
                                 ),
                               ),
-
                               const Positioned(
                                 top: 2,
                                 right: 2,
@@ -425,7 +391,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                   color: Colors.white,
                                 ),
                               ),
-
                               const Positioned(
                                 right: 0,
                                 bottom: 36,
@@ -439,7 +404,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ),
                                 ),
                               ),
-
                               Positioned(
                                 right: 0,
                                 bottom: 0,
@@ -457,8 +421,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
                       ),
+                        ),
+                      ),
                     ),
-
                     const SizedBox(height: 19),
 
                     // 카드 4개
@@ -494,9 +459,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ],
                     ),
-
                     const SizedBox(height: 12),
-
                     Row(
                       children: [
                         Expanded(
@@ -508,18 +471,14 @@ class _HomeScreenState extends State<HomeScreen> {
                               context,
                               '/water-change-loading',
                               );
-
                               if (result is Map &&
                               result['success'] == true) {
-
                               final prefs =
                               await SharedPreferences.getInstance();
-
                               await prefs.setBool(
                               'waterChangeDone',
                               true,
                               );
-
                               setState(() {
                               waterChangeDone = true;
                               });
@@ -537,18 +496,14 @@ class _HomeScreenState extends State<HomeScreen> {
                                 context,
                                 '/feeding-loading',
                                 );
-
                                 if (result is Map &&
                                 result['success'] == true) {
-
                                 final prefs =
                                 await SharedPreferences.getInstance();
-
                                 await prefs.setBool(
                                 'feedingDone',
                                 true,
                                 );
-
                                 setState(() {
                                 feedingDone = true;
                                 });
@@ -568,13 +523,10 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                  const SizedBox(height: 20),
-
                     Center(
                       child: ElevatedButton(
                         onPressed: () async{
-
                           if (!context.mounted) return;
-
                           showDialog(
                             context: context,
                             builder: (context) {
@@ -601,9 +553,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                           hintText: '예: 23.0',
                                         ),
                                       ),
-
                                       const SizedBox(height: 10),
-
                                       TextField(
                                         controller: maxTempController,
                                         keyboardType: const TextInputType.numberWithOptions(
@@ -614,9 +564,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                           hintText: '예: 26.0',
                                         ),
                                       ),
-
                                       const SizedBox(height: 10),
-
                                       TextField(
                                         controller: minWaterController,
                                         keyboardType: TextInputType.number,
@@ -625,9 +573,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                           hintText: '예: 250',
                                         ),
                                       ),
-
                                       const SizedBox(height: 10),
-
                                       TextField(
                                         controller: maxWaterController,
                                         keyboardType: TextInputType.number,
@@ -646,7 +592,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                     },
                                     child: const Text('취소'),
                                   ),
-
                                   ElevatedButton(
                                     onPressed: () {
                                       saveTank();
@@ -677,14 +622,11 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-
-
 class HomeInfoCard extends StatefulWidget {
   final String title;
   final String value;
   final Color valueColor;
   final VoidCallback onTap;
-
   const HomeInfoCard({
     super.key,
     required this.title,
@@ -699,13 +641,11 @@ class HomeInfoCard extends StatefulWidget {
 
 class _HomeInfoCardState extends State<HomeInfoCard> {
   bool isPressed = false;
-
   void setPressed(bool value) {
     setState(() {
       isPressed = value;
     });
   }
-
   @override
   Widget build(BuildContext context) {
     return AnimatedScale(
@@ -783,7 +723,6 @@ class HomeActionCard extends StatefulWidget {
   final String title;
   final bool isDone;
   final VoidCallback onTap;
-
   const HomeActionCard({
     super.key,
     required this.title,
@@ -797,21 +736,17 @@ class HomeActionCard extends StatefulWidget {
 
 class _HomeActionCardState extends State<HomeActionCard> {
   bool isPressed = false;
-
   void setPressed(bool value) {
     setState(() {
       isPressed = value;
     });
   }
-
   @override
   Widget build(BuildContext context) {
     final Color statusColor =
     widget.isDone ? const Color(0xFF00BDF2) : const Color(0xFFFF91A4);
-
     final IconData statusIcon =
     widget.isDone ? Icons.check_circle_outline : Icons.close;
-
     return AnimatedScale(
       scale: isPressed ? 0.96 : 1.0,
       duration: const Duration(milliseconds: 90),

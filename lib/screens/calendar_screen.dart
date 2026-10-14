@@ -102,8 +102,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
       backgroundColor: Colors.white,
       body: SafeArea(
         child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(28, 54, 28, 28),
+          physics: const NeverScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(28, 23, 28, 28),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
