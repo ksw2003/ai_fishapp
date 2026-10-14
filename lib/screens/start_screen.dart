@@ -1,60 +1,47 @@
 import 'dart:async';
 import 'dart:convert';
-
 import 'package:ai_fishapp/api/api_client.dart';
 import 'package:ai_fishapp/services/socket_service.dart';
 import 'package:ai_fishapp/services/token_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:kakao_flutter_sdk_user/kakao_flutter_sdk_user.dart';
-
 class StartScreen extends StatefulWidget {
   const StartScreen({super.key});
-
   @override
   State<StartScreen> createState() => _StartScreenState();
 }
-
 class _StartScreenState extends State<StartScreen> {
   bool isLoading = true;
   bool showLogin = false;
-
   @override
   void initState() {
     super.initState();
-
     Timer(const Duration(seconds: 2), () {
       if (!mounted) return;
-
       setState(() {
         isLoading = false;
       });
     });
   }
-
   // =========================================================
   // 카카오 로그인
   // =========================================================
   Future<void> kakaoLogin(BuildContext context) async {
     try {
       print('카카오 로그인 시작');
-
       final data =
           await UserApi.instance.loginWithKakaoAccount();
-
       final (success, hasUserNickname) =
           await getToken(
         data.accessToken,
         'kakao',
       );
-
       if (!success) {
         print('카카오 로그인 실패');
         return;
       }
-
       if (!context.mounted) return;
-
       if (hasUserNickname) {
         Navigator.pushReplacementNamed(
           context,
@@ -71,7 +58,6 @@ class _StartScreenState extends State<StartScreen> {
       print(stackTrace);
     }
   }
-
   // =========================================================
   // 구글 로그인
   // =========================================================
@@ -81,9 +67,7 @@ class _StartScreenState extends State<StartScreen> {
     try {
       final GoogleSignInAccount googleUser =
           await GoogleSignIn.instance.authenticate();
-
       print(googleUser);
-
       final authorization =
           await googleUser.authorizationClient
               .authorizationForScopes([
@@ -91,32 +75,25 @@ class _StartScreenState extends State<StartScreen> {
         'email',
         'profile',
       ]);
-
       print(authorization?.accessToken);
       final accessToken =
           authorization?.accessToken;
-
       if (accessToken == null) {
         print('구글 Access Token 없음');
         return;
       }
-
       final (success, hasUserNickname) =
           await getToken(
         accessToken,
         'google',
       );
-
       print(success);
       print(hasUserNickname);
-
       if (!success) {
         print('구글 로그인 실패');
         return;
       }
-
       if (!context.mounted) return;
-
       if (hasUserNickname) {
         Navigator.pushReplacementNamed(
           context,
@@ -137,7 +114,6 @@ class _StartScreenState extends State<StartScreen> {
       print('구글 로그인 오류: $e');
     }
   }
-
   // =========================================================
   // Node.js 로그인 API
   // =========================================================
@@ -145,7 +121,6 @@ class _StartScreenState extends State<StartScreen> {
     String accessToken,
     String provider,
   ) async {
-
     print('들어감');
     print(accessToken);
     print(provider);
@@ -156,17 +131,12 @@ class _StartScreenState extends State<StartScreen> {
         'provider': provider,
       }),
     );
-
     print('상태코드: ${response.statusCode}');
     print('응답본문: ${response.body}');
-
     await TokenStorage.deleteDeviceId();
-  
-
     if (response.statusCode == 200) {
       final data =
           jsonDecode(response.body);
-
       // ==========================================
       // accessToken / refreshToken 저장
       // ==========================================
@@ -174,21 +144,18 @@ class _StartScreenState extends State<StartScreen> {
         data['accesstoken'],
         data['refreshtoken'],
       );
-
       // ==========================================
       // user_id 저장
       // ==========================================
       await TokenStorage.saveUserId(
         data['user_id'],
       );
-
       // ==========================================
       // Flutter -> Node 공용 WebSocket 연결
       // ==========================================
       await SocketService.instance.connect(
         data['user_id'],
       );
-
       // ==========================================
       // device_id가 있으면 저장
       // ==========================================
@@ -196,37 +163,30 @@ class _StartScreenState extends State<StartScreen> {
         print(
           'device_id 저장: ${data['device_id']}',
         );
-
         await TokenStorage.savedeviceId(
           data['device_id'],
         );
       }
-
       return (
         true,
         data['exNickname'],
       );
     }
-
     print('로그인 실패');
-
     return (
       false,
       false,
     );
   }
-
   // =========================================================
-  // 로그인 패널 열기
+  // 로그인 패널 열기 / 닫기 (패널 바깥 화면 터치)
   // =========================================================
-  void openLoginPanel() {
+  void toggleLoginPanel() {
     if (isLoading) return;
-
     setState(() {
-      showLogin = true;
+      showLogin = !showLogin;
     });
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -249,21 +209,21 @@ class _StartScreenState extends State<StartScreen> {
               ),
             ),
           ),
-
           // ==========================================
           // 로고 영역
           // ==========================================
-          Center(
-            child: GestureDetector(
-              onTap: openLoginPanel,
-              child: Column(
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: toggleLoginPanel,
+            child: SizedBox.expand(
+              child: Center(
+                child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Image.asset(
                     'assets/images/fish_logo.png',
                     width: 260,
                   ),
-
                   const Text(
                     'FISH LOGO',
                     style: TextStyle(
@@ -273,11 +233,9 @@ class _StartScreenState extends State<StartScreen> {
                       letterSpacing: 2,
                     ),
                   ),
-
                   const SizedBox(
                     height: 30,
                   ),
-
                   if (isLoading)
                     const SizedBox(
                       width: 35,
@@ -288,7 +246,6 @@ class _StartScreenState extends State<StartScreen> {
                         strokeWidth: 3,
                       ),
                     ),
-
                   if (!isLoading)
                     const Text(
                       '화면을 터치해주세요',
@@ -298,10 +255,10 @@ class _StartScreenState extends State<StartScreen> {
                       ),
                     ),
                 ],
+                ),
               ),
             ),
           ),
-
           // ==========================================
           // 로그인 패널
           // ==========================================
@@ -350,11 +307,9 @@ class _StartScreenState extends State<StartScreen> {
                             FontWeight.bold,
                       ),
                     ),
-
                     const SizedBox(
                       height: 40,
                     ),
-
                     const Text(
                       'SNS로 간편 가입하기',
                       style: TextStyle(
@@ -363,11 +318,9 @@ class _StartScreenState extends State<StartScreen> {
                         fontSize: 18,
                       ),
                     ),
-
                     const SizedBox(
                       height: 30,
                     ),
-
                     // ==================================
                     // 카카오 로그인
                     // ==================================
@@ -403,11 +356,9 @@ class _StartScreenState extends State<StartScreen> {
                         ),
                       ),
                     ),
-
                     const SizedBox(
                       height: 15,
                     ),
-
                     // ==================================
                     // 구글 로그인
                     // ==================================
