@@ -14,81 +14,70 @@ class PostCard extends StatelessWidget {
     required this.selectedTag,
   });
 
-  Widget buildHighlightedTitle() {
-    if (keyword.trim().isEmpty) {
+  // 일반 검색어와 일치하는 글자만 파란색으로 표시 (대소문자 구분 없음)
+  Widget buildHighlightedText(
+    String value, {
+    required double fontSize,
+    required FontWeight fontWeight,
+    int? maxLines,
+    TextOverflow? overflow,
+    double? height,
+  }) {
+    final search = keyword.trim();
+    final baseStyle = TextStyle(
+      fontSize: fontSize,
+      fontWeight: fontWeight,
+      color: Colors.black,
+      height: height,
+    );
+
+    if (search.isEmpty) {
       return Text(
-        post.title,
-        style: const TextStyle(
-          fontSize: 24,
-          fontWeight: FontWeight.w700,
-          color: Colors.black,
-        ),
+        value,
+        style: baseStyle,
+        maxLines: maxLines,
+        overflow: overflow,
       );
     }
 
-    final title = post.title;
-    final lowerTitle = title.toLowerCase();
-    final lowerKeyword = keyword.toLowerCase();
-
-    if (!lowerTitle.contains(lowerKeyword)) {
-      return Text(
-        title,
-        style: const TextStyle(
-          fontSize: 24,
-          fontWeight: FontWeight.w700,
-          color: Colors.black,
-        ),
-      );
-    }
-
-    List<TextSpan> spans = [];
-    int start = 0;
+    final lowerValue = value.toLowerCase();
+    final lowerSearch = search.toLowerCase();
+    final spans = <TextSpan>[];
+    var start = 0;
 
     while (true) {
-      final index = lowerTitle.indexOf(lowerKeyword, start);
-
+      final index = lowerValue.indexOf(lowerSearch, start);
       if (index == -1) {
-        spans.add(
-          TextSpan(
-            text: title.substring(start),
-          ),
-        );
+        spans.add(TextSpan(text: value.substring(start)));
         break;
       }
-
       if (index > start) {
-        spans.add(
-          TextSpan(
-            text: title.substring(start, index),
-          ),
-        );
+        spans.add(TextSpan(text: value.substring(start, index)));
       }
-
       spans.add(
         TextSpan(
-          text: title.substring(
-            index,
-            index + keyword.length,
-          ),
+          text: value.substring(index, index + search.length),
           style: const TextStyle(
             color: Color(0xff005FEA),
             fontWeight: FontWeight.w800,
           ),
         ),
       );
-
-      start = index + keyword.length;
+      start = index + search.length;
     }
 
-    return RichText(
-      text: TextSpan(
-        style: const TextStyle(
-          fontSize: 24,
-          fontWeight: FontWeight.w700,
-          color: Colors.black,
-        ),
-        children: spans,
-      ),
+    return Text.rich(
+      TextSpan(style: baseStyle, children: spans),
+      maxLines: maxLines,
+      overflow: overflow,
+    );
+  }
+
+  Widget buildHighlightedTitle() {
+    return buildHighlightedText(
+      post.title,
+      fontSize: 24,
+      fontWeight: FontWeight.w700,
     );
   }
 
@@ -121,42 +110,34 @@ class PostCard extends StatelessWidget {
                   color: Color(0xff8A93A6),
                 ),
               ),
-
               const SizedBox(width: 10),
-
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.only(top: 6),
-                  child: Text(
+                  child: buildHighlightedText(
                     post.nickname,
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w700,
-                    ),
+                    fontSize: 24,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
             ],
           ),
-
           const SizedBox(height: 12),
 
-          /// 제목
+          /// 제목: 일반 검색어에 일치하는 부분만 파란색
           buildHighlightedTitle(),
-
           const SizedBox(height: 8),
 
-          /// 내용
-          Text(
+          /// 내용: 일반 검색어에 일치하는 부분만 파란색
+          buildHighlightedText(
             post.content,
+            fontSize: 18,
+            fontWeight: FontWeight.normal,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 18,
-              height: 1.6,
-            ),
+            height: 1.6,
           ),
-
           const SizedBox(height: 18),
 
           /// 댓글 + 태그
@@ -182,7 +163,7 @@ class PostCard extends StatelessWidget {
                     const SizedBox(width: 5),
                     Text(
                       post.commentCount.toString(),
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 18,
                         color: Color(0xff9BA9B0),
                       ),
@@ -190,9 +171,7 @@ class PostCard extends StatelessWidget {
                   ],
                 ),
               ),
-
               const SizedBox(width: 12),
-
               Container(
                 height: 34,
                 padding: const EdgeInsets.symmetric(horizontal: 18),
@@ -204,7 +183,9 @@ class PostCard extends StatelessWidget {
                   child: Text(
                     post.fishType,
                     style: TextStyle(
-                      color: keyword.isNotEmpty
+                      // 태그 필터를 적용했을 때만 파란색
+                      color: selectedTag != '전체' &&
+                              post.fishType == selectedTag
                           ? Colors.blue
                           : const Color(0xff9BA9B0),
                       fontSize: 18,
@@ -214,9 +195,7 @@ class PostCard extends StatelessWidget {
               ),
             ],
           ),
-
           const SizedBox(height: 16),
-
           const Divider(
             thickness: 1,
             color: Color(0xffEFEFEF),
