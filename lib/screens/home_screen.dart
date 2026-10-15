@@ -321,7 +321,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           },
                           icon: const Icon(
                             Icons.notifications_none,
-                            size: 36,
+                            size: 30,
                             color: Color(0xFF2D3E5F),
                           ),
                         ),
