@@ -420,7 +420,7 @@ class _PostWritingScreenState
                           ),
                           clipBehavior: Clip.hardEdge,
                           child: Image.network(
-                            "${ApiClient.baseUrl}${oldImages[index]["Image_url"]}",
+                            "${oldImages[index]["Image_url"]}",
                             fit: BoxFit.cover,
                             loadingBuilder: (context, child, loadingProgress) {
                               if (loadingProgress == null) return child;

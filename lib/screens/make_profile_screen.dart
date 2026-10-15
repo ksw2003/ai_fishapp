@@ -1,6 +1,8 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:ai_fishapp/api/api_client.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 class MakeProfileScreen extends StatefulWidget {
   const MakeProfileScreen({super.key});
@@ -21,6 +23,10 @@ class _MakeProfileScreenState
   String profileImage =
       "https://i.pravatar.cc/300";
 
+  final ImagePicker _picker = ImagePicker();
+
+  XFile? selectedImage;
+
   @override
   void dispose() {
     nicknameController.dispose();
@@ -28,15 +34,38 @@ class _MakeProfileScreenState
   }
 
   void makeProfile(BuildContext context) async{
-    final data = await ApiClient.post('/api/auth/profile',jsonEncode({'nickname':nicknameController.text}),token: true);
-    print(data);
-    Navigator.pushNamed(context, "/home");
+    final response = await ApiClient.postMultipart('/api/auth/profile',fields: {'nickname':nicknameController.text},
+      images: selectedImage != null ? [selectedImage!]: null,imageField: 'image',token: true);
+    if(response.statusCode == 200){
+      Navigator.pushNamed(context, "/home");
+    }else{
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('데이터 저장에 실패하였습니다.'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
   }
 
   void checkNickname() {
     setState(() {
       canUseNickname =
           nicknameController.text.trim().length >= 2;
+    });
+  }
+
+  Future<void> pickImage() async {
+  final XFile? image = await _picker.pickImage(
+    source: ImageSource.gallery,
+  );
+
+    if (image == null) {
+      return;
+    }
+
+    setState(() {
+      selectedImage = image;
     });
   }
 
@@ -106,8 +135,12 @@ class _MakeProfileScreenState
 
                       child: CircleAvatar(
                         radius: 72,
-                        backgroundImage:
-                        NetworkImage(profileImage),
+                        backgroundImage: selectedImage != null
+                          ? FileImage(
+                              File(selectedImage!.path),
+                            )
+                          : NetworkImage(profileImage)
+                              as ImageProvider,
                       ),
                     ),
 
@@ -116,8 +149,8 @@ class _MakeProfileScreenState
                       bottom: 0,
 
                       child: GestureDetector(
-                        onTap: () {
-                          // TODO : 이미지 선택
+                        onTap: ()async {
+                          await pickImage();
                         },
 
                         child: Container(

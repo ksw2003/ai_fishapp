@@ -203,6 +203,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final response =
         await ApiClient.get('/api/tank/logdata', token: true);
     final data = jsonDecode(response.body);
+    print(data);
     setState(() {
       feedingDone = data['feed'];
       waterChangeDone = data['waterchange'];

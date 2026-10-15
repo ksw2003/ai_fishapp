@@ -50,18 +50,8 @@ class CommunityService {
     List<XFile>? images,
   }) async {
 
-    List<http.MultipartFile> files = [];
+    List<XFile> files = images ?? [];
 
-    if (images != null) {
-      for (final image in images) {
-        files.add(
-          await http.MultipartFile.fromPath(
-            'images',
-            image.path,
-          ),
-        );
-      }
-    }
 
     final response = await ApiClient.postMultipart(
       "/api/community/posts",
@@ -70,7 +60,7 @@ class CommunityService {
         'content': content,
         'fish_type': fishType,
       },
-      files: files,
+      images: files,
       token: true,
     );
   }
@@ -113,16 +103,8 @@ class CommunityService {
     required List<int> deletedImageIds,
   }) async {
 
-    List<http.MultipartFile> files = [];
+    List<XFile> files = images;
 
-    for (final image in images) {
-      files.add(
-        await http.MultipartFile.fromPath(
-          'images',
-          image.path,
-        ),
-      );
-    }
 
     final response = await ApiClient.postMultipart(
       "/api/community/update/$postId",
@@ -132,7 +114,7 @@ class CommunityService {
         'fish_type': fishType,
         'deleteImageId': jsonEncode(deletedImageIds),
       },
-      files: files,
+      images: files,
       token: true,
     );
 

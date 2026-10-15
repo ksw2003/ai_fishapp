@@ -5,6 +5,7 @@ import 'package:ai_fishapp/services/token_storage.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/http.dart';
+import 'package:image_picker/image_picker.dart';
 
 
 class _MultipartFileData {
@@ -193,94 +194,92 @@ class ApiClient {
 
   // 이미지 및 파일 업로드
   static Future<http.Response> postMultipart(
-    String endpoint, {
-    Map<String, String>? fields,
-    List<http.MultipartFile>? files,
-    bool token = false,
-    bool retry = false,
-  }) async {
+  String endpoint, {
+  Map<String, String>? fields,
+  List<XFile>? images,
+  String imageField = 'images',
+  bool token = false,
+  bool retry = false,
+}) async {
+  final request = http.MultipartRequest(
+    'POST',
+    Uri.parse('$baseUrl$endpoint'),
+  );
 
-    // 파일 데이터를 최초 요청 전에 메모리에 보관
-    final savedFiles = <_MultipartFileData>[];
+  if (token) {
+    final accessToken = await TokenStorage.getAccessToken();
 
-    if (files != null) {
-      for (final file in files) {
-        final bytes = await file.finalize().toBytes();
-
-        final filename = file.filename ?? 'image.jpg';
-        final extension = filename.split('.').last.toLowerCase();
-
-        final contentType = switch (extension) {
-          'jpg' || 'jpeg' => MediaType('image', 'jpeg'),
-          'png' => MediaType('image', 'png'),
-          'webp' => MediaType('image', 'webp'),
-          _ => throw Exception('지원하지 않는 이미지 형식입니다: $filename'),
-        };
-
-        savedFiles.add(
-          _MultipartFileData(
-            field: file.field,
-            filename: filename,
-            bytes: bytes,
-            contentType: contentType,
-          ),
-        );
-      }
+    if (accessToken != null) {
+      request.headers['authorization'] = 'Bearer $accessToken';
     }
+  }
 
-    // 실제 HTTP 요청을 실행하는 내부 함수
-    Future<http.Response> sendRequest() async {
-      final request = http.MultipartRequest(
-        'POST',
-        Uri.parse('$baseUrl$endpoint'),
+  if (fields != null) {
+    request.fields.addAll(fields);
+  }
+
+  if (images != null) {
+    for (final image in images) {
+
+      final multipartFile =
+          await http.MultipartFile.fromPath(
+        imageField,
+        image.path,
+        contentType:
+            getImageContentType(image.path),
       );
 
-      if (token) {
-        final accessToken = await TokenStorage.getAccessToken();
+      request.files.add(multipartFile);
+    }
+  }
 
-        if (accessToken != null) {
-          request.headers['authorization'] = 'Bearer $accessToken';
-        }
-      }
+  final streamedResponse =
+      await request.send();
 
-      if (fields != null) {
-        request.fields.addAll(fields);
-      }
+  final response =
+      await http.Response.fromStream(
+        streamedResponse,
+      );
 
-      // 매 요청마다 새로운 MultipartFile 생성
-      for (final file in savedFiles) {
-        request.files.add(
-          http.MultipartFile.fromBytes(
-            file.field,
-            file.bytes,
-            filename: file.filename,
-            contentType: file.contentType,
-          ),
+  if (token && !retry && response.statusCode == 401) {
+    final data = jsonDecode(response.body);
+
+    if (data['code'] == 'ACCESS_TOKEN_EXPIRED') {
+      final success = await _refreshtoken();
+
+      if (success) {
+        return postMultipart(
+          endpoint,
+          fields: fields,
+          images: images,
+          imageField: imageField,
+          token: true,
+          retry: true,
         );
       }
-
-      final streamedResponse = await request.send();
-
-      return http.Response.fromStream(streamedResponse);
     }
-
-    // 최초 요청
-    var response = await sendRequest();
-
-    // Access Token 만료 처리
-    if (token && !retry && response.statusCode == 401) {
-      final data = jsonDecode(response.body);
-
-      if (data['code'] == 'ACCESS_TOKEN_EXPIRED') {
-        final success = await _refreshtoken();
-
-        if (success) {
-          // 갱신된 토큰과 새 MultipartFile로 재요청
-          response = await sendRequest();
-        }
-      }
-    }
-
-    return response;
   }
+
+  return response;
+}
+
+static MediaType getImageContentType(String path) {
+  final extension = path.split('.').last.toLowerCase();
+
+  switch (extension) {
+    case 'jpg':
+    case 'jpeg':
+      return MediaType('image', 'jpeg');
+
+    case 'png':
+      return MediaType('image', 'png');
+
+    case 'webp':
+      return MediaType('image', 'webp');
+
+    default:
+      throw Exception('지원하지 않는 이미지 형식입니다.');
+  }
+}
+
 }
