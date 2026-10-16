@@ -1,12 +1,11 @@
 
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-import 'package:ai_fishapp/api/api_client.dart';
+import 'package:ai_fishapp/screens/setting/myfish_screen.dart';
 import 'package:ai_fishapp/widgets/rotating_loading_icon.dart';
 
 class LiveVideoScreen extends StatefulWidget {
@@ -17,34 +16,15 @@ class LiveVideoScreen extends StatefulWidget {
 }
 
 class _LiveVideoScreenState extends State<LiveVideoScreen> {
-  String userName = '';
+  // AI 이상탐지 연동 전 임시 표시값
+  final int healthyFishCount = 2;
+  final int cautionFishCount = 0;
 
-  @override
-  void initState() {
-    super.initState();
-    getUserName();
-  }
-
-  // 로그인한 사용자 닉네임 가져오기
-  Future<void> getUserName() async {
-    try {
-      final response = await ApiClient.get(
-        '/api/auth/myinfo',
-        token: true,
-      );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-
-        if (!mounted) return;
-
-        setState(() {
-          userName = data['user']?['nickname']?.toString() ?? '';
-        });
-      }
-    } catch (e) {
-      debugPrint('사용자 이름 조회 실패: $e');
-    }
+  Future<void> _openMyFishScreen() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const MyFishScreen()),
+    );
   }
 
   @override
@@ -65,9 +45,8 @@ class _LiveVideoScreenState extends State<LiveVideoScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(20, 18, 20, 28),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -86,29 +65,6 @@ class _LiveVideoScreenState extends State<LiveVideoScreen> {
               ),
 
               const SizedBox(height: 30),
-
-              // 로그인한 사용자 환영 문구
-              RichText(
-                text: TextSpan(
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF2D3E5F),
-                  ),
-                  children: [
-                    const TextSpan(text: '환영합니다 '),
-                    TextSpan(
-                      text: userName,
-                      style: const TextStyle(
-                        color: Color(0xFF25A8F2),
-                      ),
-                    ),
-                    const TextSpan(text: '님'),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 28),
 
               // 날짜 그라데이션 박스
               Container(
@@ -148,8 +104,21 @@ class _LiveVideoScreenState extends State<LiveVideoScreen> {
                   ],
                 ),
               ),
+              const SizedBox(height: 14),
 
-              const SizedBox(height: 32),
+              // 화면 제목
+              const Padding(
+                padding: EdgeInsets.only(left: 8),
+                child: Text(
+                  '실시간 영상',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF2D3E5F),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
 
               // 실시간 영상 영역
               // 화면 너비에 따라 16:9 비율 자동 조절
@@ -157,21 +126,159 @@ class _LiveVideoScreenState extends State<LiveVideoScreen> {
                 videoUrl: videoUrl,
               ),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
 
-              const Center(
-                child: Text(
-                  '실시간 어항 영상',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF222222),
+              // 영상 위쪽은 고정, 이 아래 영역만 세로 스크롤
+              Expanded(
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.only(top: 8, bottom: 28),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: _FishCountCard(
+                      label: '건강 물고기',
+                      count: healthyFishCount,
+                      icon: Icons.sentiment_satisfied_alt_outlined,
+                      accent: const Color(0xFF238BFF),
+                      background: const Color(0xFFF0F7FF),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _FishCountCard(
+                      label: '주의 물고기',
+                      count: cautionFishCount,
+                      icon: Icons.error_outline,
+                      accent: const Color(0xFFFF9366),
+                      background: const Color(0xFFFFF5EF),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+
+              // 나의 물고기 관리 화면으로 이동
+              Material(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(18),
+                child: InkWell(
+                  onTap: _openMyFishScreen,
+                  borderRadius: BorderRadius.circular(18),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(18),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: const Color(0xFFE2ECF7)),
+                    ),
+                    child: const Row(
+                      children: [
+                        Expanded(
+                          child: Padding(
+                            padding: EdgeInsets.only(left: 12),
+                            child: Text(
+                              '나의 물고기',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w800,
+                                color: Color(0xFF2D3E5F),
+                              ),
+                            ),
+                          ),
+                        ),
+                        Icon(Icons.chevron_right, color: Color(0xFF8FA8D8)),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+                    ],
                   ),
                 ),
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+// 하단 물고기 개체 수 카드
+class _FishCountCard extends StatelessWidget {
+  final String label;
+  final int? count;
+  final IconData icon;
+  final Color accent;
+  final Color background;
+
+  const _FishCountCard({
+    required this.label,
+    required this.count,
+    required this.icon,
+    required this.accent,
+    required this.background,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 21, color: accent),
+              const SizedBox(width: 7),
+              Flexible(
+                child: Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF2D3E5F),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                count?.toString() ?? '--',
+                style: TextStyle(
+                  fontSize: 30,
+                  fontWeight: FontWeight.w800,
+                  height: 1,
+                  color: accent,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 2),
+                child: Text(
+                  '마리',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: accent,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

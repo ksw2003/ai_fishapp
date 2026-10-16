@@ -147,43 +147,19 @@ class _CommunityListScreenState extends State<CommunityListScreen> {
         body: SafeArea(
           child: Column(
             children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 10,
-                ),
-                child: Row(
-                  children: [
-                    const Spacer(),
-                    IconButton(
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                      onPressed: () {
-                        Navigator.pushNamed(
-                          context,
-                          '/alert',
-                        );
-                      },
-                      icon: const Icon(
-                        Icons.notifications_none,
-                          size: 30,
-                          color: Color(0xFF2D3E5F),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
               /// 검색창
               Padding(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 27),
+                padding: const EdgeInsets.only(
+                    left: 27, right: 27, top: 35),
                 child: SizedBox(
                   height: 49,
                   child: TextField(
                     controller: searchController,
+                    style: const TextStyle(fontSize: 18),
                     onChanged: (_) => setState(() {}),
                     decoration: InputDecoration(
                       hintText: "검색",
+                      hintStyle: const TextStyle(fontSize: 18),
                       prefixIcon:
                       const Icon(Icons.search),
                       contentPadding:
@@ -227,7 +203,7 @@ class _CommunityListScreenState extends State<CommunityListScreen> {
                       "태그 : ",
                       style: TextStyle(
                         color: Color(0xff94ABCC),
-                        fontSize: 16,
+                        fontSize: 18,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -267,7 +243,7 @@ class _CommunityListScreenState extends State<CommunityListScreen> {
                             ),
                             style: const TextStyle(
                               color: Colors.blue,
-                              fontSize: 16,
+                              fontSize: 18,
                               fontWeight: FontWeight.w700,
                             ),
                             onSubmitted: (value) {
@@ -290,7 +266,7 @@ class _CommunityListScreenState extends State<CommunityListScreen> {
                             color: selectedTag == "전체"
                                 ? const Color(0xff94ABCC)
                                 : Colors.blue,
-                            fontSize: 16,
+                            fontSize: 18,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
