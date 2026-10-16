@@ -273,7 +273,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                       title: '평균 수온',
                       value: data == null
                           ? '-'
-                          : '${data?['daily']?['temp_avg']}˚C',
+                          : '${(data?['daily']?['temp_avg'] as num).round()}˚C',
                       valueColor: const Color(0xFF9CB8E8),
                       onTap: () {
                         Navigator.pushNamed(
