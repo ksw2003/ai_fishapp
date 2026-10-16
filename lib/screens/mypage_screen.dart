@@ -12,7 +12,7 @@ import 'package:ai_fishapp/services/token_storage.dart';
 
 import 'package:flutter/material.dart';
 
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 
 import '../widgets/common_bottom_nav_bar.dart';
 
@@ -44,9 +44,7 @@ class _MyPageScreenState extends State<MyPageScreen>{
 
 
 
-  String profileImage =
-
-      "https://i.pravatar.cc/300";
+  String? profileImage;
 
 
 
@@ -74,9 +72,14 @@ class _MyPageScreenState extends State<MyPageScreen>{
 
       setState(() {
 
-        nickname = data["user"]["nickname"];
+        nickname = data["user"]?["nickname"] ?? "";
 
-        profileImage = data["image"];
+        final image = data["image"]?.toString();
+        profileImage = image == null ||
+                image.trim().isEmpty ||
+                image.contains('i.pravatar.cc')
+            ? null
+            : image;
 
       });
 
@@ -398,6 +401,24 @@ class _MyPageScreenState extends State<MyPageScreen>{
 
 
 
+  // 게시글 카드(PostCard)와 동일한 기본 발바닥 프로필
+  Widget _defaultProfileImage() {
+    return const SizedBox(
+      width: 94,
+      height: 94,
+      child: ColoredBox(
+        color: Colors.white,
+        child: Center(
+          child: Icon(
+            Icons.pets,
+            size: 52,
+            color: Color(0xff8A93A6),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
 
   Widget build(BuildContext context) {
@@ -460,19 +481,20 @@ class _MyPageScreenState extends State<MyPageScreen>{
 
 
     CircleAvatar(
-
-    radius: 50,
-
-    backgroundColor: const Color(0xffBCC4D4),
-
-    child: CircleAvatar(
-
-    radius: 47,
-
-    backgroundImage: NetworkImage(profileImage),
-
-    ),
-
+      radius: 50,
+      backgroundColor: const Color(0xffBCC4D4),
+      child: ClipOval(
+        child: profileImage == null
+            ? _defaultProfileImage()
+            : Image.network(
+                profileImage!,
+                width: 94,
+                height: 94,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) =>
+                    _defaultProfileImage(),
+              ),
+      ),
     ),
 
 
@@ -521,23 +543,16 @@ class _MyPageScreenState extends State<MyPageScreen>{
 
     title: "프로필 변경",
 
-    onTap: () {
-
-    Navigator.pushNamed(
-
-    context,
-
-    "/profile-edit",
-
-    );
-
+    onTap: () async {
+      await Navigator.pushNamed(context, "/profile-edit");
+      if (mounted) getUserInfo();
     },
 
     ),
 
 
 
-    const SizedBox(height: 18),
+    const SizedBox(height: 12),
 
 
 
@@ -577,7 +592,7 @@ class _MyPageScreenState extends State<MyPageScreen>{
 
 
 
-    const SizedBox(height: 18),
+    const SizedBox(height: 12),
 
 
 
@@ -589,7 +604,7 @@ class _MyPageScreenState extends State<MyPageScreen>{
 
 
 
-    const SizedBox(height: 28),
+    const SizedBox(height: 22),
 
       //--------------------------------
 
@@ -599,75 +614,9 @@ class _MyPageScreenState extends State<MyPageScreen>{
 
 
 
-      SizedBox(
-
-        width: double.infinity,
-
-        height: 58,
-
-        child: DecoratedBox(
-
-          decoration: BoxDecoration(
-
-            borderRadius: BorderRadius.circular(15),
-
-            gradient: const LinearGradient(
-
-              colors: [
-
-                Color(0xff2D9CFF),
-
-                Color(0xff3CC8F2),
-
-              ],
-
-            ),
-
-          ),
-
-          child: Material(
-
-            color: Colors.transparent,
-
-            child: InkWell(
-
-              borderRadius: BorderRadius.circular(15),
-
-              onTap: () {
-
-                logout(context);
-
-              },
-
-              child: const Center(
-
-                child: Text(
-
-                  "로그아웃",
-
-                  style: TextStyle(
-
-                    color: Colors.white,
-
-                    fontSize: 18,
-
-                    fontWeight: FontWeight.w700,
-
-                  ),
-
-                ),
-
-              ),
-
-            ),
-
-          ),
-
-        ),
-
+      LogoutPressButton(
+        onTap: () => logout(context),
       ),
-
-
 
       const SizedBox(height: 40),
 
@@ -755,9 +704,9 @@ class _MyPageButtonState extends State<MyPageButton> {
 
         color: Colors.white,
 
-        elevation: isPressed ? 2 : 6,
+        elevation: isPressed ? 0 : 2,
 
-        shadowColor: Colors.black.withOpacity(0.18),
+        shadowColor: Colors.black.withOpacity(0.12),
 
         borderRadius: BorderRadius.circular(15),
 
@@ -828,3 +777,66 @@ class _MyPageButtonState extends State<MyPageButton> {
 
 
 
+
+// 로그아웃: 기존 그라데이션/그림자 없음 유지, 일반 메뉴와 같은 눌림 크기
+class LogoutPressButton extends StatefulWidget {
+  final VoidCallback onTap;
+
+  const LogoutPressButton({super.key, required this.onTap});
+
+  @override
+  State<LogoutPressButton> createState() => _LogoutPressButtonState();
+}
+
+class _LogoutPressButtonState extends State<LogoutPressButton> {
+  bool isPressed = false;
+
+  void setPressed(bool value) {
+    if (!mounted) return;
+    setState(() => isPressed = value);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedScale(
+      scale: isPressed ? 0.97 : 1,
+      duration: const Duration(milliseconds: 90),
+      curve: Curves.easeOut,
+      child: SizedBox(
+          width: double.infinity,
+          height: 58,
+          child: DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(15),
+            gradient: const LinearGradient(
+              colors: [
+                Color(0xff2D9CFF),
+                Color(0xff3CC8F2),
+              ],
+            ),
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(15),
+              onTap: widget.onTap,
+              onTapDown: (_) => setPressed(true),
+              onTapUp: (_) => setPressed(false),
+              onTapCancel: () => setPressed(false),
+              child: const Center(
+                child: Text(
+                  '로그아웃',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
