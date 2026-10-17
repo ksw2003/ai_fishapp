@@ -100,11 +100,19 @@ class _CalendarScreenState extends State<CalendarScreen> {
     final data = selectedData;
     print(data);
 
+    // 월요일 시작 기준, 달력이 6주를 차지하는 달에만 세로 스크롤 허용
+    final firstWeekday = DateTime(focusedDay.year, focusedDay.month, 1).weekday;
+    final daysInMonth = DateTime(focusedDay.year, focusedDay.month + 1, 0).day;
+    final weekCount = ((firstWeekday - 1 + daysInMonth + 6) ~/ 7);
+    final isSixWeekMonth = weekCount == 6;
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
         child: SingleChildScrollView(
-          physics: const NeverScrollableScrollPhysics(),
+          physics: isSixWeekMonth
+              ? const BouncingScrollPhysics()
+              : const NeverScrollableScrollPhysics(),
           padding: const EdgeInsets.fromLTRB(28, 23, 28, 28),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -385,8 +393,8 @@ class _CalendarInfoCardState extends State<CalendarInfoCard> {
       curve: Curves.easeOut,
       child: Material(
         color: Colors.white,
-        elevation: isPressed ? 2 : 8,
-        shadowColor: Colors.black.withOpacity(0.28),
+        elevation: isPressed ? 1 : 3,
+        shadowColor: Colors.black.withOpacity(0.12),
         borderRadius: BorderRadius.circular(14),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
@@ -403,8 +411,8 @@ class _CalendarInfoCardState extends State<CalendarInfoCard> {
               color: isPressed ? const Color(0xFFF4F8FF) : Colors.white,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: const Color(0xFFDCE8F6),
-                width: 1.5,
+                color: const Color(0xFFE8EFF8),
+                width: 0.8,
               ),
             ),
             child: Stack(
@@ -481,8 +489,8 @@ class _CalendarActionCardState extends State<CalendarActionCard> {
       curve: Curves.easeOut,
       child: Material(
         color: Colors.white,
-        elevation: isPressed ? 2 : 8,
-        shadowColor: Colors.black.withOpacity(0.4),
+        elevation: isPressed ? 1 : 3,
+        shadowColor: Colors.black.withOpacity(0.12),
         borderRadius: BorderRadius.circular(14),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
@@ -499,8 +507,8 @@ class _CalendarActionCardState extends State<CalendarActionCard> {
               color: isPressed ? const Color(0xFFF4F8FF) : Colors.white,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: const Color(0xFFDCE8F6),
-                width: 1.5,
+                color: const Color(0xFFE8EFF8),
+                width: 0.8,
               ),
             ),
             child: Stack(

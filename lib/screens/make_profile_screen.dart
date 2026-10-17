@@ -16,7 +16,7 @@ class _MakeProfileScreenState
     extends State<MakeProfileScreen> {
 
   final TextEditingController nicknameController =
-  TextEditingController();
+      TextEditingController();
 
   bool canUseNickname = false;
 
@@ -33,12 +33,18 @@ class _MakeProfileScreenState
     super.dispose();
   }
 
-  void makeProfile(BuildContext context) async{
-    final response = await ApiClient.postMultipart('/api/auth/profile',fields: {'nickname':nicknameController.text},
-      images: selectedImage != null ? [selectedImage!]: null,imageField: 'image',token: true);
-    if(response.statusCode == 200){
+  void makeProfile(BuildContext context) async {
+    final response = await ApiClient.postMultipart(
+      '/api/auth/profile',
+      fields: {'nickname': nicknameController.text},
+      images: selectedImage != null ? [selectedImage!] : null,
+      imageField: 'image',
+      token: true,
+    );
+
+    if (response.statusCode == 200) {
       Navigator.pushNamed(context, "/home");
-    }else{
+    } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('데이터 저장에 실패하였습니다.'),
@@ -56,9 +62,9 @@ class _MakeProfileScreenState
   }
 
   Future<void> pickImage() async {
-  final XFile? image = await _picker.pickImage(
-    source: ImageSource.gallery,
-  );
+    final XFile? image = await _picker.pickImage(
+      source: ImageSource.gallery,
+    );
 
     if (image == null) {
       return;
@@ -77,12 +83,10 @@ class _MakeProfileScreenState
       body: SafeArea(
         child: SingleChildScrollView(
           padding:
-          const EdgeInsets.symmetric(horizontal: 22),
+              const EdgeInsets.symmetric(horizontal: 22),
 
           child: Column(
-            crossAxisAlignment:
-            CrossAxisAlignment.start,
-
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
 
               //----------------------------------
@@ -91,21 +95,7 @@ class _MakeProfileScreenState
 
               const SizedBox(height: 12),
 
-              Row(
-                children: [
-
-                  IconButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                    icon: const Icon(
-                      Icons.arrow_back_ios_new,
-                      color: Color(0xff8FA8D8),
-                    ),
-                  ),
-
-                ],
-              ),
+              // 뒤로가기 버튼 삭제
 
               const SizedBox(height: 20),
 
@@ -131,16 +121,16 @@ class _MakeProfileScreenState
                     CircleAvatar(
                       radius: 75,
                       backgroundColor:
-                      const Color(0xffBCC4D4),
+                          const Color(0xffBCC4D4),
 
                       child: CircleAvatar(
                         radius: 72,
                         backgroundImage: selectedImage != null
-                          ? FileImage(
-                              File(selectedImage!.path),
-                            )
-                          : NetworkImage(profileImage)
-                              as ImageProvider,
+                            ? FileImage(
+                                File(selectedImage!.path),
+                              )
+                            : NetworkImage(profileImage)
+                                as ImageProvider,
                       ),
                     ),
 
@@ -149,7 +139,7 @@ class _MakeProfileScreenState
                       bottom: 0,
 
                       child: GestureDetector(
-                        onTap: ()async {
+                        onTap: () async {
                           await pickImage();
                         },
 
@@ -158,9 +148,8 @@ class _MakeProfileScreenState
                           height: 48,
 
                           decoration:
-                          const BoxDecoration(
-                            color:
-                            Color(0xffD9D9D9),
+                              const BoxDecoration(
+                            color: Color(0xffD9D9D9),
                             shape: BoxShape.circle,
                           ),
 
@@ -210,8 +199,7 @@ class _MakeProfileScreenState
 
                     style: const TextStyle(
                       color: Color(0xff00C2FA),
-                      fontWeight:
-                      FontWeight.w600,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ],
@@ -224,7 +212,7 @@ class _MakeProfileScreenState
 
                 decoration: BoxDecoration(
                   borderRadius:
-                  BorderRadius.circular(20),
+                      BorderRadius.circular(20),
 
                   border: Border.all(
                     color: const Color(0xffF5F5F5),
@@ -239,11 +227,10 @@ class _MakeProfileScreenState
                     checkNickname();
                   },
 
-                  decoration:
-                  const InputDecoration(
+                  decoration: const InputDecoration(
                     border: InputBorder.none,
                     contentPadding:
-                    EdgeInsets.symmetric(
+                        EdgeInsets.symmetric(
                       horizontal: 18,
                     ),
                   ),
@@ -264,24 +251,22 @@ class _MakeProfileScreenState
 
                   onPressed: canUseNickname
                       ? () {
-                    makeProfile(context);
-                  }
+                          makeProfile(context);
+                        }
                       : null,
 
-                  style:
-                  ElevatedButton.styleFrom(
+                  style: ElevatedButton.styleFrom(
                     elevation: 0,
 
                     backgroundColor:
-                    const Color(0xff00C2FA),
+                        const Color(0xff00C2FA),
 
                     disabledBackgroundColor:
-                    Colors.grey.shade300,
+                        Colors.grey.shade300,
 
-                    shape:
-                    RoundedRectangleBorder(
+                    shape: RoundedRectangleBorder(
                       borderRadius:
-                      BorderRadius.circular(20),
+                          BorderRadius.circular(20),
                     ),
                   ),
 
@@ -290,8 +275,7 @@ class _MakeProfileScreenState
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 20,
-                      fontWeight:
-                      FontWeight.w700,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),

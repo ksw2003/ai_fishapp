@@ -82,7 +82,7 @@ class DailyTempDetailScreen extends StatelessWidget {
                                     ),
                                   ),
                                   Text(
-                                    '${averageTemp.toStringAsFixed(1)}˚C',
+                                    '${averageTemp.round()}˚C',
                                     style: const TextStyle(
                                       fontSize: 24,
                                       fontWeight: FontWeight.w900,

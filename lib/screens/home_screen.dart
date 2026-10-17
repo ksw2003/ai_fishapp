@@ -32,7 +32,7 @@ class _HomeScreenState extends State<HomeScreen> {
   StreamSubscription<Map<String, dynamic>>? _subscription;
   StreamSubscription<Map<String, dynamic>>? _sensorSubscription;
   final SensorApi _sensorApi = SensorApi();
-  String fishCondition = '매우 좋음';
+  String fishCondition = '좋음';
   bool waterChangeDone = false;
   bool feedingDone = false;
   SensorData? sensor;
@@ -373,23 +373,32 @@ class _HomeScreenState extends State<HomeScreen> {
                               Positioned(
                                 top: 0,
                                 left: 0,
-                                child: Text(
-                                  todayText,
-                                  style: const TextStyle(
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.w700,
-                                    height: 1.46,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                              const Positioned(
-                                top: 2,
-                                right: 2,
-                                child: Icon(
-                                  Icons.photo_camera_outlined,
-                                  size: 48,
-                                  color: Colors.white,
+                                right: 0,
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    Expanded(
+                                      child: FittedBox(
+                                        fit: BoxFit.scaleDown,
+                                        alignment: Alignment.centerLeft,
+                                        child: Text(
+                                          todayText,
+                                          style: const TextStyle(
+                                            fontSize: 24,
+                                            fontWeight: FontWeight.w700,
+                                            height: 1.46,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    const Icon(
+                                      Icons.photo_camera_outlined,
+                                      size: 48,
+                                      color: Colors.white,
+                                    ),
+                                  ],
                                 ),
                               ),
                               const Positioned(
@@ -408,14 +417,25 @@ class _HomeScreenState extends State<HomeScreen> {
                               Positioned(
                                 right: 0,
                                 bottom: 0,
-                                child: Text(
-                                  fishCondition,
-                                  style: const TextStyle(
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.w700,
-                                    height: 1.46,
-                                    color: Colors.white,
-                                  ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      fishCondition,
+                                      style: const TextStyle(
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.w700,
+                                        height: 1.46,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    const Icon(
+                                      Icons.sentiment_very_satisfied_outlined,
+                                      size: 28,
+                                      color: Colors.white,
+                                    ),
+                                  ],
                                 ),
                               ),
                             ],
