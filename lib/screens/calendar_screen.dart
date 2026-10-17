@@ -13,8 +13,8 @@ class CalendarScreen extends StatefulWidget {
 
 class _CalendarScreenState extends State<CalendarScreen> {
 
-  int? normalWater;
-  int? warningWater;
+  int? normalWater = 300;
+  int? warningWater = 600;
 
   String _getWaterQualityText(int tds) {
     if (normalWater == null || warningWater == null) {
@@ -51,6 +51,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
         setState(() {
           selectedData = null;
         });
+        print(selectedData);
       }
     } catch (e) {
       print('일지 조회 실패 : $e');
@@ -97,6 +98,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
   Widget build(BuildContext context) {
     final String selectedKey = dateKey(selectedDay);
     final data = selectedData;
+    print(data);
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -265,7 +267,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                       title: '평균 수온',
                       value: data == null
                           ? '-'
-                          : '${data?['daily']?['temp_avg']}˚C',
+                          : '${data?['daily']?['avg_temperature']}˚C',
                       valueColor: const Color(0xFF9CB8E8),
                       onTap: () {
                         Navigator.pushNamed(
@@ -273,9 +275,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
                           '/daily-temp-detail',
                           arguments: {
                             'selectedDate': selectedDay,
-                            'averageTemp': data?['daily']['temp_avg'] ?? 0.0,
-                            'maxTemp': data?['daily']['temp_max'] ?? 0.0,
-                            'minTemp': data?['daily']['temp_min'] ?? 0.0,
+                            'averageTemp': data?['daily']['avg_temperature'] ?? 0.0,
+                            'maxTemp': data?['daily']['max_temperature'] ?? 0.0,
+                            'minTemp': data?['daily']['min_temperature'] ?? 0.0,
                           },
                         );
                       },
