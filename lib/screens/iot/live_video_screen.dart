@@ -6,6 +6,8 @@ import 'package:webview_flutter/webview_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'package:ai_fishapp/screens/setting/myfish_screen.dart';
+import 'package:ai_fishapp/services/fishinfo_service.dart';
+import 'package:ai_fishapp/models/fishinfo.dart';
 import 'package:ai_fishapp/widgets/rotating_loading_icon.dart';
 
 class LiveVideoScreen extends StatefulWidget {
@@ -20,11 +22,46 @@ class _LiveVideoScreenState extends State<LiveVideoScreen> {
   final int healthyFishCount = 2;
   final int cautionFishCount = 0;
 
+  List<Fish> _savedFishes = [];
+  bool _isFishLoading = true;
+  bool _fishLoadFailed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedFishes();
+  }
+
+  Future<void> _loadSavedFishes() async {
+    if (mounted) {
+      setState(() {
+        _isFishLoading = true;
+        _fishLoadFailed = false;
+      });
+    }
+    try {
+      final list = await FishService.getFishList();
+      if (!mounted) return;
+      setState(() {
+        _savedFishes = list;
+        _isFishLoading = false;
+      });
+    } catch (e) {
+      debugPrint('저장된 물고기 조회 실패: $e');
+      if (!mounted) return;
+      setState(() {
+        _isFishLoading = false;
+        _fishLoadFailed = true;
+      });
+    }
+  }
+
   Future<void> _openMyFishScreen() async {
     await Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const MyFishScreen()),
     );
+    if (mounted) await _loadSavedFishes();
   }
 
   @override
@@ -104,21 +141,8 @@ class _LiveVideoScreenState extends State<LiveVideoScreen> {
                   ],
                 ),
               ),
-              const SizedBox(height: 14),
-
-              // 화면 제목
-              const Padding(
-                padding: EdgeInsets.only(left: 8),
-                child: Text(
-                  '실시간 영상',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF2D3E5F),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
+              // 날짜 박스와 영상 사이 간격
+              const SizedBox(height: 16),
 
               // 실시간 영상 영역
               // 화면 너비에 따라 16:9 비율 자동 조절
@@ -132,35 +156,10 @@ class _LiveVideoScreenState extends State<LiveVideoScreen> {
               Expanded(
                 child: SingleChildScrollView(
                   physics: const BouncingScrollPhysics(),
-                  padding: const EdgeInsets.only(top: 8, bottom: 28),
+                  padding: const EdgeInsets.only(bottom: 28),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: _FishCountCard(
-                      label: '건강 물고기',
-                      count: healthyFishCount,
-                      icon: Icons.sentiment_satisfied_alt_outlined,
-                      accent: const Color(0xFF238BFF),
-                      background: const Color(0xFFF0F7FF),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _FishCountCard(
-                      label: '주의 물고기',
-                      count: cautionFishCount,
-                      icon: Icons.error_outline,
-                      accent: const Color(0xFFFF9366),
-                      background: const Color(0xFFFFF5EF),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-
               // 나의 물고기 관리 화면으로 이동
               Material(
                 color: Colors.white,
@@ -196,6 +195,112 @@ class _LiveVideoScreenState extends State<LiveVideoScreen> {
                   ),
                 ),
               ),
+              const SizedBox(height: 12),
+
+              Row(
+                children: [
+                  Expanded(
+                    child: _FishCountCard(
+                      label: '건강 물고기',
+                      count: healthyFishCount,
+                      icon: Icons.sentiment_satisfied_alt_outlined,
+                      accent: const Color(0xFF238BFF),
+                      background: const Color(0xFFF0F7FF),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _FishCountCard(
+                      label: '주의 물고기',
+                      count: cautionFishCount,
+                      icon: Icons.error_outline,
+                      accent: const Color(0xFFFF9366),
+                      background: const Color(0xFFFFF5EF),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // DB에 저장된 물고기: 흰색 큰 카드와 둥근 어종 태그
+              Container(
+                width: double.infinity,
+                constraints: const BoxConstraints(minHeight: 126),
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: const Color(0xFFE2ECF7)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      '등록된 물고기',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF2D3E5F),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    if (_isFishLoading)
+                      const Center(child: CircularProgressIndicator())
+                    else if (_fishLoadFailed)
+                      TextButton(
+                        onPressed: _loadSavedFishes,
+                        child: const Text('목록을 불러오지 못했어요. 다시 시도'),
+                      )
+                    else if (_savedFishes.isEmpty)
+                      const Text(
+                        '등록된 물고기가 없습니다.',
+                        style: TextStyle(fontSize: 16, color: Color(0xFF8FA0B5)),
+                      )
+                    else
+                      // 물고기가 많으면 최대 180px 높이 안에서만 스크롤
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(maxHeight: 180),
+                        child: SingleChildScrollView(
+                          primary: false,
+                          physics: const ClampingScrollPhysics(),
+                          child: Wrap(
+                        spacing: 9,
+                        runSpacing: 10,
+                        children: _savedFishes.map((fish) {
+                          return Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 11,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(30),
+                              border: Border.all(color: const Color(0xFFD8E9FB)),
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Color(0x0D4873A5),
+                                  blurRadius: 7,
+                                  offset: Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Text(
+                              '${fish.fishType} ${fish.fishCount}마리',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF50576B),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
                     ],
                   ),
                 ),
