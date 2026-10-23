@@ -301,9 +301,8 @@ class _CommunityListScreenState extends State<CommunityListScreen> {
                             ),
                           ),
                         );
-                        if (result == true) {
-                          loadPosts(); // 또는 fetchPosts()
-                        }
+                        if (!mounted) return;
+                        await loadPosts();
                       },
                       child: PostCard(
                         post: post,

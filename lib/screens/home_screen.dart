@@ -42,7 +42,9 @@ class _HomeScreenState extends State<HomeScreen> {
   // 카메라 카드 터치 애니메이션 상태
   bool isCameraPressed = false;
   String _getWaterQualityText(int tds) {
-    if (normalWater == null || warningWater == null) {
+    // 수질 텍스트는 build 중 여러 번 계산될 수 있으므로
+    // 상세 로그는 센서 수신 및 설정 로드 시점에 출력합니다.
+    if (normalWater == null) {
       return '로딩중';
     }
     if (tds <= normalWater!) {
@@ -82,13 +84,23 @@ class _HomeScreenState extends State<HomeScreen> {
     getFeedAndWaterChange();
     loadTankSetting();
     _loadTodayStatus();
+    debugPrint('[수질 디버그] 센서 스트림 연결 시작: /api/tank/data');
     _sensorSubscription = _sensorApi.connect('/api/tank/data').listen((data) {
-      print(data);
+      debugPrint('[수질 디버그] 스트림 수신: $data');
       if (!mounted) return;
       if(data["type"]=='sensor'){
-        setState(() {
-          sensor = SensorData.fromJson(data["data"]);
-        });
+        try {
+          final nextSensor = SensorData.fromJson(data["data"]);
+          debugPrint('[수질 디버그] TDS = ${nextSensor.water_quality}');
+          debugPrint('[수질 디버그] normalWater = $normalWater, warningWater = $warningWater');
+          debugPrint('[수질 디버그] 판정 = ${_getWaterQualityText(nextSensor.water_quality)}');
+          setState(() {
+            sensor = nextSensor;
+          });
+        } catch (e, stack) {
+          debugPrint('[수질 디버그] 센서 데이터 변환 오류: $e');
+          debugPrintStack(stackTrace: stack);
+        }
       }else if(data["type"] == 'temp'){
         if(data['data'] == 'high'){
           showAlert("온도가 너무 높습니다.");
@@ -98,6 +110,11 @@ class _HomeScreenState extends State<HomeScreen> {
       }else if(data['type'] == 'waterquality'){
         showAlert("수질이 좋지 않습니다.");
       }
+    }, onError: (Object error, StackTrace stack) {
+      debugPrint('[수질 디버그] 센서 스트림 오류: $error');
+      debugPrintStack(stackTrace: stack);
+    }, onDone: () {
+      debugPrint('[수질 디버그] 센서 스트림 종료');
     });
     _subscription = SocketService.instance.stream.listen((data){
       if(data['type']=='fishStatus'){
@@ -143,16 +160,26 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
   Future<void> loadTankSetting() async {
+    debugPrint('[수질 디버그] 어항 설정 요청 시작');
     try {
       final setting = await TankService.getTankSetting();
+      debugPrint('[수질 디버그] 어항 설정 응답 전체: $setting');
+      debugPrint('[수질 디버그] normal_waterquality: ${setting['normal_waterquality']} (${setting['normal_waterquality']?.runtimeType})');
+      debugPrint('[수질 디버그] warning_waterquality: ${setting['warning_waterquality']} (${setting['warning_waterquality']?.runtimeType})');
+      if (!mounted) return;
       setState(() {
         normalWater = setting['normal_waterquality'];
         warningWater = setting['warning_waterquality'];
         minTemp = (setting['min_temp'] as num?)?.toDouble();
         maxTemp = (setting['max_temp'] as num?)?.toDouble();
       });
-    } catch (e) {
-      print('어항 설정 로드 실패: $e');
+      debugPrint('[수질 디버그] 적용 완료: normalWater=$normalWater, warningWater=$warningWater');
+      if (sensor != null) {
+        debugPrint('[수질 디버그] 현재 수질 판정: ${_getWaterQualityText(sensor!.water_quality)} (TDS=${sensor!.water_quality})');
+      }
+    } catch (e, stack) {
+      debugPrint('[수질 디버그] 어항 설정 로드 실패: $e');
+      debugPrintStack(stackTrace: stack);
     }
   }
   Future<void> _loadTodayStatus() async {

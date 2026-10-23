@@ -52,6 +52,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
     required bool isReply,
   }) {
     return GestureDetector( //댓글 눌렀을 때 (답댓 위해)
+      behavior: HitTestBehavior.opaque,
       onTap: () {
         if (comment.isDeleted) return;
 
@@ -354,129 +355,134 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
 
       return Scaffold(
 
+          // 키보드 높이는 아래 AnimatedPadding에서 직접 반영합니다.
+          resizeToAvoidBottomInset: false,
           backgroundColor: Colors.white,
 
-          bottomNavigationBar: SafeArea(
-
-          child: Padding(
-
-          padding: const EdgeInsets.fromLTRB(
-          18,
-          10,
-          18,
-          12,
-      ),
-
-    child: Row(
-
-    children: [
-
-    Expanded(
-
-    child: Container(
-
-    height: 42,
-
-    decoration: BoxDecoration(
-
-    color: const Color(0xffF5F5F5),
-
-    borderRadius:
-    BorderRadius.circular(20),
-
-    ),
-
-    child: TextField(
-
-    controller:
-    commentController,
-
-      decoration: InputDecoration(
-
-        hintText: replyTarget == null
-            ? "댓글을 입력해주세요."
-            : "${replyTarget!.nickname}님에게 답글",
-
-        hintStyle: const TextStyle(
-          color: Color(0xffB8B8B8),
-        ),
-
-        border: InputBorder.none,
-
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 18,
-          vertical: 11,
-        ),
-      ),
-    ),
-    ),
-    ),
-
-    const SizedBox(width: 10),
-
-    SizedBox(
-
-    width: 60,
-    height: 40,
-
-    child: ElevatedButton(
-
-    style:
-    ElevatedButton.styleFrom(
-
-    elevation: 0,
-
-    backgroundColor:
-    const Color(0xffF5F5F5),
-
-    foregroundColor:
-    const Color(0xff9BA9B0),
-
-    shape:
-    RoundedRectangleBorder(
-
-    borderRadius:
-    BorderRadius.circular(
-    15,
-    ),
-
-    ),
-    ),
-
-    onPressed: () async {
-
-    if (commentController.text
-        .trim()
-        .isEmpty) {
-    return;
-    }
-
-    await CommunityService.writeComment(
-      postId: post.postId,
-      content: commentController.text,
-      parentId: replyTarget?.commentId,
-    );
-    commentController.clear();
-    replyTarget = null;
-
-    setState(() {
-    futurePost =
-    CommunityService
-        .getPostDetail(
-    widget.postId,
-    );
-
-    });
-    },
-        child: const Text("등록")
-
-    ),
-    ),
-
-    ],
-    ),
-    ),
-    ),
+          bottomNavigationBar: AnimatedPadding(
+            duration: const Duration(milliseconds: 180),
+            curve: Curves.easeOut,
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.viewInsetsOf(context).bottom,
+            ),
+            child: SafeArea(
+              bottom: MediaQuery.viewInsetsOf(context).bottom == 0,
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(
+                  18,
+                  10,
+                  18,
+                  MediaQuery.viewInsetsOf(context).bottom > 0 ? 16 : 12,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (replyTarget != null) ...[
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.subdirectory_arrow_right,
+                            size: 18,
+                            color: Color(0xff9BA9B0),
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              "${replyTarget!.nickname}님에게 답글 작성 중",
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: Color(0xff9BA9B0),
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            tooltip: '답글 취소',
+                            visualDensity: VisualDensity.compact,
+                            constraints: const BoxConstraints(
+                              minWidth: 32,
+                              minHeight: 32,
+                            ),
+                            padding: EdgeInsets.zero,
+                            icon: const Icon(Icons.close, size: 20),
+                            onPressed: () {
+                              setState(() {
+                                replyTarget = null;
+                              });
+                            },
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                    ],
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Container(
+                            height: 42,
+                            decoration: BoxDecoration(
+                              color: const Color(0xffF5F5F5),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: TextField(
+                              controller: commentController,
+                              decoration: const InputDecoration(
+                                hintText: '댓글을 입력해주세요.',
+                                hintStyle: TextStyle(
+                                  color: Color(0xffB8B8B8),
+                                ),
+                                border: InputBorder.none,
+                                contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 18,
+                                  vertical: 11,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        SizedBox(
+                          width: 60,
+                          height: 40,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              elevation: 0,
+                              padding: EdgeInsets.zero,
+                              minimumSize: const Size(60, 40),
+                              backgroundColor: const Color(0xffF5F5F5),
+                              foregroundColor: const Color(0xff9BA9B0),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(15),
+                              ),
+                            ),
+                            onPressed: () async {
+                              if (commentController.text.trim().isEmpty) {
+                                return;
+                              }
+                              await CommunityService.writeComment(
+                                postId: post.postId,
+                                content: commentController.text,
+                                parentId: replyTarget?.commentId,
+                              );
+                              commentController.clear();
+                              setState(() {
+                                replyTarget = null;
+                                futurePost = CommunityService.getPostDetail(
+                                  widget.postId,
+                                );
+                              });
+                            },
+                            child: const Text('등록'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
 
     body: GestureDetector(
     onTap: () {
