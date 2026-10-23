@@ -32,6 +32,7 @@ class _CommunityListScreenState extends State<CommunityListScreen> {
         posts = result;
         isLoading = false;
       });
+      
     } catch (e) {
       debugPrint(e.toString());
       setState(() {

@@ -8,15 +8,30 @@ class AlertService {
   static Future<List<AlertModel>> getAlerts() async {
 
     final response =
-    await ApiClient.get('/api/tank/alert');
+    await ApiClient.get('/api/tank/alert',token:true);
 
     if (response.statusCode != 200) {
       throw Exception('알림 조회 실패');
     }
 
+    print(response.body);
+
     final List data =
     jsonDecode(utf8.decode(response.bodyBytes));
-
+    for (final e in data) {
+      String? message;
+      if(e['type'] == 'waterquality'){
+        message = '수질이 안좋아보입니다.';
+      }else if(e['type'] == 'temp'){
+        if(e['status'] == 'low'){
+          message = '온도가 낮습니다.';
+        }else{
+          message = '온도가 높습니다.';
+        }
+      }
+      e['message'] = message;
+      print(e);
+    }
     return data
         .map((e) => AlertModel.fromJson(e))
         .toList();
