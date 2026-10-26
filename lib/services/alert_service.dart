@@ -8,11 +8,7 @@ class AlertService {
   static Future<List<AlertModel>> getAlerts() async {
 
     final response =
-<<<<<<< HEAD
-    await ApiClient.get('/api/tank/alert',token:true);
-=======
     await ApiClient.get('/api/tank/alert', token: true);
->>>>>>> ba73d0ea909390573f9f9e5de9e2119e627a3684
 
     if (response.statusCode != 200) {
       throw Exception('알림 조회 실패');

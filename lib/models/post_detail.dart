@@ -5,6 +5,7 @@ class PostDetail {
   final int userId;
   final String nickname;
   final String title;
+  final String userpicture;
   final String content;
   final String fishType;
   final bool mine;
@@ -17,6 +18,7 @@ class PostDetail {
     required this.userId,
     required this.nickname,
     required this.title,
+    required this.userpicture,
     required this.content,
     required this.fishType,
     required this.mine,
@@ -32,6 +34,7 @@ class PostDetail {
       postId: post["post_id"],
       userId: post["user_id"],
       nickname: post["User"]["nickname"],
+      userpicture: post["User"]?["UserImage"]?["Image_url"] ?? '',
       title: post["title"],
       content: post["content"],
       fishType: post["fish_type"],
@@ -46,4 +49,6 @@ class PostDetail {
           .toList(),
     );
   }
+
+  Object? operator [](String other) {}
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../../models/post.dart';
 import '../../services/community_service.dart';
 
@@ -96,7 +97,7 @@ class PostCard extends StatelessWidget {
               Container(
                 width: 54,
                 height: 54,
-                padding: const EdgeInsets.all(8),
+                //padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(
@@ -104,10 +105,21 @@ class PostCard extends StatelessWidget {
                     width: 3,
                   ),
                 ),
-                child: const Icon(
-                  Icons.pets,
-                  size: 28,
-                  color: Color(0xff8A93A6),
+                child: CircleAvatar(
+                  radius: 50,
+                  backgroundColor: Colors.white,
+                  foregroundImage: post.picture.isNotEmpty
+                      ? NetworkImage(
+                          '${dotenv.env['API_BASE_URL']}${post.picture}',
+                        )
+                      : null,
+                  child:Container(
+                    color: Colors.white,
+                    child: const Icon(
+                      Icons.pets,
+                      size: 28,
+                      color: Color(0xff8A93A6),
+                    )),
                 ),
               ),
               const SizedBox(width: 10),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../../models/post_detail.dart';
 import '../../services/community_service.dart';
 import '../community/post_writing_screen.dart';
@@ -91,11 +92,22 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                   width: 3,
                 ),
               ),
-              child: const Icon(
-                Icons.pets,
-                size: 22,
-                color: Color(0xff8A93A6),
-              ),
+              child: CircleAvatar(
+                  radius: 50,
+                  backgroundColor: Colors.white,
+                  foregroundImage: comment.userpicture.isNotEmpty
+                      ? NetworkImage(
+                          '${dotenv.env['API_BASE_URL']}${comment.userpicture}',
+                        )
+                      : null,
+                  child:Container(
+                    color: Colors.white,
+                    child: const Icon(
+                      Icons.pets,
+                      size: 28,
+                      color: Color(0xff8A93A6),
+                    )),
+                ),
             ),
 
             const SizedBox(width: 12),
@@ -629,10 +641,20 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                 width: 3,
               ),
             ),
-            child: const Icon(
-              Icons.pets,
-              size: 28,
-              color: Color(0xff8A93A6),
+            child: CircleAvatar(
+              radius: 50,
+              backgroundColor: Colors.white,
+              foregroundImage: post.userpicture.isNotEmpty?
+              NetworkImage('${dotenv.env['API_BASE_URL']}${post.userpicture}'):
+              null,
+              child: Container(
+                color: Colors.white,
+                child: const Icon(
+                  Icons.pets,
+                  size: 28,
+                  color: Color(0xff8A93A6),
+                ),
+              ),
             ),
           ),
 

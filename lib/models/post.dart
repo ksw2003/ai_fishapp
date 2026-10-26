@@ -25,7 +25,7 @@ class Post {
       fishType: json['fish_type'] ?? '',
       commentCount: json['comment_count'] ?? 0,
       nickname: json['User']?['nickname'] ?? '익명의 한경이',
-      picture: json['User']?['UserImage'],
+      picture: json['User']?['UserImage']?['Image_url'] ?? '',
     );
   }
 }

@@ -5,6 +5,7 @@ class Comment {
   String content;
   int likeCount;
   bool isLiked;
+  String userpicture;
   final bool isDeleted;
   final int? parentId;
 
@@ -16,6 +17,7 @@ class Comment {
     required this.likeCount,
     required this.isLiked,
     required this.isDeleted,
+    required this.userpicture,
     this.parentId,
   });
 
@@ -25,6 +27,7 @@ class Comment {
       userId: json['User']['user_id'],
       nickname: json['User']['nickname'],
       content: json['content'],
+      userpicture: json['User']?['UserImage']?['Image_url'] ?? '',
       likeCount: int.tryParse(json['likeCount'].toString()) ?? 0,
       isLiked: json['isLiked'] ?? false,
       isDeleted: json['is_deleted'] ?? false,
