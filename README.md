@@ -1,22 +1,22 @@
-#관상어용 스마트 어항 시스템
+# 관상어용 스마트 어항 시스템
 IOT+Node.js+AI 기반 어항 관리 시스템
 
 ## 프로젝트 소개
 ~~한 것입니다.
 
-##멤버 구성
+## 멤버 구성
 김서원 :
 이다경 :
 이승엽 : 
 
-##개발 환경
+## 개발 환경
 -visual studio code(IDE)
 -AWS(amazon web service)
 -Docker
 -Android studio
 -RaspberryPy
 
-##주요 기능
+## 주요 기능
 ### 1. 로그인 <a href="login 깃허브 wifi 링크">상세보기</a>
 -카카오 로그인
 -구글 로그인
