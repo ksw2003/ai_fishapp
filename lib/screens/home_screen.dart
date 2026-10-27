@@ -6,6 +6,7 @@ import 'package:ai_fishapp/services/token_storage.dart';
 import 'package:flutter/material.dart';
 import '../widgets/common_bottom_nav_bar.dart';
 import '../widgets/yes_or_no.dart';
+import '../widgets/tank_register.dart';
 import '../api/sensor_api.dart';
 import '../models/sensor.dart';
 import '../services/tank_service.dart';
@@ -24,11 +25,6 @@ class _HomeScreenState extends State<HomeScreen> {
   double? minTemp;
   double? maxTemp;
   bool settingTank = false;
-  final minTempController = TextEditingController();
-  final maxTempController = TextEditingController();
-  final minWaterController = TextEditingController();
-  final maxWaterController = TextEditingController();
-  final tankName = TextEditingController();
   StreamSubscription<Map<String, dynamic>>? _subscription;
   StreamSubscription<Map<String, dynamic>>? _sensorSubscription;
   final SensorApi _sensorApi = SensorApi();
@@ -80,9 +76,9 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     getUserName();
-    getTankId();
     getFeedAndWaterChange();
     loadTankSetting();
+    _initTank();
     _loadTodayStatus();
     debugPrint('[수질 디버그] 센서 스트림 연결 시작: /api/tank/data');
     _sensorSubscription = _sensorApi.connect('/api/tank/data').listen((data) {
@@ -140,15 +136,6 @@ class _HomeScreenState extends State<HomeScreen> {
         duration: const Duration(seconds: 3),
       ),
     );
-  }
-  Future<void> getTankId()async{
-    final getdeviceid = await TokenStorage.getdeviceId();
-    print('여기$getdeviceid');
-    if(getdeviceid == null){
-      settingTank = false;
-    }else{
-      settingTank = true;
-    }
   }
   Future<void> getUserName()async{
     final response = await ApiClient.get('/api/auth/myinfo',token: true);
@@ -218,12 +205,21 @@ class _HomeScreenState extends State<HomeScreen> {
     }
     return false;
   }
-  Future<bool>checkDevice()async{
-    final id = await getDeviceId();
-    if(id){
-      return true;
-    }else{
-      return false;
+
+  Future<void> _initTank() async {
+    final savedDeviceId = await TokenStorage.getdeviceId();
+
+    if (!mounted) return;
+
+    final hasTank =
+        savedDeviceId != null && savedDeviceId.trim().isNotEmpty;
+
+    setState(() {
+      settingTank = hasTank;
+    });
+
+    if (hasTank) {
+      await loadTankSetting();
     }
   }
   Future<void> getFeedAndWaterChange() async {
@@ -235,34 +231,6 @@ class _HomeScreenState extends State<HomeScreen> {
       feedingDone = data['feed'];
       waterChangeDone = data['waterchange'];
     });
-  }
-    Future<void> saveTank()async{
-    final minTemp = double.tryParse(minTempController.text);
-    final maxTemp = double.tryParse(maxTempController.text);
-    final normalWater = int.tryParse(minWaterController.text);
-    final maxWater = int.tryParse(maxWaterController.text);
-    final String name = tankName.text;
-    final response = await ApiClient.post('/api/tank/setting',
-                                          jsonEncode({
-                                          'device_id':name,
-                                          'min_temp':minTemp,
-                                          'max_temp':maxTemp,
-                                          'normal_waterquality':normalWater,
-                                          'warning_waterquality':maxWater}),token: true);
-    final data = jsonDecode(response.body);
-    print(data);
-    if(response.statusCode == 201){
-      print(data['device_id']);
-      await TokenStorage.savedeviceId(data['device_id']);
-      setState((){
-          settingTank = true;
-      });
-      print(settingTank);
-    }
-    else if(response.statusCode == 409){
-      showAlert("이미 등록된 기기입니다.");
-    }
-    print(response.body);
   }
     Future<void> feed() async {
     final result = await Navigator.pushNamed(context, '/feeding-loading');
@@ -571,90 +539,25 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                  const SizedBox(height: 20),
-                    Center(
-                      child: ElevatedButton(
-                        onPressed: () async{
-                          if (!context.mounted) return;
-                          showDialog(
+                      Center(
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            final result = await showDialog<bool>(
                             context: context,
-                            builder: (context) {
-                              return AlertDialog(
-                                title: const Text('어항 등록'),
-                                content: SingleChildScrollView(
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      TextField(
-                                        controller: tankName,
-                                        keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
-                                          labelText: '어항 시리얼 넘버'
-                                        ),
-                                      ),
-                                      TextField(
-                                        controller: minTempController,
-                                        keyboardType: const TextInputType.numberWithOptions(
-                                          decimal: true,
-                                        ),
-                                        decoration: const InputDecoration(
-                                          labelText: '최저 온도',
-                                          hintText: '예: 23.0',
-                                        ),
-                                      ),
-                                      const SizedBox(height: 10),
-                                      TextField(
-                                        controller: maxTempController,
-                                        keyboardType: const TextInputType.numberWithOptions(
-                                          decimal: true,
-                                        ),
-                                        decoration: const InputDecoration(
-                                          labelText: '최고 온도',
-                                          hintText: '예: 26.0',
-                                        ),
-                                      ),
-                                      const SizedBox(height: 10),
-                                      TextField(
-                                        controller: minWaterController,
-                                        keyboardType: TextInputType.number,
-                                        decoration: const InputDecoration(
-                                          labelText: '수질 최저',
-                                          hintText: '예: 250',
-                                        ),
-                                      ),
-                                      const SizedBox(height: 10),
-                                      TextField(
-                                        controller: maxWaterController,
-                                        keyboardType: TextInputType.number,
-                                        decoration: const InputDecoration(
-                                          labelText: '수질 최고',
-                                          hintText: '예: 700',
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () {
-                                      Navigator.pop(context);
-                                    },
-                                    child: const Text('취소'),
-                                  ),
-                                  ElevatedButton(
-                                    onPressed: () {
-                                      saveTank();
-                                      Navigator.pop(context);
-                                    },
-                                    child: const Text('등록'),
-                                  ),
-                                ],
-                              );
-                            },
+                            builder: (context) => const TankRegister(),
                           );
-                        },
-                        child: const Text('어항 등록하기'),
+
+                          if (!mounted || result != true) return;
+
+                          setState(() {
+                              settingTank = true;
+                            });
+
+                            await loadTankSetting();
+                            },
+                            child: const Text('어항 등록하기'),
+                          ),
                       ),
-                    ),
                   ],
                 ],
                 ),
