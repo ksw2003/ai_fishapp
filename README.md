@@ -20,7 +20,8 @@ IOT+Node.js+AI 기반 어항 관리 시스템
 |인증|JWT,kakao Oauth 2.0,google Oauth 2.0|
 |실시간 통신|Websocket(ws)|
 |실시간 스트리밍|MediaMTX,RTSP,WebRTC|
-|AI서버|파이썬,FastAPI|
+|AI서버|Python,FastAPI|
+|IOT|RaspberryPi,Python|
 |인프라|AWS EC2,Docker,Docker Compose|
 |버전 관리|git,github|
 
