@@ -1,97 +1,43 @@
-# 관상어용 스마트 어항 시스템
-IOT+Node.js+AI 기반 어항 관리 시스템
+# 관상어용 스마트 어항 시스템 Frontend
+## :file_folder: 프로젝트구조
+lib
+├── main.dart          # 앱 실행 및 초기 설정
+├── api                # 서버 API 통신 관련 코드
+├── models             # 데이터 모델 정의
+├── screens            # 각 화면 및 페이지 UI
+├── services           # 비즈니스 로직 및 외부 서비스 연동
+└── widgets            # 재사용 가능한 UI 컴포넌트
 
-## 프로젝트 소개
-본 프로젝트는 IoT 기술과 AI를 활용하여 관상어 사육 환경을 효율적으로 관리할 수 있는 스마트 어항 시스템입니다. 센서를 통해 수온 및 수질 데이터를 수집하고, 모바일 애플리케이션을 통해 어항 상태를 실시간으로 확인할 수 있습니다. 또한 원격 환수 및 먹이 급여 기능과 AI 기반 어항 관리 챗봇을 제공하여 사용자가 보다 편리하게 관상어를 관리할 수 있도록 지원합니다.
+## 🚀 실행 방법
 
-## 멤버 구성
-|개발자|기능 담당|
-|---|---|
-|김서원|IoT기능 개발,프론트엔드 UI개발|
-|이다경|IoT기능 개발, 물고기 행동 분석 AI개발 및 AI서버 담당|
-|유승엽|백엔드 서버 개발,프론트엔드 UI개발 보조|
+### 1. 프로젝트 클론
+```bash
+git clone https://github.com/ksw2003/ai_fishapp.git
+cd ai_fishapp/
+```
+### 2. .env 파일 생성
+프로젝트 루트 디렉토리에 .env 파일을 생성합니다.
+```bash
+cp env-template .env
+```
 
-## 개발 환경
-|구분|기술 스택|
-|---|---|
-|프론트 엔드(모바일)|Dart,flutter|
-|백엔드(서버)|javascript,node.js,express.js|
-|DataBase/ORM|MySQL 8.0, sequelize|
-|인증|JWT,kakao Oauth 2.0,google Oauth 2.0|
-|실시간 통신|Websocket(ws)|
-|실시간 스트리밍|MediaMTX,RTSP,WebRTC|
-|AI서버|Python,FastAPI|
-|IOT|RaspberryPi,Python|
-|인프라|AWS EC2,Docker,Docker Compose|
-|버전 관리|git,github|
+### 3. .env 파일 생성
+.env 파일에 다음 키 값들을 입력하세요:
+카카오 로그인
+- KAKAO_NATIVE_APP_KEY: 카카오 개발자 콘솔에서 발급받은 네이티브 앱 키
+구글 로그인
+- GOOGLE_KEY: 구글 개발자 콘솔에서 발급받은 네이티브 앱 키
+AWS 서버 주소
+- API_BASE_URL: AWS EC2에 배포된 백엔드 서버의 API 기본 주소
+mediamtx 서버 주소
+- VIDEO_BASE_URL: AWS EC2에 배포된 mewdiamtx 서버의 API 기본 주소
 
-## 주요 기능
-### 1. 로그인 <a href="login 깃허브 wifi 링크">상세보기</a>
--카카오 로그인
--구글 로그인
-
-### 2. 회원가입 <a href="login 깃허브 wifi 링크">상세보기</a>
-- 어항 시리얼 ID 검증
-- 최고/최저 수온 설정
-- 수질 설정
-
-### 3. 어항 관리 <a href="login 깃허브 wifi 링크">상세보기</a>
-- 라즈베리 파이 기반 수온/수질 측정
-- socket 기반 원격 환수/급여
-- 서버 기반 카메라 연동
-- 서버 기반 AI 분석
-- 수온/수질 이상시 알림
-
-### 4. 캘린더 <a href="login 깃허브 wifi 링크">상세보기</a>
--날짜별 그날 수온/수질 확인
--날짜별 그날 환수/급여 여부 확인
--그날 최저/최고/평균 수온 확인
-
-### 5. 커뮤니티 <a href="login 깃허브 wifi 링크">상세보기</a>
--글 작성/수정/삭제
--글에 태그, 사진 추가
--댓글 작성/수정/삭제
--댓글 추천 기능
--태그/검색어로 작성글 검색
-
-### 6.AI챗봇 <a href="login 깃허브 wifi 링크">상세보기</a>
--gemini api 연동
-
-### 7.마이페이지 <a href="login 깃허브 wifi 링크">상세보기</a>
--닉네임/프로필 사진 변경
--내 어항 물고기 등록
--로그아웃
-
-## 🚀 Getting Started (실행 방법)
-
-### 1. APK 파일을 이용한 설치
-
-프로젝트에서 제공하는 APK 파일을 Android 스마트폰으로 다운로드합니다.
-다운로드한 APK 파일을 실행합니다.
-설치 과정에서 출처를 알 수 없는 앱 설치를 허용합니다. (필요한 경우)
-설치가 완료되면 앱을 실행합니다.
-
-### 2. 개발 환경에서 직접 실행
-필요 환경
-Flutter SDK
-Android Studio 또는 Android SDK
-Android 스마트폰 또는 에뮬레이터
-실행 순서
-
-# 1. 프로젝트 저장소 복제
-git clone [저장소 주소]
-
-# 2. 프로젝트 폴더로 이동
-cd [프로젝트 폴더]
-
-# 3. 필요한 패키지 설치
+### 4. 앱 실행
+환경 변수 설정이 완료되면 Flutter 앱을 실행할 수 있습니다.
+```bash
 flutter pub get
-
-# 4. 연결된 기기 확인
-flutter devices
-
-# 5. 애플리케이션 실행
 flutter run
+```
 
 3. 실행 시 참고 사항
 
