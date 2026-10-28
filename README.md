@@ -12,11 +12,17 @@ IOT+Node.js+AI 기반 어항 관리 시스템
 |유승엽|백엔드 서버 개발,프론트엔드 UI개발 보조|
 
 ## 개발 환경
--visual studio code(IDE)
--AWS(amazon web service)
--Docker
--Android studio
--RaspberryPy
+|구분|기술 스택|
+|---|---|
+|프론트 엔드(모바일)|Dart,flutter|
+|백엔드(서버)|javascript,node.js,express.js|
+|DataBase/ORM|MySQL 8.0, sequelize|
+|인증|JWT,kakao Oauth 2.0,google Oauth 2.0|
+|실시간 통신|Websocket(ws)|
+|실시간 스트리밍|MediaMTX,RTSP,WebRTC|
+|AI서버|파이썬,FastAPI|
+|인프라|AWS EC2,Docker,Docker Compose|
+|버전 관리|git,github|
 
 ## 주요 기능
 ### 1. 로그인 <a href="login 깃허브 wifi 링크">상세보기</a>
