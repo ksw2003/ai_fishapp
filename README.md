@@ -37,5 +37,3 @@ mediamtx 서버 주소
 flutter pub get
 flutter run
 ```
-
-환수 및 먹이 급여 제어 기능을 사용하려면 라즈베리 파이와 관련 하드웨어가 연결되어 있어야 합니다.
