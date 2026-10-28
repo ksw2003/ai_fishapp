@@ -124,6 +124,7 @@ class _MyPageScreenState extends State<MyPageScreen>{
     final response = await ApiClient.get('/api/tank/setting/$tankId',token: true);
 
     final data = jsonDecode(response.body);
+    print(data);
 
     final tankNameController = TextEditingController(text:data['device_id'] ?? '');
 
@@ -276,7 +277,6 @@ class _MyPageScreenState extends State<MyPageScreen>{
             ElevatedButton(
 
               onPressed: () async {
-
                 final tankName = tankNameController.text.trim();
 
                 final minTemp =
@@ -304,12 +304,11 @@ class _MyPageScreenState extends State<MyPageScreen>{
                     normalWater == null ||
 
                     warningWater == null) {
-
                   return;
 
                 }
 
-
+              
 
                 // 여기에서 서버에 수정 요청
 
@@ -339,7 +338,7 @@ class _MyPageScreenState extends State<MyPageScreen>{
 
                   );
 
-
+                  print(response.body);
 
                   if (!context.mounted) return;
 
@@ -378,6 +377,7 @@ class _MyPageScreenState extends State<MyPageScreen>{
 
 
                 }
+                
 
               },
 

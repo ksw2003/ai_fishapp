@@ -1,3 +1,4 @@
+
 import 'dart:convert';
 import 'dart:io';
 
@@ -21,7 +22,7 @@ class _ProfileEditScreenState
   //-----------------------------------------
 
   final TextEditingController nicknameController =
-  TextEditingController(
+      TextEditingController(
     text: "한경이",
   );
 
@@ -63,12 +64,22 @@ class _ProfileEditScreenState
 
   }
 
-  void makeProfile(BuildContext context) async{
-    final response = await ApiClient.postMultipart('/api/auth/profile',fields: {'nickname':nicknameController.text},
-      images: selectedImage != null ? [selectedImage!]: null,imageField: 'image',token: true);
-    if(response.statusCode == 200){
+  void makeProfile(BuildContext context) async {
+    final response = await ApiClient.postMultipart(
+      '/api/auth/profile',
+      fields: {
+        'nickname': nicknameController.text,
+      },
+      images: selectedImage != null
+          ? [selectedImage!]
+          : null,
+      imageField: 'image',
+      token: true,
+    );
+
+    if (response.statusCode == 200) {
       Navigator.pushNamed(context, "/home");
-    }else{
+    } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('데이터 저장에 실패하였습니다.'),
@@ -78,22 +89,29 @@ class _ProfileEditScreenState
     }
   }
 
-  Future<void> getUserInfo()async{
-    final response = await ApiClient.get('/api/auth/myinfo',token: true);
-    if(response.statusCode == 200){
+  Future<void> getUserInfo() async {
+    final response = await ApiClient.get(
+      '/api/auth/myinfo',
+      token: true,
+    );
+
+    if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
+
       if (!mounted) return;
+
       setState(() {
-        nicknameController.text = data["user"]["nickname"];
+        nicknameController.text =
+            data["user"]["nickname"];
         profileImage = data["image"];
       });
     }
   }
 
   Future<void> pickImage() async {
-  final XFile? image = await _picker.pickImage(
-    source: ImageSource.gallery,
-  );
+    final XFile? image = await _picker.pickImage(
+      source: ImageSource.gallery,
+    );
 
     if (image == null) {
       return;
@@ -125,47 +143,20 @@ class _ProfileEditScreenState
 
               //---------------------------------
               // 상단
+              // 오른쪽 저장 버튼 삭제
               //---------------------------------
 
               const SizedBox(height: 12),
 
               Row(
-
                 children: [
-
                   IconButton(
-
                     onPressed: () {
-
                       Navigator.pop(context);
-
                     },
-
                     icon: const Icon(
                       Icons.arrow_back_ios_new,
                       color: Color(0xff8FA8D8),
-                    ),
-                  ),
-
-                  const Spacer(),
-
-                  GestureDetector(
-
-                    onTap: () {
-
-                      // TODO : 저장
-
-                    },
-
-                    child: const Text(
-
-                      "저장",
-
-                      style: TextStyle(
-                        color: Color(0xff9BA9B0),
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                      ),
                     ),
                   ),
                 ],
@@ -186,7 +177,7 @@ class _ProfileEditScreenState
                     radius: 75,
 
                     backgroundColor:
-                    const Color(0xffBCC4D4),
+                        const Color(0xffBCC4D4),
 
                     child: CircleAvatar(
 
@@ -209,8 +200,8 @@ class _ProfileEditScreenState
 
                     child: GestureDetector(
 
-                      onTap: ()async {
-                          await pickImage();
+                      onTap: () async {
+                        await pickImage();
                       },
 
                       child: Container(
@@ -219,11 +210,8 @@ class _ProfileEditScreenState
                         height: 48,
 
                         decoration: const BoxDecoration(
-
                           color: Color(0xffD9D9D9),
-
                           shape: BoxShape.circle,
-
                         ),
 
                         child: const Icon(
@@ -297,7 +285,7 @@ class _ProfileEditScreenState
                 decoration: BoxDecoration(
 
                   borderRadius:
-                  BorderRadius.circular(16),
+                      BorderRadius.circular(16),
 
                   border: Border.all(
                     color: const Color(0xffF2F2F2),
@@ -311,9 +299,7 @@ class _ProfileEditScreenState
                   controller: nicknameController,
 
                   onChanged: (_) {
-
                     checkNickname();
-
                   },
 
                   decoration: const InputDecoration(
@@ -321,7 +307,7 @@ class _ProfileEditScreenState
                     border: InputBorder.none,
 
                     contentPadding:
-                    EdgeInsets.symmetric(
+                        EdgeInsets.symmetric(
                       horizontal: 16,
                     ),
 
@@ -332,27 +318,33 @@ class _ProfileEditScreenState
               const SizedBox(height: 32),
 
               //---------------------------------
-              // 저장 버튼 (선택)
+              // 하단 저장 버튼
               //---------------------------------
 
               SizedBox(
                 width: double.infinity,
                 height: 54,
+
                 child: ElevatedButton(
+
                   onPressed: canUseNickname
                       ? () {
-                    makeProfile(context);
-                  }
+                          makeProfile(context);
+                        }
                       : null,
+
                   style: ElevatedButton.styleFrom(
                     elevation: 0,
-                    backgroundColor: const Color(0xff2DA5F7),
-                    disabledBackgroundColor: Colors.grey.shade300,
+                    backgroundColor:
+                        const Color(0xff2DA5F7),
+                    disabledBackgroundColor:
+                        Colors.grey.shade300,
                     shape: RoundedRectangleBorder(
                       borderRadius:
-                      BorderRadius.circular(16),
+                          BorderRadius.circular(16),
                     ),
                   ),
+
                   child: const Text(
                     "저장",
                     style: TextStyle(
