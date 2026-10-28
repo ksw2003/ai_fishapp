@@ -109,7 +109,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
         child: Column(
           children: [
             Container(
-              height: 58,
+              height: 60,
               color: Colors.white,
               child: Stack(
                 children: [
@@ -129,11 +129,11 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                   ),
                   const Center(
                     child: Text(
-                      'Chat GPT',
+                      'Gemini',
                       style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w900,
-                        color: Color(0xFF2D3E5F),
+                        fontSize: 24,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF50576B),
                       ),
                     ),
                   ),
@@ -172,12 +172,12 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                     ),
 
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
+                      padding: const EdgeInsets.fromLTRB(14, 8, 14, 10),
                       child: Row(
                         children: [
                           Expanded(
                             child: Container(
-                              height: 34,
+                              height: 48,
                               decoration: BoxDecoration(
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(18),
@@ -195,16 +195,16 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                                   maxLines: 1,
                                   cursorColor: const Color(0xFF8FA8D8),
                                   style: const TextStyle(
-                                    fontSize: 12,
-                                    height: 1.0,
+                                    fontSize: 16,
+                                    height: 1.2,
                                     fontWeight: FontWeight.w600,
                                     color: Color(0xFF2D3E5F),
                                   ),
                                   decoration: InputDecoration(
                                     hintText: '메시지를 입력해주세요.',
                                     hintStyle: TextStyle(
-                                      fontSize: 11,
-                                      height: 1.0,
+                                      fontSize: 15,
+                                      height: 1.2,
                                       fontWeight: FontWeight.w600,
                                       color: const Color(0xFF8FA8D8)
                                           .withOpacity(0.75),
@@ -227,11 +227,11 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                             ),
                           ),
 
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 10),
 
                           Material(
                             color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(18),
                             clipBehavior: Clip.antiAlias,
                             child: InkWell(
                               splashColor:
@@ -240,13 +240,13 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                               const Color(0xFF8FA8D8).withOpacity(0.08),
                               onTap: sendMessage,
                               child: const SizedBox(
-                                width: 42,
-                                height: 34,
+                                width: 70,
+                                height: 48,
                                 child: Center(
                                   child: Text(
                                     '전송',
                                     style: TextStyle(
-                                      fontSize: 11,
+                                      fontSize: 15,
                                       fontWeight: FontWeight.w800,
                                       color: Color(0xFF8FA8D8),
                                     ),
@@ -309,7 +309,7 @@ class ChatBubble extends StatelessWidget {
             child: Text(
               text,
               style: const TextStyle(
-                fontSize: 12,
+                fontSize: 16,
                 height: 1.25,
                 fontWeight: FontWeight.w600,
                 color: Color(0xFF2D3E5F),

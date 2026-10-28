@@ -174,6 +174,16 @@ class _MyFishScreenState extends State<MyFishScreen> {
       isRefreshing = false;
     });
 
+    // 탐지된 물고기가 0마리면 기존 목록은 비운 상태로 안내 표시
+    if (fishes.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('탐지된 물고기가 없습니다.'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+
     print('AI 어종 결과 화면 반영 완료');
   }
 
@@ -277,7 +287,7 @@ class _MyFishScreenState extends State<MyFishScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(
-        0xffF7F7F7,
+        0xffFFFFFF,
       ),
 
       bottomNavigationBar:
@@ -397,7 +407,7 @@ class _MyFishScreenState extends State<MyFishScreen> {
                   const Padding(
                     padding:
                         EdgeInsets.symmetric(
-                      horizontal: 28,
+                      horizontal: 22,
                     ),
                     child: Align(
                       alignment:
@@ -409,7 +419,7 @@ class _MyFishScreenState extends State<MyFishScreen> {
                           fontWeight:
                               FontWeight.w700,
                           color: Color(
-                            0xff50576B,
+                            0xff393C43,
                           ),
                         ),
                       ),
@@ -428,7 +438,7 @@ class _MyFishScreenState extends State<MyFishScreen> {
                       padding:
                           const EdgeInsets
                               .symmetric(
-                        horizontal: 14,
+                        horizontal: 22,
                       ),
                       children: [
                         ...List.generate(
@@ -436,9 +446,10 @@ class _MyFishScreenState extends State<MyFishScreen> {
                           (index) =>
                               Padding(
                             padding:
-                                const EdgeInsets
-                                    .only(
-                              bottom: 12,
+                                EdgeInsets.only(
+                              bottom: isEdit && index == fishes.length - 1
+                                  ? 22
+                                  : 12,
                             ),
                             child:
                                 FishRowWidget(
@@ -498,7 +509,7 @@ class _MyFishScreenState extends State<MyFishScreen> {
                               });
                             },
                             child: Container(
-                              height: 48,
+                              height: 52,
                               decoration:
                                   BoxDecoration(
                                 borderRadius:
@@ -510,7 +521,7 @@ class _MyFishScreenState extends State<MyFishScreen> {
                                     Border.all(
                                   color:
                                       const Color(
-                                    0xffCCE6FF,
+                                    0xff2DA5F7,
                                   ),
                                   width: 2,
                                 ),
@@ -523,7 +534,7 @@ class _MyFishScreenState extends State<MyFishScreen> {
                                       TextStyle(
                                     color:
                                         Color(
-                                      0xff94ABCC,
+                                      0xff2DA5F7,
                                     ),
                                     fontSize:
                                         17,
@@ -536,15 +547,16 @@ class _MyFishScreenState extends State<MyFishScreen> {
                             ),
                           ),
 
-                        const SizedBox(
-                          height: 22,
+                        SizedBox(
+                          height: isEdit ? 12 : 22,
                         ),
 
                         // ==================================
                         // AI 갱신하기
                         // ==================================
                         SizedBox(
-                          height: 44,
+                          width: double.infinity,
+                          height: 54,
                           child:
                               ElevatedButton(
                             onPressed:
@@ -558,18 +570,18 @@ class _MyFishScreenState extends State<MyFishScreen> {
                               elevation: 0,
                               backgroundColor:
                                   const Color(
-                                0xffCCE6FF,
+                                0xff2DA5F7,
                               ),
                               disabledBackgroundColor:
                                   const Color(
-                                0xffCCE6FF,
+                                0xffD9D9D9,
                               ),
                               shape:
                                   RoundedRectangleBorder(
                                 borderRadius:
                                     BorderRadius
                                         .circular(
-                                  12,
+                                  16,
                                 ),
                               ),
                             ),
@@ -586,7 +598,7 @@ class _MyFishScreenState extends State<MyFishScreen> {
                                               2.5,
                                           color:
                                               Color(
-                                            0xff50576B,
+                                            0xffFFFFFF,
                                           ),
                                         ),
                                       )
@@ -596,8 +608,9 @@ class _MyFishScreenState extends State<MyFishScreen> {
                                             TextStyle(
                                           color:
                                               Color(
-                                            0xff50576B,
+                                            0xffFFFFFF,
                                           ),
+                                          fontSize: 17,
                                           fontWeight:
                                               FontWeight
                                                   .w700,
@@ -642,7 +655,7 @@ class FishRowWidget extends StatelessWidget {
         // ----------------------------------
         Expanded(
           child: Container(
-            height: 48,
+            height: 52,
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius:
@@ -652,7 +665,7 @@ class FishRowWidget extends StatelessWidget {
               border: Border.all(
                 color:
                     const Color(
-                  0xffF1F1F1,
+                  0xffF2F2F2,
                 ),
                 width: 2,
               ),
@@ -680,6 +693,7 @@ class FishRowWidget extends StatelessWidget {
                         ),
                         fontWeight:
                             FontWeight.w700,
+                        fontSize: 16,
                       ),
                     ),
                   )
@@ -693,7 +707,7 @@ class FishRowWidget extends StatelessWidget {
                       fontWeight:
                           FontWeight.w700,
                       color: Color(
-                        0xff50576B,
+                        0xff393C43,
                       ),
                     ),
                   ),
@@ -708,8 +722,8 @@ class FishRowWidget extends StatelessWidget {
         // 개수
         // ----------------------------------
         Container(
-          width: 60,
-          height: 48,
+          width: 82,
+          height: 52,
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius:
@@ -719,7 +733,7 @@ class FishRowWidget extends StatelessWidget {
             border: Border.all(
               color:
                   const Color(
-                0xffF1F1F1,
+                0xffF2F2F2,
               ),
               width: 2,
             ),
@@ -745,7 +759,8 @@ class FishRowWidget extends StatelessWidget {
                       color: Color(
                         0xffBCC4D4,
                       ),
-                      fontSize: 12,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 )
@@ -759,15 +774,14 @@ class FishRowWidget extends StatelessWidget {
                     fontWeight:
                         FontWeight.w700,
                     color: Color(
-                      0xff50576B,
+                      0xff393C43,
                     ),
                   ),
                 ),
         ),
 
-        const SizedBox(
-          width: 8,
-        ),
+        if (isEdit)
+          const SizedBox(width: 8),
 
         // ----------------------------------
         // 삭제 버튼
@@ -796,10 +810,6 @@ class FishRowWidget extends StatelessWidget {
                 ),
               ),
             ),
-          )
-        else
-          const SizedBox(
-            width: 24,
           ),
       ],
     );
