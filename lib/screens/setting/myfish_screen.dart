@@ -330,7 +330,12 @@ class _MyFishScreenState extends State<MyFishScreen> {
 
                         const Spacer(),
 
-                        GestureDetector(
+                        Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            customBorder: const CircleBorder(),
+                            splashColor: const Color(0xFF8FA8D8).withOpacity(0.20),
+                            highlightColor: const Color(0xFF8FA8D8).withOpacity(0.10),
                           onTap: () async {
                             if (isEdit) {
                               final fishlist =
@@ -381,18 +386,18 @@ class _MyFishScreenState extends State<MyFishScreen> {
                                   !isEdit;
                             });
                           },
-                          child: Text(
-                            isEdit
-                                ? "완료"
-                                : "수정",
-                            style:
-                                const TextStyle(
-                              fontSize: 17,
-                              fontWeight:
-                                  FontWeight
-                                      .w700,
-                              color: Color(
-                                0xff9BA9B0,
+                            child: SizedBox(
+                              width: 48,
+                              height: 48,
+                              child: Center(
+                                child: Text(
+                                  isEdit ? "완료" : "수정",
+                                  style: const TextStyle(
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xff9BA9B0),
+                                  ),
+                                ),
                               ),
                             ),
                           ),

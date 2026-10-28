@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'dart:async';
 import '../../models/alert.dart';
@@ -9,13 +10,10 @@ class AlertScreen extends StatefulWidget {
   const AlertScreen({super.key});
 
   @override
-  State<AlertScreen> createState() =>
-      _AlertScreenState();
+  State<AlertScreen> createState() => _AlertScreenState();
 }
 
-class _AlertScreenState
-    extends State<AlertScreen> {
-
+class _AlertScreenState extends State<AlertScreen> {
   late Future<List<AlertModel>> alertsFuture;
   StreamSubscription? sseSubscription;
 
@@ -33,17 +31,12 @@ class _AlertScreenState
 
     sseSubscription =
         SensorApi().connect('/api/tank/data').listen((event) {
-
-          if (event["type"] == "warning") {
-
-            setState(() {
-              alertsFuture =
-                  AlertService.getAlerts();
-            });
-
-          }
-
+      if (event["type"] == "warning") {
+        setState(() {
+          alertsFuture = AlertService.getAlerts();
         });
+      }
+    });
   }
 
   @override
@@ -53,7 +46,6 @@ class _AlertScreenState
   }
 
   String formatDate(DateTime date) {
-
     final now = DateTime.now();
 
     if (date.year == now.year &&
@@ -79,10 +71,10 @@ class _AlertScreenState
   Color getIconColor(AlertModel item) {
     if (item.type == "temp") {
       if (item.status == "low") {
-        return Colors.lightBlue.shade300; // 낮음
+        return Colors.lightBlue.shade300;
       }
       if (item.status == "high") {
-        return Colors.red.shade300; // 높음
+        return Colors.red.shade300;
       }
     }
 
@@ -112,7 +104,6 @@ class _AlertScreenState
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       backgroundColor: Colors.white,
 
@@ -129,10 +120,31 @@ class _AlertScreenState
         iconTheme: const IconThemeData(
           color: Colors.black,
         ),
+
+        // 모두 읽기 버튼 디자인 수정
         actions: [
-          TextButton(
-            onPressed: () {},
-            child: const Text("모두읽기"),
+          Padding(
+            padding: const EdgeInsets.only(right: 14),
+            child: TextButton(
+              onPressed: () {},
+              style: TextButton.styleFrom(
+                foregroundColor: const Color(0xFF8FA8D8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 8,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24),
+                ),
+              ),
+              child: const Text(
+                "모두 읽기",
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
           ),
         ],
       ),
@@ -140,7 +152,6 @@ class _AlertScreenState
       body: FutureBuilder<List<AlertModel>>(
         future: alertsFuture,
         builder: (context, snapshot) {
-
           if (snapshot.connectionState ==
               ConnectionState.waiting) {
             return const Center(
@@ -165,10 +176,8 @@ class _AlertScreenState
           }
 
           return Column(
-            crossAxisAlignment:
-            CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-
               const Padding(
                 padding: EdgeInsets.only(
                   left: 20,
@@ -190,7 +199,6 @@ class _AlertScreenState
                   child: ListView.builder(
                     itemCount: alerts.length,
                     itemBuilder: (context, index) {
-
                       final item = alerts[index];
 
                       return Padding(
@@ -200,15 +208,16 @@ class _AlertScreenState
                         ),
                         child: Row(
                           crossAxisAlignment:
-                          CrossAxisAlignment.start,
+                              CrossAxisAlignment.start,
                           children: [
-
                             Container(
                               width: 60,
                               height: 60,
                               decoration: BoxDecoration(
-                                color: getIconBackgroundColor(item),
-                                borderRadius: BorderRadius.circular(16),
+                                color:
+                                    getIconBackgroundColor(item),
+                                borderRadius:
+                                    BorderRadius.circular(16),
                               ),
                               child: Icon(
                                 getIcon(item.type),
@@ -222,9 +231,8 @@ class _AlertScreenState
                             Expanded(
                               child: Column(
                                 crossAxisAlignment:
-                                CrossAxisAlignment.start,
+                                    CrossAxisAlignment.start,
                                 children: [
-
                                   Text(
                                     item.message,
                                     style: const TextStyle(

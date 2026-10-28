@@ -8,7 +8,6 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:ai_fishapp/screens/setting/myfish_screen.dart';
 import 'package:ai_fishapp/services/fishinfo_service.dart';
 import 'package:ai_fishapp/models/fishinfo.dart';
-import 'package:ai_fishapp/widgets/rotating_loading_icon.dart';
 
 class LiveVideoScreen extends StatefulWidget {
   const LiveVideoScreen({super.key});
@@ -708,7 +707,7 @@ class _RealtimeVideoBoxState extends State<RealtimeVideoBox> {
                 child: ColoredBox(
                   color: Colors.white,
                   child: Center(
-                    child: RotatingLoadingIcon(),
+                    child: CircularProgressIndicator(),
                   ),
                 ),
               ),

@@ -74,11 +74,11 @@ class _PostWritingScreenState
     return Scaffold(
 
         backgroundColor: Colors.white,
+        resizeToAvoidBottomInset: true,
 
         body: SafeArea(
-        child: Column(
-        children: [
-
+          child: Column(
+            children: [
         /// 상단
         Padding(
         padding: const EdgeInsets.symmetric(
@@ -152,11 +152,94 @@ class _PostWritingScreenState
     ),
         ),
 
-    /// 태그
+              Expanded(
+                child: SingleChildScrollView(
+                  // 키보드가 열린 상태에서도 스크롤해 태그와 사진 영역을 볼 수 있도록 유지
+                  keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.manual,
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.only(bottom: 150),
+                  child: Column(
+                    children: [
+    const SizedBox(height: 25),
+
+    /// 제목
+    Padding(
+    padding: const EdgeInsets.symmetric(
+    horizontal: 30,
+    ),
+    child: TextField(
+
+    controller: titleController,
+
+    decoration: const InputDecoration(
+
+    hintText: "제목을 입력하세요",
+
+    border: InputBorder.none,
+
+    hintStyle: TextStyle(
+    fontSize: 24,
+    fontWeight: FontWeight.w700,
+    color: Colors.black38,
+    ),
+
+    ),
+
+    style: const TextStyle(
+    fontSize: 24,
+    fontWeight: FontWeight.w700,
+    ),
+
+    ),
+    ),
+
+    const Divider(
+    thickness: 2,
+    color: Color(0xffF5F5F5),
+    ),
+          /// 내용 입력
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 30,
+              vertical: 20,
+            ),
+            child: TextField(
+              controller: contentController,
+              minLines: 6,
+              maxLines: null,
+              keyboardType: TextInputType.multiline,
+              scrollPadding: const EdgeInsets.only(bottom: 120),
+              decoration: const InputDecoration(
+                hintText: "내용을 입력하세요.",
+                border: InputBorder.none,
+                hintStyle: TextStyle(
+                  fontSize: 18,
+                  color: Colors.black38,
+                  height: 1.7,
+                ),
+              ),
+              style: const TextStyle(
+                fontSize: 18,
+                height: 1.7,
+              ),
+            ),
+          ),
+
+          // 내용과 태그 영역 구분
+          const Divider(
+            thickness: 2,
+            height: 2,
+            color: Color(0xffF5F5F5),
+          ),
+          const SizedBox(height: 28),
+
+    /// 태그 - 왼쪽 정렬
     Padding(
     padding: const EdgeInsets.symmetric(
     horizontal: 20,
     ),
+    child: Align(
+    alignment: Alignment.centerLeft,
     child: Wrap(
     spacing: 10,
     runSpacing: 10,
@@ -239,10 +322,7 @@ class _PostWritingScreenState
 
     decoration: BoxDecoration(
 
-    border: Border.all(
     color: const Color(0xffF5F5F5),
-    width: 3,
-    ),
 
     borderRadius:
     BorderRadius.circular(15),
@@ -287,71 +367,9 @@ class _PostWritingScreenState
     ],
     ),
     ),
-
-    const SizedBox(height: 25),
-
-    /// 제목
-    Padding(
-    padding: const EdgeInsets.symmetric(
-    horizontal: 30,
-    ),
-    child: TextField(
-
-    controller: titleController,
-
-    decoration: const InputDecoration(
-
-    hintText: "제목을 입력하세요",
-
-    border: InputBorder.none,
-
-    hintStyle: TextStyle(
-    fontSize: 24,
-    fontWeight: FontWeight.w700,
-    color: Colors.black38,
     ),
 
-    ),
-
-    style: const TextStyle(
-    fontSize: 24,
-    fontWeight: FontWeight.w700,
-    ),
-
-    ),
-    ),
-
-    const Divider(
-    thickness: 2,
-    color: Color(0xffF5F5F5),
-    ),
-          /// 내용 입력
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 30,
-                vertical: 20,
-              ),
-              child: TextField(
-                controller: contentController,
-                maxLines: null,
-                keyboardType: TextInputType.multiline,
-                decoration: const InputDecoration(
-                  hintText: "내용을 입력하세요.",
-                  border: InputBorder.none,
-                  hintStyle: TextStyle(
-                    fontSize: 18,
-                    color: Colors.black38,
-                    height: 1.7,
-                  ),
-                ),
-                style: const TextStyle(
-                  fontSize: 18,
-                  height: 1.7,
-                ),
-              ),
-            ),
-          ),
+          const SizedBox(height: 16),
 
           /// 구분선
           Container(
@@ -522,8 +540,12 @@ class _PostWritingScreenState
 
           const SizedBox(height: 20),
         ],
-        ),
-        ),
-    );
+        ), // scroll content Column
+        ), // SingleChildScrollView
+        ), // Expanded
+        ], // outer Column children
+        ), // outer Column
+        ), // SafeArea
+    ); // Scaffold
   }
 }
