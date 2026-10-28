@@ -1,12 +1,14 @@
 # 관상어용 스마트 어항 시스템 Frontend
 ## :file_folder: 프로젝트구조
-lib
-├── main.dart          # 앱 실행 및 초기 설정
-├── api                # 서버 API 통신 관련 코드
-├── models             # 데이터 모델 정의
-├── screens            # 각 화면 및 페이지 UI
-├── services           # 비즈니스 로직 및 외부 서비스 연동
-└── widgets            # 재사용 가능한 UI 컴포넌트
+```text
+lib/
+├── main.dart/         # 앱 실행 및 초기 설정
+├── api/               # 서버 API 통신 관련 코드
+├── models/            # 데이터 모델 정의
+├── screens/           # 각 화면 및 페이지 UI
+├── services/          # 비즈니스 로직 및 외부 서비스 연동
+└── widgets/           # 재사용 가능한 UI 컴포넌트
+```
 
 ## :rocket: 실행 방법
 
