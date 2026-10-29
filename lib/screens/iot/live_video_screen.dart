@@ -8,6 +8,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:ai_fishapp/screens/setting/myfish_screen.dart';
 import 'package:ai_fishapp/services/fishinfo_service.dart';
 import 'package:ai_fishapp/models/fishinfo.dart';
+import 'package:ai_fishapp/services/socket_service.dart';
 
 class LiveVideoScreen extends StatefulWidget {
   const LiveVideoScreen({super.key});
@@ -17,9 +18,10 @@ class LiveVideoScreen extends StatefulWidget {
 }
 
 class _LiveVideoScreenState extends State<LiveVideoScreen> {
-  // AI 이상탐지 연동 전 임시 표시값
-  final int healthyFishCount = 2;
-  final int cautionFishCount = 0;
+  // SOM 활동성 분석 결과: 최초 수신 전에는 --마리로 표시
+  int? healthyFishCount;
+  int? cautionFishCount;
+  StreamSubscription<Map<String, dynamic>>? _activitySubscription;
 
   List<Fish> _savedFishes = [];
   bool _isFishLoading = true;
@@ -29,6 +31,37 @@ class _LiveVideoScreenState extends State<LiveVideoScreen> {
   void initState() {
     super.initState();
     _loadSavedFishes();
+
+    // 기존 공용 WebSocket을 구독하며, 다른 화면의 수신은 방해하지 않음
+    _activitySubscription = SocketService.instance.stream.listen((message) {
+      if (message['type'] != 'activity_result') return;
+
+      final rawData = message['data'];
+      if (rawData is! Map) {
+        debugPrint('[ACTIVITY] 잘못된 데이터 형식: $message');
+        return;
+      }
+
+      final healthy = rawData['healthy'];
+      final abnormal = rawData['abnormal'];
+      if (healthy is! num || abnormal is! num) {
+        debugPrint('[ACTIVITY] healthy/abnormal 누락: $message');
+        return;
+      }
+
+      if (!mounted) return;
+      setState(() {
+        healthyFishCount = healthy.toInt();
+        cautionFishCount = abnormal.toInt();
+      });
+      debugPrint('[ACTIVITY] 건강=$healthyFishCount, 주의=$cautionFishCount');
+    });
+  }
+
+  @override
+  void dispose() {
+    _activitySubscription?.cancel();
+    super.dispose();
   }
 
   Future<void> _loadSavedFishes() async {
@@ -159,43 +192,6 @@ class _LiveVideoScreenState extends State<LiveVideoScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-              // 나의 물고기 관리 화면으로 이동
-              Material(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(18),
-                child: InkWell(
-                  onTap: _openMyFishScreen,
-                  borderRadius: BorderRadius.circular(18),
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(18),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: const Color(0xFFE2ECF7)),
-                    ),
-                    child: const Row(
-                      children: [
-                        Expanded(
-                          child: Padding(
-                            padding: EdgeInsets.only(left: 12),
-                            child: Text(
-                              '나의 물고기',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w800,
-                                color: Color(0xFF2D3E5F),
-                              ),
-                            ),
-                          ),
-                        ),
-                        Icon(Icons.chevron_right, color: Color(0xFF8FA8D8)),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-
               Row(
                 children: [
                   Expanded(
@@ -234,13 +230,40 @@ class _LiveVideoScreenState extends State<LiveVideoScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      '등록된 물고기',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFF2D3E5F),
-                      ),
+                    Row(
+                      children: [
+                        const Expanded(
+                          child: Text(
+                            '나의 물고기',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF2D3E5F),
+                            ),
+                          ),
+                        ),
+                        // 기존 나의 물고기 버튼과 동일한 화면으로 이동
+                        Material(
+                          color: Colors.transparent,
+                          shape: const CircleBorder(),
+                          clipBehavior: Clip.antiAlias,
+                          child: InkWell(
+                            customBorder: const CircleBorder(),
+                            splashColor: const Color(0xFF8FA8D8).withOpacity(0.20),
+                            highlightColor: const Color(0xFF8FA8D8).withOpacity(0.10),
+                            onTap: _openMyFishScreen,
+                            child: const SizedBox(
+                              width: 40,
+                              height: 40,
+                              child: Icon(
+                                Icons.add,
+                                size: 27,
+                                color: Color(0xFF8FA8D8),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 16),
                     if (_isFishLoading)

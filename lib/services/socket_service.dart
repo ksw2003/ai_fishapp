@@ -2,6 +2,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
@@ -47,6 +48,8 @@ class SocketService {
           .replaceFirst('http://', 'ws://')
           .replaceFirst('https://', 'wss://');
 
+      debugPrint('[WS] 연결 시도: $wsUrl');
+
       final channel = WebSocketChannel.connect(
         Uri.parse(wsUrl),
       );
@@ -64,7 +67,7 @@ class SocketService {
       _reconnectTimer = null;
       _isReconnecting = false;
 
-      print('WebSocket 연결 성공');
+      debugPrint('[WS] WebSocket 연결 성공');
 
       // 서버에 사용자 등록
       send({
@@ -79,14 +82,58 @@ class SocketService {
             final decoded = jsonDecode(message);
 
             if (decoded is Map<String, dynamic>) {
+
+              // ======================================
+              // 수신 메시지 타입 확인
+              // ======================================
+              debugPrint(
+                '[WS] 메시지 수신 type: ${decoded['type']}',
+              );
+
+              // ======================================
+              // SOM 활동성 분석 결과 확인
+              // ======================================
+              if (decoded['type'] == 'activity_result') {
+                debugPrint(
+                  '[FLUTTER] 활동성 결과 수신: $decoded',
+                );
+
+                final data = decoded['data'];
+
+                if (data is Map) {
+                  debugPrint(
+                    '[FLUTTER] 건강=${data['healthy']}, '
+                    '주의=${data['abnormal']}',
+                  );
+                } else {
+                  debugPrint(
+                    '[FLUTTER] 활동성 data 형식 오류: $data',
+                  );
+                }
+              }
+
+              // ======================================
+              // 어종 분석 결과 확인
+              // ======================================
+              if (decoded['type'] == 'species_result') {
+                debugPrint(
+                  '[FLUTTER] 어종 분석 결과 수신: $decoded',
+                );
+              }
+
+              // 기존 메시지 전달 유지
               _controller.add(decoded);
+            } else {
+              debugPrint(
+                '[WS] 예상하지 못한 데이터 형식: $decoded',
+              );
             }
           } catch (e) {
-            print('WebSocket 데이터 변환 실패: $e');
+            debugPrint('WebSocket 데이터 변환 실패: $e');
           }
         },
         onError: (error) {
-          print('WebSocket 오류: $error');
+          debugPrint('[WS] WebSocket 오류: $error');
 
           if (_channel == channel) {
             _channel = null;
@@ -95,7 +142,7 @@ class SocketService {
           _reconnect();
         },
         onDone: () {
-          print('WebSocket 연결 종료됨');
+          debugPrint('[WS] WebSocket 연결 종료됨');
 
           if (_channel == channel) {
             _channel = null;
@@ -105,7 +152,7 @@ class SocketService {
         },
       );
     } catch (error) {
-      print('WebSocket 연결 실패: $error');
+      debugPrint('[WS] WebSocket 연결 실패: $error');
 
       _channel = null;
 
@@ -133,7 +180,7 @@ class SocketService {
 
     _isReconnecting = true;
 
-    print('3초 후 WebSocket 재연결 시도');
+    debugPrint('[WS] 3초 후 WebSocket 재연결 시도');
 
     _reconnectTimer?.cancel();
 
@@ -146,7 +193,7 @@ class SocketService {
           return;
         }
 
-        print('WebSocket 재연결 중...');
+        debugPrint('[WS] WebSocket 재연결 중...');
 
         await connect(userId);
       },
@@ -157,13 +204,15 @@ class SocketService {
     final channel = _channel;
 
     if (channel == null) {
-      print('WebSocket이 연결되어 있지 않습니다.');
+      debugPrint('[WS] WebSocket이 연결되어 있지 않습니다.');
       return;
     }
 
     channel.sink.add(
       jsonEncode(data),
     );
+
+    debugPrint('[WS] 전송: $data');
   }
 
   Future<void> disconnect() async {
@@ -183,6 +232,6 @@ class SocketService {
       await channel.sink.close();
     }
 
-    print('WebSocket 연결 종료');
+    debugPrint('[WS] WebSocket 연결 종료');
   }
 }

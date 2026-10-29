@@ -48,6 +48,11 @@ class _MyFishScreenState extends State<MyFishScreen> {
 
   final List<FishRowData> fishes = [];
 
+  // DB에 저장된 어종과 ID를 유지하여 AI 갱신 결과 저장 시 재사용
+  final Map<String, int> _savedFishIds = {};
+
+  String _speciesKey(String species) => species.trim().toLowerCase();
+
   bool isLoading = true;
   bool isRefreshing = false;
 
@@ -135,12 +140,12 @@ class _MyFishScreenState extends State<MyFishScreen> {
   // =========================================================
   // Node -> Flutter WebSocket 메시지 처리
   // =========================================================
-  void handleWebSocketMessage(
+  Future<void> handleWebSocketMessage(
     Map<String, dynamic> message,
-  ) {
+  ) async {
     final type = message['type'];
 
-    if (type != 'species_result') {
+    if (type != 'species_result' || !isRefreshing) {
       return;
     }
 
@@ -211,11 +216,15 @@ class _MyFishScreenState extends State<MyFishScreen> {
           ? countValue
           : int.tryParse(countValue.toString()) ?? 0;
 
+      // 기존 DB에 있던 어종이라면 fish_id를 유지
+      final existingId = _savedFishIds[_speciesKey(species)];
+
       newFishes.add(
         FishRowData(
-          fishId: null,
+          fishId: existingId,
           species: species,
           count: count,
+          isNew: existingId == null,
         ),
       );
     });
@@ -227,7 +236,6 @@ class _MyFishScreenState extends State<MyFishScreen> {
         ..clear()
         ..addAll(newFishes);
 
-      isRefreshing = false;
     });
 
     // 기존 Controller 정리
@@ -241,10 +249,21 @@ class _MyFishScreenState extends State<MyFishScreen> {
     // 탐지된 물고기가 없을 때 중앙 Toast
     // ==========================================
     if (newFishes.isEmpty) {
-      showCenterToast('탐지된 물고기가 없습니다.');
+      showCenterToast('탐지된 물고기가 없어 자동 저장하지 않았습니다.');
+      if (mounted) setState(() => isRefreshing = false);
+      return;
     }
 
-    print('AI 어종 결과 화면 반영 완료');
+    // 갱신하기 결과를 기존 '완료' 저장 동작과 동일하게 DB에 저장
+    final saved = await saveFish();
+    if (!mounted) return;
+
+    setState(() => isRefreshing = false);
+    if (saved) {
+      showCenterToast('AI 분석 결과가 저장되었습니다.');
+    }
+
+    print('AI 어종 결과 자동 저장 ${saved ? '완료' : '실패'}');
   }
 
   // =========================================================
@@ -256,6 +275,14 @@ class _MyFishScreenState extends State<MyFishScreen> {
           await FishService.getFishList();
 
       if (!mounted) return;
+
+      // 실제 저장된 DB 정보로 ID 목록을 갱신
+      _savedFishIds.clear();
+      for (final fish in fishList) {
+        if (fish.fishId != null) {
+          _savedFishIds[_speciesKey(fish.fishType)] = fish.fishId!;
+        }
+      }
 
       final newFishes = fishList.map((fish) {
         return FishRowData(
@@ -326,7 +353,7 @@ class _MyFishScreenState extends State<MyFishScreen> {
   // =========================================================
   // 물고기 정보 저장
   // =========================================================
-  Future<void> saveFish() async {
+  Future<bool> saveFish() async {
     final fishlist = fishes
         .map((fish) {
           return {
@@ -347,21 +374,23 @@ class _MyFishScreenState extends State<MyFishScreen> {
         fishes: fishlist,
       );
 
-      if (!mounted) return;
+      if (!mounted) return false;
 
       await loadFish();
 
-      if (!mounted) return;
+      if (!mounted) return false;
 
       setState(() {
         isEdit = false;
       });
+      return true;
     } catch (e) {
       print('물고기 정보 저장 실패: $e');
 
-      if (!mounted) return;
+      if (!mounted) return false;
 
       showCenterToast('저장에 실패했습니다.');
+      return false;
     }
   }
 

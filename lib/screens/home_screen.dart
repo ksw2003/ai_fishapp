@@ -28,7 +28,55 @@ class _HomeScreenState extends State<HomeScreen> {
   StreamSubscription<Map<String, dynamic>>? _subscription;
   StreamSubscription<Map<String, dynamic>>? _sensorSubscription;
   final SensorApi _sensorApi = SensorApi();
-  String fishCondition = '좋음';
+  // 실제 SOM 활동성 결과를 받기 전에는 상태를 단정하지 않음
+  String fishCondition = '분석 중';
+  DateTime? _lastActivityReceivedAt;
+  Timer? _activityStaleTimer;
+
+  // 물고기 상태에 맞는 아이콘
+  IconData get _fishConditionIcon {
+    switch (fishCondition) {
+      case '좋음':
+        return Icons.sentiment_very_satisfied_outlined;
+      case '보통':
+        return Icons.sentiment_neutral_outlined;
+      case '나쁨':
+        return Icons.sentiment_very_dissatisfied_outlined;
+      default:
+        return Icons.help_outline;
+    }
+  }
+
+  // 주의 비율: 0% 좋음 / 0% 초과~50% 미만 보통 / 50% 이상 나쁨
+  // 현재 SOM이 상태를 판정한 개체 수를 기준으로 계산한다.
+  String _classifyFishCondition(int healthy, int abnormal) {
+    final total = healthy + abnormal;
+    if (total == 0) return '분석 중';
+    if (abnormal == 0) return '좋음';
+    // 부동소수점 계산 대신 정수 비교로 정확하게 50% 경계를 판단
+    if (abnormal * 2 >= total) return '나쁨';
+    return '보통';
+  }
+
+  void _handleActivityResult(Map<String, dynamic> message) {
+    final raw = message['data'];
+    if (raw is! Map) return;
+    final healthy = raw['healthy'];
+    final abnormal = raw['abnormal'];
+    if (healthy is! num || abnormal is! num) return;
+    if (!healthy.isFinite || !abnormal.isFinite) return;
+    if (healthy < 0 || abnormal < 0) return;
+    if (healthy != healthy.truncateToDouble() ||
+        abnormal != abnormal.truncateToDouble()) return;
+    if (!mounted) return;
+
+    final next = _classifyFishCondition(healthy.toInt(), abnormal.toInt());
+    setState(() {
+      fishCondition = next;
+      _lastActivityReceivedAt = DateTime.now();
+    });
+    debugPrint('[활동성] 건강=$healthy 주의=$abnormal → $next');
+  }
   bool waterChangeDone = false;
   bool feedingDone = false;
   SensorData? sensor;
@@ -112,18 +160,30 @@ class _HomeScreenState extends State<HomeScreen> {
     }, onDone: () {
       debugPrint('[수질 디버그] 센서 스트림 종료');
     });
-    _subscription = SocketService.instance.stream.listen((data){
-      if(data['type']=='fishStatus'){
+    _subscription = SocketService.instance.stream.listen((data) {
+      if (data['type'] == 'fishStatus') {
         print(data);
       }
-      if(data['type'] == 'activity_result'){
-        print(data['data']['activity']);
+      if (data['type'] == 'activity_result') {
+        _handleActivityResult(data);
+      }
+    });
+
+    // AI 결과는 5초마다 재전송되므로 15초 이상 없으면 오래된 상태를 숨김
+    _activityStaleTimer = Timer.periodic(const Duration(seconds: 3), (_) {
+      final last = _lastActivityReceivedAt;
+      if (!mounted || last == null || fishCondition == '분석 중') return;
+      if (DateTime.now().difference(last) > const Duration(seconds: 15)) {
+        setState(() {
+          fishCondition = '분석 중';
+        });
       }
     });
   }
   @override
   void dispose() {
     _timer?.cancel();
+    _activityStaleTimer?.cancel();
     _sensorSubscription?.cancel();
     _subscription?.cancel();
     super.dispose();
@@ -425,8 +485,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                       ),
                                     ),
                                     const SizedBox(width: 6),
-                                    const Icon(
-                                      Icons.sentiment_very_satisfied_outlined,
+                                    Icon(
+                                      _fishConditionIcon,
                                       size: 28,
                                       color: Colors.white,
                                     ),
