@@ -5,8 +5,7 @@ class DailyTempDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 달력 화면에서 넘겨받는 값
-    // 나중에 백엔드에서 선택 날짜의 평균/최고/최저 수온 받아와서 전달
+    // 달력 화면에서 넘겨받는 값 (기존 기능 유지)
     final Map<String, dynamic>? args =
         ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
 
@@ -24,26 +23,25 @@ class DailyTempDetailScreen extends StatelessWidget {
         child: LayoutBuilder(
           builder: (context, constraints) {
             final double screenHeight = constraints.maxHeight;
-            final double barHeight = (screenHeight * 0.58).clamp(330.0, 430.0);
+            final double gaugeHeight =
+                (screenHeight * 0.58).clamp(330.0, 430.0);
 
             return SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
               child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  minHeight: screenHeight,
-                ),
+                constraints: BoxConstraints(minHeight: screenHeight),
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(28, 18, 28, 28),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // 뒤로가기 버튼
+                      // 현재 수온 화면과 동일한 뒤로가기 버튼
                       IconButton(
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(),
                         icon: const Icon(
                           Icons.arrow_back_ios_new,
-                          size: 16,
+                          size: 18,
                           color: Color(0xFF8FA8D8),
                         ),
                         onPressed: () {
@@ -51,95 +49,102 @@ class DailyTempDetailScreen extends StatelessWidget {
                         },
                       ),
 
-                      SizedBox(height: screenHeight * 0.12),
+                      SizedBox(height: screenHeight * 0.10),
 
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // 왼쪽 텍스트 영역
+                          // 현재 수온 화면과 동일한 텍스트 위치 및 간격
                           Expanded(
-                            child: Padding(
-                              padding: const EdgeInsets.only(left: 10),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  SizedBox(height: screenHeight * 0.07),
+                            child: Transform.translate(
+                              offset: const Offset(0, -40),
+                              child: Padding(
+                                padding: const EdgeInsets.only(left: 34),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    SizedBox(height: screenHeight * 0.08),
 
-                                  Text(
-                                    '${selectedDate.year}년 ${selectedDate.month}월 ${selectedDate.day}일의',
-                                    style: const TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w800,
-                                      color: Color(0xFF006FEF),
+                                    // 선택한 날짜를 표시 (기존 데이터 유지)
+                                    Text(
+                                      '${selectedDate.year}년 ${selectedDate.month}월 ${selectedDate.day}일의',
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w800,
+                                        color: Color(0xFF005BD8),
+                                      ),
                                     ),
-                                  ),
-                                  const Text(
-                                    '평균 수온은',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w800,
-                                      color: Color(0xFF006FEF),
+                                    const SizedBox(height: 4),
+                                    const Text(
+                                      '평균 수온은',
+                                      style: TextStyle(
+                                        fontSize: 19,
+                                        fontWeight: FontWeight.w800,
+                                        color: Color(0xFF005BD8),
+                                      ),
                                     ),
-                                  ),
-                                  Text(
-                                    '${averageTemp.round()}˚C',
-                                    style: const TextStyle(
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.w900,
-                                      color: Color(0xFF006FEF),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      '${averageTemp.round()}°C',
+                                      style: const TextStyle(
+                                        fontSize: 38,
+                                        fontWeight: FontWeight.w900,
+                                        color: Color(0xFF005BD8),
+                                        height: 1,
+                                      ),
                                     ),
-                                  ),
 
-                                  SizedBox(height: screenHeight * 0.10),
+                                    SizedBox(height: screenHeight * 0.23),
 
-                                  const Text(
-                                    '최고수온:',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w800,
-                                      color: Color(0xFF9CB8E8),
+                                    const Text(
+                                      '최고수온:',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w800,
+                                        color: Color(0xFFB0C4EA),
+                                      ),
                                     ),
-                                  ),
-                                  Text(
-                                    '${maxTemp.toStringAsFixed(1)}˚C',
-                                    style: const TextStyle(
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w900,
-                                      color: Color(0xFF006FEF),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      '${maxTemp.toStringAsFixed(1)}°C',
+                                      style: const TextStyle(
+                                        fontSize: 22,
+                                        fontWeight: FontWeight.w900,
+                                        color: Color(0xFF91ACDF),
+                                      ),
                                     ),
-                                  ),
-
-                                  const SizedBox(height: 18),
-
-                                  const Text(
-                                    '최저수온:',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w800,
-                                      color: Color(0xFF9CB8E8),
+                                    const SizedBox(height: 22),
+                                    const Text(
+                                      '최저수온:',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w800,
+                                        color: Color(0xFFB0C4EA),
+                                      ),
                                     ),
-                                  ),
-                                  Text(
-                                    '${minTemp.toStringAsFixed(1)}˚C',
-                                    style: const TextStyle(
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w900,
-                                      color: Color(0xFF006FEF),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      '${minTemp.toStringAsFixed(1)}°C',
+                                      style: const TextStyle(
+                                        fontSize: 22,
+                                        fontWeight: FontWeight.w900,
+                                        color: Color(0xFF91ACDF),
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ),
                           ),
 
-                          const SizedBox(width: 18),
+                          const SizedBox(width: 16),
 
-                          // 오른쪽 수온 바
+                          // 동일한 가로 위치, 너비, 높이의 게이지
                           DailyTemperatureBar(
                             temperature: averageTemp,
                             minTemperature: 0,
                             maxTemperature: 40,
-                            barHeight: barHeight,
+                            barHeight: gaugeHeight,
                           ),
                         ],
                       ),
@@ -171,30 +176,28 @@ class DailyTemperatureBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 평균 수온 화면의 기존 0~40°C 게이지 계산 그대로 유지
     final double ratio =
         ((temperature - minTemperature) / (maxTemperature - minTemperature))
             .clamp(0.0, 1.0);
 
-    const double barWidth = 52;
+    const double barWidth = 58;
     final double fillHeight = barHeight * ratio;
 
     return SizedBox(
-      width: barWidth,
+      width: 80,
       height: barHeight,
       child: Stack(
         alignment: Alignment.bottomCenter,
         children: [
-          // 회색 배경 바
           Container(
             width: barWidth,
             height: barHeight,
             decoration: BoxDecoration(
               color: const Color(0xFFD9D9D9),
-              borderRadius: BorderRadius.circular(26),
+              borderRadius: BorderRadius.circular(40),
             ),
           ),
-
-          // 수온 채워지는 부분
           Align(
             alignment: Alignment.bottomCenter,
             child: Container(
@@ -204,23 +207,23 @@ class DailyTemperatureBar extends StatelessWidget {
                 gradient: const LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
+                  // 현재 수온 화면의 게이지 색상과 통일
                   colors: [
-                    Color(0xFF20D7E8),
-                    Color(0xFF0073F5),
+                    Color(0xFF18DDE8),
+                    Color(0xFF00A8F5),
+                    Color(0xFF006BF0),
                   ],
                 ),
-                borderRadius: BorderRadius.circular(26),
+                borderRadius: BorderRadius.circular(40),
               ),
             ),
           ),
-
-          // 가운데 수온 텍스트
           Positioned(
             bottom: getTemperatureTextBottom(fillHeight, barHeight),
             child: Text(
-              '${temperature.toStringAsFixed(1)}˚C',
+              '${temperature.toStringAsFixed(1)}°C',
               style: const TextStyle(
-                fontSize: 13,
+                fontSize: 18,
                 fontWeight: FontWeight.w900,
                 color: Colors.white,
               ),
@@ -232,17 +235,15 @@ class DailyTemperatureBar extends StatelessWidget {
   }
 
   double getTemperatureTextBottom(double fillHeight, double barHeight) {
-    final double position = fillHeight - 42;
-    final double maxPosition = barHeight - 60;
+    final double position = fillHeight - 65;
+    final double maxPosition = barHeight - 80;
 
     if (position < 20) {
       return 20;
     }
-
     if (position > maxPosition) {
       return maxPosition;
     }
-
     return position;
   }
 }
