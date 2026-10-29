@@ -1,6 +1,7 @@
 
 import 'package:flutter/material.dart';
 import 'dart:async';
+
 import '../../models/alert.dart';
 import '../../services/alert_service.dart';
 import '../../api/sensor_api.dart';
@@ -120,33 +121,6 @@ class _AlertScreenState extends State<AlertScreen> {
         iconTheme: const IconThemeData(
           color: Colors.black,
         ),
-
-        // 모두 읽기 버튼 디자인 수정
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 14),
-            child: TextButton(
-              onPressed: () {},
-              style: TextButton.styleFrom(
-                foregroundColor: const Color(0xFF8FA8D8),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 8,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(24),
-                ),
-              ),
-              child: const Text(
-                "모두 읽기",
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-          ),
-        ],
       ),
 
       body: FutureBuilder<List<AlertModel>>(

@@ -1,3 +1,4 @@
+
 import 'dart:async';
 
 import 'package:ai_fishapp/services/socket_service.dart';
@@ -26,6 +27,11 @@ class FishRowData {
         countController = TextEditingController(
           text: count == 0 ? "" : count.toString(),
         );
+
+  void dispose() {
+    speciesController.dispose();
+    countController.dispose();
+  }
 }
 
 class MyFishScreen extends StatefulWidget {
@@ -43,18 +49,84 @@ class _MyFishScreenState extends State<MyFishScreen> {
   final List<FishRowData> fishes = [];
 
   bool isLoading = true;
-
-  // AI 어종 갱신 중인지
   bool isRefreshing = false;
+
+  OverlayEntry? _toastEntry;
+  Timer? _toastTimer;
+
+  // =========================================================
+  // 중앙 Toast 알림
+  // =========================================================
+  void showCenterToast(String message) {
+    if (!mounted) return;
+
+    _removeToast();
+
+    final overlay = Overlay.of(context);
+
+    final entry = OverlayEntry(
+      builder: (context) => Positioned.fill(
+        child: IgnorePointer(
+          child: Center(
+            child: Material(
+              color: Colors.transparent,
+              child: Container(
+                margin: const EdgeInsets.symmetric(
+                  horizontal: 30,
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 26,
+                  vertical: 18,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF393C43)
+                      .withOpacity(0.90),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Text(
+                  message,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    _toastEntry = entry;
+    overlay.insert(entry);
+
+    _toastTimer = Timer(
+      const Duration(seconds: 2),
+      _removeToast,
+    );
+  }
+
+  void _removeToast() {
+    _toastTimer?.cancel();
+    _toastTimer = null;
+
+    final entry = _toastEntry;
+    _toastEntry = null;
+
+    if (entry != null) {
+      entry.remove();
+      entry.dispose();
+    }
+  }
 
   @override
   void initState() {
     super.initState();
 
-    // 기존 DB 물고기 정보 불러오기
     loadFish();
 
-    // 이미 연결되어 있는 공용 WebSocket의 메시지 수신
     _subscription = SocketService.instance.stream.listen(
       handleWebSocketMessage,
     );
@@ -68,7 +140,6 @@ class _MyFishScreenState extends State<MyFishScreen> {
   ) {
     final type = message['type'];
 
-    // 어종 분석 결과가 아니면 무시
     if (type != 'species_result') {
       return;
     }
@@ -89,20 +160,15 @@ class _MyFishScreenState extends State<MyFishScreen> {
       return;
     }
 
-    final data = Map<String, dynamic>.from(
-      rawData,
-    );
+    final data = Map<String, dynamic>.from(rawData);
 
     // Node에서 오류 메시지를 보낸 경우
     if (data['message'] != null) {
-      final errorMessage =
-          data['message'].toString();
+      final errorMessage = data['message'].toString();
 
       print('어종 분석 실패: $errorMessage');
 
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
 
       setState(() {
         isRefreshing = false;
@@ -117,8 +183,7 @@ class _MyFishScreenState extends State<MyFishScreen> {
       return;
     }
 
-    final rawSpeciesCount =
-        data['speciesCount'];
+    final rawSpeciesCount = data['speciesCount'];
 
     if (rawSpeciesCount is! Map) {
       print('speciesCount가 없습니다.');
@@ -132,56 +197,51 @@ class _MyFishScreenState extends State<MyFishScreen> {
       return;
     }
 
-    final speciesCount =
-        Map<String, dynamic>.from(
+    final speciesCount = Map<String, dynamic>.from(
       rawSpeciesCount,
     );
 
-    // 기존 화면 Controller 정리
-    for (final fish in fishes) {
-      fish.speciesController.dispose();
-      fish.countController.dispose();
-    }
+    if (!mounted) return;
 
-    fishes.clear();
+    final newFishes = <FishRowData>[];
 
     // AI 결과를 화면 목록으로 변환
-    speciesCount.forEach(
-      (species, countValue) {
-        final count =
-            countValue is int
-                ? countValue
-                : int.tryParse(
-                      countValue.toString(),
-                    ) ??
-                    0;
+    speciesCount.forEach((species, countValue) {
+      final count = countValue is int
+          ? countValue
+          : int.tryParse(countValue.toString()) ?? 0;
 
-        fishes.add(
-          FishRowData(
-            fishId: null,
-            species: species,
-            count: count,
-          ),
-        );
-      },
-    );
+      newFishes.add(
+        FishRowData(
+          fishId: null,
+          species: species,
+          count: count,
+        ),
+      );
+    });
 
-    if (!mounted) {
-      return;
-    }
+    final oldFishes = List<FishRowData>.from(fishes);
 
     setState(() {
+      fishes
+        ..clear()
+        ..addAll(newFishes);
+
       isRefreshing = false;
     });
 
-    // 탐지된 물고기가 0마리면 기존 목록은 비운 상태로 안내 표시
-    if (fishes.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('탐지된 물고기가 없습니다.'),
-          duration: Duration(seconds: 2),
-        ),
-      );
+    // 기존 Controller 정리
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      for (final fish in oldFishes) {
+        fish.dispose();
+      }
+    });
+
+    // ==========================================
+    // 탐지된 물고기가 없을 때 중앙 Toast
+    // ==========================================
+    if (newFishes.isEmpty) {
+      showCenterToast('탐지된 물고기가 없습니다.');
     }
 
     print('AI 어종 결과 화면 반영 완료');
@@ -195,37 +255,35 @@ class _MyFishScreenState extends State<MyFishScreen> {
       final List<Fish> fishList =
           await FishService.getFishList();
 
-      // 기존 Controller 정리
-      for (final fish in fishes) {
-        fish.speciesController.dispose();
-        fish.countController.dispose();
-      }
+      if (!mounted) return;
 
-      fishes.clear();
-
-      for (final fish in fishList) {
-        fishes.add(
-          FishRowData(
-            fishId: fish.fishId,
-            species: fish.fishType,
-            count: fish.fishCount,
-          ),
+      final newFishes = fishList.map((fish) {
+        return FishRowData(
+          fishId: fish.fishId,
+          species: fish.fishType,
+          count: fish.fishCount,
         );
-      }
+      }).toList();
 
-      if (!mounted) {
-        return;
-      }
+      final oldFishes = List<FishRowData>.from(fishes);
 
       setState(() {
+        fishes
+          ..clear()
+          ..addAll(newFishes);
+
         isLoading = false;
+      });
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        for (final fish in oldFishes) {
+          fish.dispose();
+        }
       });
     } catch (e) {
       print("물고기 정보 조회 실패: $e");
 
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
 
       setState(() {
         isLoading = false;
@@ -238,19 +296,16 @@ class _MyFishScreenState extends State<MyFishScreen> {
   // Flutter -> Node
   // =========================================================
   Future<void> refreshFish() async {
-    // 공용 WebSocket 연결 확인
+    if (isRefreshing) return;
+
     if (!SocketService.instance.isConnected) {
       print('WebSocket이 연결되어 있지 않습니다.');
 
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(
-            '서버 연결을 확인해주세요.',
-          ),
+          content: Text('서버 연결을 확인해주세요.'),
         ),
       );
 
@@ -263,21 +318,63 @@ class _MyFishScreenState extends State<MyFishScreen> {
 
     print('AI 어종 분석 요청');
 
-    // Flutter -> Node
     SocketService.instance.send({
       'type': 'species',
     });
   }
 
+  // =========================================================
+  // 물고기 정보 저장
+  // =========================================================
+  Future<void> saveFish() async {
+    final fishlist = fishes
+        .map((fish) {
+          return {
+            'fish_id': fish.fishId,
+            'fish_type':
+                fish.speciesController.text.trim(),
+            'fish_count': int.tryParse(
+                  fish.countController.text,
+                ) ??
+                0,
+          };
+        })
+        .where((fish) => fish['fish_type'] != '')
+        .toList();
+
+    try {
+      await FishService.postFishList(
+        fishes: fishlist,
+      );
+
+      if (!mounted) return;
+
+      await loadFish();
+
+      if (!mounted) return;
+
+      setState(() {
+        isEdit = false;
+      });
+    } catch (e) {
+      print('물고기 정보 저장 실패: $e');
+
+      if (!mounted) return;
+
+      showCenterToast('저장에 실패했습니다.');
+    }
+  }
+
+  // =========================================================
+  // 종료
+  // =========================================================
   @override
   void dispose() {
-    // 이 화면이 듣고 있던 Stream만 해제
-    // 공용 WebSocket 자체는 끊지 않음
     _subscription?.cancel();
+    _removeToast();
 
     for (final fish in fishes) {
-      fish.speciesController.dispose();
-      fish.countController.dispose();
+      fish.dispose();
     }
 
     super.dispose();
@@ -286,20 +383,16 @@ class _MyFishScreenState extends State<MyFishScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(
-        0xffFFFFFF,
-      ),
+      backgroundColor: const Color(0xffFFFFFF),
 
-      bottomNavigationBar:
-          const CommonBottomNavBar(
+      bottomNavigationBar: const CommonBottomNavBar(
         selectedIndex: 3,
       ),
 
       body: SafeArea(
         child: isLoading
             ? const Center(
-                child:
-                    CircularProgressIndicator(),
+                child: CircularProgressIndicator(),
               )
             : Column(
                 children: [
@@ -307,24 +400,17 @@ class _MyFishScreenState extends State<MyFishScreen> {
                   // 상단
                   // ==================================
                   Padding(
-                    padding:
-                        const EdgeInsets.symmetric(
+                    padding: const EdgeInsets.symmetric(
                       horizontal: 18,
                       vertical: 14,
                     ),
                     child: Row(
                       children: [
                         IconButton(
-                          onPressed: () =>
-                              Navigator.pop(
-                            context,
-                          ),
+                          onPressed: () => Navigator.pop(context),
                           icon: const Icon(
-                            Icons
-                                .arrow_back_ios_new,
-                            color: Color(
-                              0xff8FA8D8,
-                            ),
+                            Icons.arrow_back_ios_new,
+                            color: Color(0xff8FA8D8),
                           ),
                         ),
 
@@ -334,58 +420,19 @@ class _MyFishScreenState extends State<MyFishScreen> {
                           color: Colors.transparent,
                           child: InkWell(
                             customBorder: const CircleBorder(),
-                            splashColor: const Color(0xFF8FA8D8).withOpacity(0.20),
-                            highlightColor: const Color(0xFF8FA8D8).withOpacity(0.10),
-                          onTap: () async {
-                            if (isEdit) {
-                              final fishlist =
-                                  fishes
-                                      .map(
-                                (fish) {
-                                  return {
-                                    'fish_id':
-                                        fish.fishId,
-                                    'fish_type':
-                                        fish
-                                            .speciesController
-                                            .text
-                                            .trim(),
-                                    'fish_count':
-                                        int.tryParse(
-                                              fish
-                                                  .countController
-                                                  .text,
-                                            ) ??
-                                            0,
-                                  };
-                                },
-                              )
-                                      .where(
-                                (fish) =>
-                                    fish[
-                                        'fish_type'] !=
-                                    '',
-                              )
-                                      .toList();
-
-                              await FishService
-                                  .postFishList(
-                                fishes:
-                                    fishlist,
-                              );
-
-                              await loadFish();
-                            }
-
-                            if (!mounted) {
-                              return;
-                            }
-
-                            setState(() {
-                              isEdit =
-                                  !isEdit;
-                            });
-                          },
+                            splashColor: const Color(0xFF8FA8D8)
+                                .withOpacity(0.20),
+                            highlightColor: const Color(0xFF8FA8D8)
+                                .withOpacity(0.10),
+                            onTap: () async {
+                              if (isEdit) {
+                                await saveFish();
+                              } else {
+                                setState(() {
+                                  isEdit = true;
+                                });
+                              }
+                            },
                             child: SizedBox(
                               width: 48,
                               height: 48,
@@ -410,77 +457,55 @@ class _MyFishScreenState extends State<MyFishScreen> {
                   // 제목
                   // ==================================
                   const Padding(
-                    padding:
-                        EdgeInsets.symmetric(
+                    padding: EdgeInsets.symmetric(
                       horizontal: 22,
                     ),
                     child: Align(
-                      alignment:
-                          Alignment.centerLeft,
+                      alignment: Alignment.centerLeft,
                       child: Text(
                         "나의 물고기",
                         style: TextStyle(
                           fontSize: 28,
-                          fontWeight:
-                              FontWeight.w700,
-                          color: Color(
-                            0xff393C43,
-                          ),
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xff393C43),
                         ),
                       ),
                     ),
                   ),
 
-                  const SizedBox(
-                    height: 24,
-                  ),
+                  const SizedBox(height: 24),
 
                   // ==================================
                   // 물고기 목록
                   // ==================================
                   Expanded(
                     child: ListView(
-                      padding:
-                          const EdgeInsets
-                              .symmetric(
+                      padding: const EdgeInsets.symmetric(
                         horizontal: 22,
                       ),
                       children: [
                         ...List.generate(
                           fishes.length,
-                          (index) =>
-                              Padding(
-                            padding:
-                                EdgeInsets.only(
-                              bottom: isEdit && index == fishes.length - 1
+                          (index) => Padding(
+                            padding: EdgeInsets.only(
+                              bottom: isEdit &&
+                                      index == fishes.length - 1
                                   ? 22
                                   : 12,
                             ),
-                            child:
-                                FishRowWidget(
-                              data:
-                                  fishes[index],
-                              isEdit:
-                                  isEdit,
-                              onDelete:
-                                  () async {
-                                final fish =
-                                    fishes[
-                                        index];
+                            child: FishRowWidget(
+                              data: fishes[index],
+                              isEdit: isEdit,
+                              onDelete: () {
+                                final fish = fishes[index];
 
                                 setState(() {
-                                  fish
-                                      .speciesController
-                                      .dispose();
+                                  fishes.removeAt(index);
+                                });
 
-                                  fish
-                                      .countController
-                                      .dispose();
-
-                                  fishes
-                                      .removeAt(
-                                    index,
-                                  );
+                                WidgetsBinding.instance
+                                    .addPostFrameCallback((_) {
+                                  fish.dispose();
                                 });
                               },
                             ),
@@ -492,60 +517,36 @@ class _MyFishScreenState extends State<MyFishScreen> {
                         // ==================================
                         if (isEdit)
                           InkWell(
-                            borderRadius:
-                                BorderRadius
-                                    .circular(
-                              16,
-                            ),
+                            borderRadius: BorderRadius.circular(16),
                             onTap: () {
                               setState(() {
                                 fishes.add(
                                   FishRowData(
-                                    fishId:
-                                        null,
-                                    species:
-                                        "",
-                                    count:
-                                        0,
-                                    isNew:
-                                        true,
+                                    fishId: null,
+                                    species: "",
+                                    count: 0,
+                                    isNew: true,
                                   ),
                                 );
                               });
                             },
                             child: Container(
                               height: 52,
-                              decoration:
-                                  BoxDecoration(
+                              decoration: BoxDecoration(
                                 borderRadius:
-                                    BorderRadius
-                                        .circular(
-                                  16,
-                                ),
-                                border:
-                                    Border.all(
-                                  color:
-                                      const Color(
-                                    0xff2DA5F7,
-                                  ),
+                                    BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: const Color(0xff2DA5F7),
                                   width: 2,
                                 ),
                               ),
-                              child:
-                                  const Center(
+                              child: const Center(
                                 child: Text(
                                   "추가하기 +",
-                                  style:
-                                      TextStyle(
-                                    color:
-                                        Color(
-                                      0xff2DA5F7,
-                                    ),
-                                    fontSize:
-                                        17,
-                                    fontWeight:
-                                        FontWeight
-                                            .w700,
+                                  style: TextStyle(
+                                    color: Color(0xff2DA5F7),
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.w700,
                                   ),
                                 ),
                               ),
@@ -562,71 +563,42 @@ class _MyFishScreenState extends State<MyFishScreen> {
                         SizedBox(
                           width: double.infinity,
                           height: 54,
-                          child:
-                              ElevatedButton(
-                            onPressed:
-                                isRefreshing ||
-                                        isEdit
-                                    ? null
-                                    : refreshFish,
-                            style:
-                                ElevatedButton
-                                    .styleFrom(
+                          child: ElevatedButton(
+                            onPressed: isRefreshing || isEdit
+                                ? null
+                                : refreshFish,
+                            style: ElevatedButton.styleFrom(
                               elevation: 0,
                               backgroundColor:
-                                  const Color(
-                                0xff2DA5F7,
-                              ),
+                                  const Color(0xff2DA5F7),
                               disabledBackgroundColor:
-                                  const Color(
-                                0xffD9D9D9,
-                              ),
-                              shape:
-                                  RoundedRectangleBorder(
+                                  const Color(0xffD9D9D9),
+                              shape: RoundedRectangleBorder(
                                 borderRadius:
-                                    BorderRadius
-                                        .circular(
-                                  16,
-                                ),
+                                    BorderRadius.circular(16),
                               ),
                             ),
-                            child:
-                                isRefreshing
-                                    ? const SizedBox(
-                                        width:
-                                            20,
-                                        height:
-                                            20,
-                                        child:
-                                            CircularProgressIndicator(
-                                          strokeWidth:
-                                              2.5,
-                                          color:
-                                              Color(
-                                            0xffFFFFFF,
-                                          ),
-                                        ),
-                                      )
-                                    : const Text(
-                                        "갱신하기",
-                                        style:
-                                            TextStyle(
-                                          color:
-                                              Color(
-                                            0xffFFFFFF,
-                                          ),
-                                          fontSize: 17,
-                                          fontWeight:
-                                              FontWeight
-                                                  .w700,
-                                        ),
-                                      ),
+                            child: isRefreshing
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2.5,
+                                      color: Color(0xffFFFFFF),
+                                    ),
+                                  )
+                                : const Text(
+                                    "갱신하기",
+                                    style: TextStyle(
+                                      color: Color(0xffFFFFFF),
+                                      fontSize: 17,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
                           ),
                         ),
 
-                        const SizedBox(
-                          height: 24,
-                        ),
+                        const SizedBox(height: 24),
                       ],
                     ),
                   ),
@@ -637,11 +609,12 @@ class _MyFishScreenState extends State<MyFishScreen> {
   }
 }
 
+// =========================================================
+// 물고기 행 UI
+// =========================================================
 class FishRowWidget extends StatelessWidget {
   final FishRowData data;
-
   final bool isEdit;
-
   final VoidCallback onDelete;
 
   const FishRowWidget({
@@ -663,65 +636,41 @@ class FishRowWidget extends StatelessWidget {
             height: 52,
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius:
-                  BorderRadius.circular(
-                16,
-              ),
+              borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color:
-                    const Color(
-                  0xffF2F2F2,
-                ),
+                color: const Color(0xffF2F2F2),
                 width: 2,
               ),
             ),
-            alignment:
-                Alignment.centerLeft,
-            padding:
-                const EdgeInsets.symmetric(
+            alignment: Alignment.centerLeft,
+            padding: const EdgeInsets.symmetric(
               horizontal: 14,
             ),
             child: isEdit
                 ? TextField(
-                    controller:
-                        data.speciesController,
-                    decoration:
-                        const InputDecoration(
-                      border:
-                          InputBorder.none,
-                      hintText:
-                          "어종",
-                      hintStyle:
-                          TextStyle(
-                        color: Color(
-                          0xffBCC4D4,
-                        ),
-                        fontWeight:
-                            FontWeight.w700,
+                    controller: data.speciesController,
+                    decoration: const InputDecoration(
+                      border: InputBorder.none,
+                      hintText: "어종",
+                      hintStyle: TextStyle(
+                        color: Color(0xffBCC4D4),
+                        fontWeight: FontWeight.w700,
                         fontSize: 16,
                       ),
                     ),
                   )
                 : Text(
-                    data
-                        .speciesController
-                        .text,
-                    style:
-                        const TextStyle(
+                    data.speciesController.text,
+                    style: const TextStyle(
                       fontSize: 16,
-                      fontWeight:
-                          FontWeight.w700,
-                      color: Color(
-                        0xff393C43,
-                      ),
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xff393C43),
                     ),
                   ),
           ),
         ),
 
-        const SizedBox(
-          width: 10,
-        ),
+        const SizedBox(width: 10),
 
         // ----------------------------------
         // 개수
@@ -731,56 +680,34 @@ class FishRowWidget extends StatelessWidget {
           height: 52,
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius:
-                BorderRadius.circular(
-              16,
-            ),
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color:
-                  const Color(
-                0xffF2F2F2,
-              ),
+              color: const Color(0xffF2F2F2),
               width: 2,
             ),
           ),
-          alignment:
-              Alignment.center,
+          alignment: Alignment.center,
           child: isEdit
               ? TextField(
-                  controller:
-                      data.countController,
-                  keyboardType:
-                      TextInputType.number,
-                  textAlign:
-                      TextAlign.center,
-                  decoration:
-                      const InputDecoration(
-                    border:
-                        InputBorder.none,
-                    hintText:
-                        "마릿수",
-                    hintStyle:
-                        TextStyle(
-                      color: Color(
-                        0xffBCC4D4,
-                      ),
+                  controller: data.countController,
+                  keyboardType: TextInputType.number,
+                  textAlign: TextAlign.center,
+                  decoration: const InputDecoration(
+                    border: InputBorder.none,
+                    hintText: "마릿수",
+                    hintStyle: TextStyle(
+                      color: Color(0xffBCC4D4),
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
                 )
               : Text(
-                  data
-                      .countController
-                      .text,
-                  style:
-                      const TextStyle(
+                  data.countController.text,
+                  style: const TextStyle(
                     fontSize: 16,
-                    fontWeight:
-                        FontWeight.w700,
-                    color: Color(
-                      0xff393C43,
-                    ),
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xff393C43),
                   ),
                 ),
         ),
@@ -794,23 +721,15 @@ class FishRowWidget extends StatelessWidget {
         if (isEdit)
           GestureDetector(
             onTap: onDelete,
-            child:
-                const SizedBox(
+            child: const SizedBox(
               width: 24,
               child: Center(
                 child: Text(
                   "-",
-                  style:
-                      TextStyle(
-                    color:
-                        Color(
-                      0xffFFB7C3,
-                    ),
-                    fontSize:
-                        28,
-                    fontWeight:
-                        FontWeight
-                            .w700,
+                  style: TextStyle(
+                    color: Color(0xffFFB7C3),
+                    fontSize: 28,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),

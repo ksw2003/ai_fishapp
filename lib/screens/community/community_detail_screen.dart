@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../../models/post_detail.dart';
@@ -27,6 +28,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
   TextEditingController();
 
   late Future<PostDetail> futurePost;
+  int? currentUserId;
 
   Comment? replyTarget;
   int? editingCommentId;
@@ -39,6 +41,28 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
     super.initState();
     futurePost =
         CommunityService.getPostDetail(widget.postId);
+    _loadCurrentUserId();
+  }
+
+  Future<void> _loadCurrentUserId() async {
+    try {
+      final response = await ApiClient.get('/api/auth/myinfo', token: true);
+      if (response.statusCode != 200) {
+        debugPrint('현재 사용자 조회 실패: ${response.statusCode}');
+        return;
+      }
+      final data = jsonDecode(response.body);
+      final user = data['user'];
+      final rawId = user is Map ? user['user_id'] : null;
+      final userId = rawId is int ? rawId : int.tryParse(rawId?.toString() ?? '');
+      if (!mounted) return;
+      setState(() => currentUserId = userId);
+      if (userId == null) {
+        debugPrint('myinfo 응답에 user.user_id가 없습니다.');
+      }
+    } catch (e) {
+      debugPrint('현재 사용자 조회 오류: $e');
+    }
   }
 
 
@@ -280,12 +304,15 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
             ),
 
     /// 댓글 메뉴
-    if (!comment.isDeleted)
+    if (!comment.isDeleted &&
+        currentUserId != null &&
+        comment.userId == currentUserId)
     PopupMenuButton<String>(
     padding: EdgeInsets.zero,
     icon: const Icon(Icons.more_vert),
 
     onSelected: (value) async {
+      if (currentUserId == null || comment.userId != currentUserId) return;
 
     if (value == "delete") {
 
@@ -477,6 +504,11 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                 content: commentController.text,
                                 parentId: replyTarget?.commentId,
                               );
+                              // 댓글 작성 직후에도 본인 댓글 메뉴가 표시되도록
+                              // 로그인 사용자 정보를 먼저 확정한 뒤 댓글 목록을 갱신합니다.
+                              await _loadCurrentUserId();
+                              if (!mounted) return;
+
                               commentController.clear();
                               setState(() {
                                 replyTarget = null;

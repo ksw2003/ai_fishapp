@@ -103,7 +103,9 @@ class _WaterTempDetailScreenState extends State<WaterTempDetailScreen> {
                         children: [
                           // 왼쪽 텍스트 영역
                           Expanded(
-                            child: Padding(
+                            child: Transform.translate(
+                              offset: const Offset(0, -40),
+                              child: Padding(
                               padding: const EdgeInsets.only(left: 34),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -113,7 +115,7 @@ class _WaterTempDetailScreenState extends State<WaterTempDetailScreen> {
                                   const Text(
                                     '현재 수온은',
                                     style: TextStyle(
-                                      fontSize: 15,
+                                      fontSize: 19,
                                       fontWeight: FontWeight.w800,
                                       color: Color(0xFF005BD8),
                                     ),
@@ -122,7 +124,7 @@ class _WaterTempDetailScreenState extends State<WaterTempDetailScreen> {
                                   Text(
                                     '${currentTemp.toInt()}°C',
                                     style: const TextStyle(
-                                      fontSize: 31,
+                                      fontSize: 38,
                                       fontWeight: FontWeight.w900,
                                       color: Color(0xFF005BD8),
                                       height: 1,
@@ -134,7 +136,7 @@ class _WaterTempDetailScreenState extends State<WaterTempDetailScreen> {
                                   const Text(
                                     '오늘 최고수온:',
                                     style: TextStyle(
-                                      fontSize: 15,
+                                      fontSize: 18,
                                       fontWeight: FontWeight.w800,
                                       color: Color(0xFFB0C4EA),
                                     ),
@@ -143,7 +145,7 @@ class _WaterTempDetailScreenState extends State<WaterTempDetailScreen> {
                                   Text(
                                     '${currentmaxTemp.toInt()}°C',
                                     style: const TextStyle(
-                                      fontSize: 15,
+                                      fontSize: 22,
                                       fontWeight: FontWeight.w900,
                                       color: Color(0xFF91ACDF),
                                     ),
@@ -152,7 +154,7 @@ class _WaterTempDetailScreenState extends State<WaterTempDetailScreen> {
                                   const Text(
                                     '오늘 최저수온:',
                                     style: TextStyle(
-                                      fontSize: 15,
+                                      fontSize: 18,
                                       fontWeight: FontWeight.w800,
                                       color: Color(0xFFB0C4EA),
                                     ),
@@ -161,13 +163,14 @@ class _WaterTempDetailScreenState extends State<WaterTempDetailScreen> {
                                   Text(
                                     '${currentminTemp.toInt()}°C',
                                     style: const TextStyle(
-                                      fontSize: 15,
+                                      fontSize: 22,
                                       fontWeight: FontWeight.w900,
                                       color: Color(0xFF91ACDF),
                                     ),
                                   ),
                                 ],
                               ),
+                            ),
                             ),
                           ),
 
@@ -294,7 +297,7 @@ class TemperatureBar extends StatelessWidget {
               '${temperature.toInt()}°C',
               style: const TextStyle(
                 color: Colors.white,
-                fontSize: 15,
+                fontSize: 18,
                 fontWeight: FontWeight.w900,
               ),
             ),
