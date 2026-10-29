@@ -106,7 +106,7 @@ class DailyTempDetailScreen extends StatelessWidget {
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      '${maxTemp.toStringAsFixed(1)}°C',
+                                      '${maxTemp.round()}°C',
                                       style: const TextStyle(
                                         fontSize: 22,
                                         fontWeight: FontWeight.w900,
@@ -124,7 +124,7 @@ class DailyTempDetailScreen extends StatelessWidget {
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      '${minTemp.toStringAsFixed(1)}°C',
+                                      '${minTemp.round()}°C',
                                       style: const TextStyle(
                                         fontSize: 22,
                                         fontWeight: FontWeight.w900,
@@ -221,7 +221,7 @@ class DailyTemperatureBar extends StatelessWidget {
           Positioned(
             bottom: getTemperatureTextBottom(fillHeight, barHeight),
             child: Text(
-              '${temperature.toStringAsFixed(1)}°C',
+              '${temperature.round()}°C',
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w900,
