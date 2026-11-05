@@ -1,6 +1,7 @@
 # 관상어용 스마트 어항 시스템 Frontend
 ## :file_folder: 프로젝트구조
 ```text
+lib/
 ├── api/                                          # 서버 API 통신 관련 코드
 │   ├── api_client.dart                           # API 요청 및 응답 처리
 │   ├── dairy_api.dart                            # 캘린더 API 통신
