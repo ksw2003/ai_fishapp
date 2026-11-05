@@ -77,10 +77,10 @@ cp env-template .env
 ### :three: .env 파일 생성
 .env 파일에 다음 키 값들을 입력하세요:
 ```bash
-KAKAO_NATIVE_APP_KEY= 카카오 개발자 콘솔에서 발급받은 네이티브 앱 키
-GOOGLE_KEY= 구글 개발자 콘솔에서 발급받은 네이티브 앱 키
-API_BASE_URL= AWS EC2에 배포된 백엔드 서버의 API 기본 주소
-VIDEO_BASE_URL= AWS EC2에 배포된 mewdiamtx 서버의 API 기본 주소
+KAKAO_NATIVE_APP_KEY= <KAKAO_NATIVE_APP_KEY>
+GOOGLE_KEY= <GOOGLE_KEY>
+API_BASE_URL= <BACKEND_SERVER_URL>
+VIDEO_BASE_URL= <MEDIAMTX_SERVER_URL>
 ```
 
 ### :four: 앱 실행
