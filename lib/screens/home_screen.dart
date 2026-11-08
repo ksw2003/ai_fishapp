@@ -145,14 +145,6 @@ class _HomeScreenState extends State<HomeScreen> {
           debugPrint('[수질 디버그] 센서 데이터 변환 오류: $e');
           debugPrintStack(stackTrace: stack);
         }
-      }else if(data["type"] == 'temp'){
-        if(data['data'] == 'high'){
-          showAlert("온도가 너무 높습니다.");
-        }else if(data['data'] == 'low'){
-          showAlert("온도가 너무 낮습니다.");
-        }
-      }else if(data['type'] == 'waterquality'){
-        showAlert("수질이 좋지 않습니다.");
       }
     }, onError: (Object error, StackTrace stack) {
       debugPrint('[수질 디버그] 센서 스트림 오류: $error');
