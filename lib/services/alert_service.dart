@@ -21,7 +21,7 @@ class AlertService {
     for (final e in data) {
       String? message;
       if(e['type'] == 'waterquality'){
-        message = '수질이 안좋아보입니다.';
+        message = '수질이 나쁩니다.';
       }else if(e['type'] == 'temp'){
         if(e['status'] == 'low'){
           message = '온도가 낮습니다.';
