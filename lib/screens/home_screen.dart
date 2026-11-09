@@ -106,7 +106,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (tds <= normalWater!) {
       return Colors.blue; // 좋음
     } else if (tds <= warningWater!) {
-      return Colors.orange; // 보통
+      return Colors.lightGreen; // 보통
     } else {
       return Colors.red; // 나쁨
     }
