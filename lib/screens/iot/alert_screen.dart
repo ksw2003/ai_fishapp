@@ -142,7 +142,9 @@ class _AlertScreenState extends State<AlertScreen> {
           }
 
           final alerts = snapshot.data ?? [];
-
+          alerts.sort((a, b) =>
+              b.createdAt.compareTo(a.createdAt));
+          
           if (alerts.isEmpty) {
             return const Center(
               child: Text("알림이 없습니다."),
