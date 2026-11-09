@@ -1,47 +1,91 @@
+
 import 'dart:async';
 import 'dart:convert';
+
 import 'package:ai_fishapp/api/api_client.dart';
 import 'package:ai_fishapp/services/socket_service.dart';
 import 'package:ai_fishapp/services/token_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:kakao_flutter_sdk_user/kakao_flutter_sdk_user.dart';
+
 class StartScreen extends StatefulWidget {
   const StartScreen({super.key});
+
   @override
   State<StartScreen> createState() => _StartScreenState();
 }
-class _StartScreenState extends State<StartScreen> {
+
+class _StartScreenState extends State<StartScreen>
+    with SingleTickerProviderStateMixin {
   bool isLoading = true;
   bool showLogin = false;
+
+  // ==========================================
+  // 반짝이는 글자 애니메이션
+  // ==========================================
+  late AnimationController _blinkController;
+  late Animation<double> _blinkAnimation;
+
   @override
   void initState() {
     super.initState();
+
+    _blinkController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    );
+
+    _blinkAnimation = Tween<double>(
+      begin: 0.35,
+      end: 1.0,
+    ).animate(
+      CurvedAnimation(
+        parent: _blinkController,
+        curve: Curves.easeInOut,
+      ),
+    );
+
     Timer(const Duration(seconds: 2), () {
       if (!mounted) return;
+
       setState(() {
         isLoading = false;
       });
+
+      _blinkController.repeat(reverse: true);
     });
   }
+
+  @override
+  void dispose() {
+    _blinkController.dispose();
+    super.dispose();
+  }
+
   // =========================================================
   // 카카오 로그인
   // =========================================================
   Future<void> kakaoLogin(BuildContext context) async {
     try {
       print('카카오 로그인 시작');
+
       final data =
           await UserApi.instance.loginWithKakaoAccount();
+
       final (success, hasUserNickname) =
           await getToken(
         data.accessToken,
         'kakao',
       );
+
       if (!success) {
         print('카카오 로그인 실패');
         return;
       }
+
       if (!context.mounted) return;
+
       if (hasUserNickname) {
         Navigator.pushReplacementNamed(
           context,
@@ -58,6 +102,7 @@ class _StartScreenState extends State<StartScreen> {
       print(stackTrace);
     }
   }
+
   // =========================================================
   // 구글 로그인
   // =========================================================
@@ -67,7 +112,9 @@ class _StartScreenState extends State<StartScreen> {
     try {
       final GoogleSignInAccount googleUser =
           await GoogleSignIn.instance.authenticate();
+
       print(googleUser);
+
       final authorization =
           await googleUser.authorizationClient
               .authorizationForScopes([
@@ -75,25 +122,33 @@ class _StartScreenState extends State<StartScreen> {
         'email',
         'profile',
       ]);
+
       print(authorization?.accessToken);
+
       final accessToken =
           authorization?.accessToken;
+
       if (accessToken == null) {
         print('구글 Access Token 없음');
         return;
       }
+
       final (success, hasUserNickname) =
           await getToken(
         accessToken,
         'google',
       );
+
       print(success);
       print(hasUserNickname);
+
       if (!success) {
         print('구글 로그인 실패');
         return;
       }
+
       if (!context.mounted) return;
+
       if (hasUserNickname) {
         Navigator.pushReplacementNamed(
           context,
@@ -114,6 +169,7 @@ class _StartScreenState extends State<StartScreen> {
       print('구글 로그인 오류: $e');
     }
   }
+
   // =========================================================
   // Node.js 로그인 API
   // =========================================================
@@ -124,6 +180,7 @@ class _StartScreenState extends State<StartScreen> {
     print('들어감');
     print(accessToken);
     print(provider);
+
     final response = await ApiClient.post(
       '/api/auth/login',
       jsonEncode({
@@ -131,12 +188,15 @@ class _StartScreenState extends State<StartScreen> {
         'provider': provider,
       }),
     );
+
     print('상태코드: ${response.statusCode}');
     print('응답본문: ${response.body}');
+
     await TokenStorage.deleteDeviceId();
+
     if (response.statusCode == 200) {
-      final data =
-          jsonDecode(response.body);
+      final data = jsonDecode(response.body);
+
       // ==========================================
       // accessToken / refreshToken 저장
       // ==========================================
@@ -144,18 +204,21 @@ class _StartScreenState extends State<StartScreen> {
         data['accesstoken'],
         data['refreshtoken'],
       );
+
       // ==========================================
       // user_id 저장
       // ==========================================
       await TokenStorage.saveUserId(
         data['user_id'],
       );
+
       // ==========================================
       // Flutter -> Node 공용 WebSocket 연결
       // ==========================================
       await SocketService.instance.connect(
         data['user_id'],
       );
+
       // ==========================================
       // device_id가 있으면 저장
       // ==========================================
@@ -163,30 +226,37 @@ class _StartScreenState extends State<StartScreen> {
         print(
           'device_id 저장: ${data['device_id']}',
         );
+
         await TokenStorage.savedeviceId(
           data['device_id'],
         );
       }
+
       return (
         true,
         data['exNickname'],
       );
     }
+
     print('로그인 실패');
+
     return (
       false,
       false,
     );
   }
+
   // =========================================================
-  // 로그인 패널 열기 / 닫기 (패널 바깥 화면 터치)
+  // 로그인 패널 열기 / 닫기
   // =========================================================
   void toggleLoginPanel() {
     if (isLoading) return;
+
     setState(() {
       showLogin = !showLogin;
     });
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -209,6 +279,7 @@ class _StartScreenState extends State<StartScreen> {
               ),
             ),
           ),
+
           // ==========================================
           // 로고 영역
           // ==========================================
@@ -218,53 +289,63 @@ class _StartScreenState extends State<StartScreen> {
             child: SizedBox.expand(
               child: Center(
                 child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Image.asset(
-                    'assets/images/fish_logo.png',
-                    width: 260,
-                  ),
-                  const Text(
-                    'FISH LOGO',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 32,
-                      fontWeight: FontWeight.w500,
-                      letterSpacing: 2,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Image.asset(
+                      'assets/images/fish_logo.png',
+                      width: 260,
                     ),
-                  ),
-                  const SizedBox(
-                    height: 30,
-                  ),
-                  if (isLoading)
-                    const SizedBox(
-                      width: 35,
-                      height: 35,
-                      child:
-                          CircularProgressIndicator(
-                        color: Colors.white,
-                        strokeWidth: 3,
-                      ),
-                    ),
-                  if (!isLoading)
+
                     const Text(
-                      '화면을 터치해주세요',
+                      'FISH TANK',
                       style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 16,
+                        color: Colors.white,
+                        fontSize: 32,
+                        fontWeight: FontWeight.w500,
+                        letterSpacing: 2,
                       ),
                     ),
-                ],
+
+                    const SizedBox(height: 30),
+
+                    // ==================================
+                    // 로딩 표시
+                    // ==================================
+                    if (isLoading)
+                      const SizedBox(
+                        width: 35,
+                        height: 35,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 3,
+                        ),
+                      ),
+
+                    // ==================================
+                    // 화면 터치 안내 - 반짝임 효과
+                    // ==================================
+                    if (!isLoading && !showLogin)
+                      FadeTransition(
+                        opacity: _blinkAnimation,
+                        child: const Text(
+                          '화면을 터치해주세요',
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               ),
             ),
           ),
+
           // ==========================================
           // 로그인 패널
           // ==========================================
           AnimatedPositioned(
-            duration:
-                const Duration(milliseconds: 500),
+            duration: const Duration(milliseconds: 500),
             left: 0,
             right: 0,
             bottom: showLogin ? 0 : -450,
@@ -273,25 +354,19 @@ class _StartScreenState extends State<StartScreen> {
               decoration: const BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.only(
-                  topLeft:
-                      Radius.circular(40),
-                  topRight:
-                      Radius.circular(40),
+                  topLeft: Radius.circular(40),
+                  topRight: Radius.circular(40),
                 ),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black12,
                     blurRadius: 15,
-                    offset: Offset(
-                      0,
-                      -3,
-                    ),
+                    offset: Offset(0, -3),
                   ),
                 ],
               ),
               child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(
+                padding: const EdgeInsets.symmetric(
                   horizontal: 30,
                   vertical: 30,
                 ),
@@ -300,84 +375,65 @@ class _StartScreenState extends State<StartScreen> {
                     const Text(
                       'Login',
                       style: TextStyle(
-                        color:
-                            Color(0xFF0342AB),
+                        color: Color(0xFF0342AB),
                         fontSize: 36,
-                        fontWeight:
-                            FontWeight.bold,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(
-                      height: 40,
-                    ),
+
+                    const SizedBox(height: 40),
+
                     const Text(
                       'SNS로 간편 가입하기',
                       style: TextStyle(
-                        color:
-                            Color(0xFF50576B),
+                        color: Color(0xFF50576B),
                         fontSize: 18,
                       ),
                     ),
-                    const SizedBox(
-                      height: 30,
-                    ),
+
+                    const SizedBox(height: 30),
+
                     // ==================================
                     // 카카오 로그인
                     // ==================================
                     SizedBox(
                       width: double.infinity,
                       height: 50,
-                      child:
-                          ElevatedButton(
-                        style:
-                            ElevatedButton
-                                .styleFrom(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
                           backgroundColor:
-                              const Color(
-                            0xFFFEE500,
-                          ),
-                          foregroundColor:
-                              Colors.black,
+                              const Color(0xFFFEE500),
+                          foregroundColor: Colors.black,
                         ),
                         onPressed: () {
-                          kakaoLogin(
-                            context,
-                          );
+                          kakaoLogin(context);
                         },
                         child: const Text(
                           '카카오 로그인',
-                          style:
-                              TextStyle(
+                          style: TextStyle(
                             fontSize: 16,
-                            fontWeight:
-                                FontWeight
-                                    .bold,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
                     ),
-                    const SizedBox(
-                      height: 15,
-                    ),
+
+                    const SizedBox(height: 15),
+
                     // ==================================
                     // 구글 로그인
                     // ==================================
                     SizedBox(
                       width: double.infinity,
                       height: 50,
-                      child:
-                          OutlinedButton(
+                      child: OutlinedButton(
                         onPressed: () {
-                          googleLogin(
-                            context,
-                          );
+                          googleLogin(context);
                         },
                         child: const Text(
                           '구글 로그인',
-                          style:
-                              TextStyle(
-                            color:
-                                Colors.black,
+                          style: TextStyle(
+                            color: Colors.black,
                             fontSize: 16,
                           ),
                         ),
