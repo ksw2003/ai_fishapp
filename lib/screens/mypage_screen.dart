@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-
+import 'package:flutter/services.dart';
 
 import 'package:ai_fishapp/api/api_client.dart';
 
@@ -124,7 +124,6 @@ class _MyPageScreenState extends State<MyPageScreen>{
     final response = await ApiClient.get('/api/tank/setting/$tankId',token: true);
 
     final data = jsonDecode(response.body);
-    print(data);
 
     final tankNameController = TextEditingController(text:data['device_id'] ?? '');
 
@@ -187,7 +186,9 @@ class _MyPageScreenState extends State<MyPageScreen>{
                   keyboardType:
 
                       const TextInputType.numberWithOptions(decimal: true),
-
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                  ],
                   decoration: const InputDecoration(
 
                     labelText: '최저 온도',
@@ -207,7 +208,9 @@ class _MyPageScreenState extends State<MyPageScreen>{
                   keyboardType:
 
                       const TextInputType.numberWithOptions(decimal: true),
-
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                  ],
                   decoration: const InputDecoration(
 
                     labelText: '최고 온도',
@@ -225,10 +228,12 @@ class _MyPageScreenState extends State<MyPageScreen>{
                   controller: normalWaterController,
 
                   keyboardType: TextInputType.number,
-
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                  ],
                   decoration: const InputDecoration(
 
-                    labelText: '정상 수질 기준',
+                    labelText: '보통 수질 기준',
 
                   ),
 
@@ -241,7 +246,9 @@ class _MyPageScreenState extends State<MyPageScreen>{
                   controller: warningWaterController,
 
                   keyboardType: TextInputType.number,
-
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                  ],
                   decoration: const InputDecoration(
 
                     labelText: '위험 수질 기준',
@@ -277,6 +284,7 @@ class _MyPageScreenState extends State<MyPageScreen>{
             ElevatedButton(
 
               onPressed: () async {
+
                 final tankName = tankNameController.text.trim();
 
                 final minTemp =
@@ -304,11 +312,33 @@ class _MyPageScreenState extends State<MyPageScreen>{
                     normalWater == null ||
 
                     warningWater == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('모든 설정값을 올바르게 입력해주세요.'),
+                    ),
+                  );
+
                   return;
 
                 }
+                if (minTemp >= maxTemp) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('최저 온도는 최고 온도보다 낮게 설정해주세요.'),
+                    ),
+                  );
+                  return;
+                }
+                if (normalWater >= warningWater) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('보통 수질 기준은 위험 수질 기준보다 낮게 설정해주세요.'),
+                    ),
+                  );
+                  return;
+                }
 
-              
+
 
                 // 여기에서 서버에 수정 요청
 
@@ -338,7 +368,7 @@ class _MyPageScreenState extends State<MyPageScreen>{
 
                   );
 
-                  print(response.body);
+
 
                   if (!context.mounted) return;
 
@@ -377,7 +407,6 @@ class _MyPageScreenState extends State<MyPageScreen>{
 
 
                 }
-                
 
               },
 
