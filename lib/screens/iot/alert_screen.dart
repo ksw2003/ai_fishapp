@@ -118,6 +118,7 @@ class _AlertScreenState
 
       appBar: AppBar(
         backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
         elevation: 0,
         title: const Text(
           "알림",
