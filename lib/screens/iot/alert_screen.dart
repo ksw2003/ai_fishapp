@@ -1,244 +1,870 @@
+import 'dart:convert';
+
+import 'package:flutter/services.dart';
+
+import 'package:ai_fishapp/api/api_client.dart';
+
+import 'package:ai_fishapp/screens/start_screen.dart';
+
+import 'package:ai_fishapp/services/socket_service.dart';
+
+import 'package:ai_fishapp/services/token_storage.dart';
 
 import 'package:flutter/material.dart';
-import 'dart:async';
 
-import '../../models/alert.dart';
-import '../../services/alert_service.dart';
-import '../../api/sensor_api.dart';
-import '../../services/token_storage.dart';
 
-class AlertScreen extends StatefulWidget {
-  const AlertScreen({super.key});
+
+import '../widgets/common_bottom_nav_bar.dart';
+
+
+
+class MyPageScreen extends StatefulWidget {
+
+  const MyPageScreen({super.key});
 
   @override
-  State<AlertScreen> createState() => _AlertScreenState();
+
+  State<MyPageScreen> createState() => _MyPageScreenState();
+
 }
 
-class _AlertScreenState extends State<AlertScreen> {
-  late Future<List<AlertModel>> alertsFuture;
-  StreamSubscription? sseSubscription;
+class _MyPageScreenState extends State<MyPageScreen>{
 
-  Future<void> refreshAlerts() async {
-    setState(() {
-      alertsFuture = AlertService.getAlerts();
-    });
-  }
+ // ===============================
+
+  // 임시 데이터
+
+  // 나중에 UserModel(API)로 교체
+
+  // ===============================
+
+
+
+  String nickname = "한경이";
+
+
+
+  String? profileImage;
+
+
 
   @override
-  void initState() {
+
+  void initState(){
+
     super.initState();
 
-    alertsFuture = AlertService.getAlerts();
+    getUserInfo();
 
-    sseSubscription =
-        SensorApi().connect('/api/tank/data').listen((event) {
-      if (event["type"] == "warning") {
-        setState(() {
-          alertsFuture = AlertService.getAlerts();
-        });
-      }
-    });
+  }
+
+
+
+  Future<void> getUserInfo()async{
+
+    final response = await ApiClient.get('/api/auth/myinfo',token: true);
+
+    if(response.statusCode == 200){
+
+      final data = jsonDecode(response.body);
+
+      if (!mounted) return;
+
+      setState(() {
+
+        nickname = data["user"]?["nickname"] ?? "";
+
+        final image = data["image"]?.toString();
+        profileImage = image == null ||
+                image.trim().isEmpty ||
+                image.contains('i.pravatar.cc')
+            ? null
+            : image;
+
+      });
+
+    }
+
+  }
+
+
+
+  Future<void>logout(BuildContext context)async{
+
+    final response = await ApiClient.post('/api/auth/logout',null,token: true);
+
+    if(response.statusCode == 204){
+
+      await TokenStorage.deleteTokens();
+
+      await TokenStorage.deleteTokens();
+
+      SocketService.instance.disconnect();
+
+      if (!mounted) return;
+
+
+
+      Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context)=> const StartScreen()),(route)=>false);
+
+    }else{
+
+      print('로그아웃 실패');
+
+    }
+
+  }
+
+
+
+  Future<void> showTankSettingDialog(BuildContext context) async {
+
+    final tankId = await TokenStorage.getdeviceId();
+
+    final response = await ApiClient.get('/api/tank/setting/$tankId',token: true);
+
+    final data = jsonDecode(response.body);
+
+    final tankNameController = TextEditingController(text:data['device_id'] ?? '');
+
+    final minTempController =
+
+        TextEditingController(text: data['min_temp']?.toString() ?? '');
+
+    final maxTempController =
+
+        TextEditingController(text: data['max_temp']?.toString() ?? '');
+
+    final normalWaterController =
+
+        TextEditingController(text: data['normal_waterquality']?.toString() ?? '');
+
+    final warningWaterController =
+
+        TextEditingController(text: data['warning_waterquality']?.toString() ?? '');
+
+
+
+    await showDialog(
+
+      context: context,
+
+      builder: (context) {
+
+        return AlertDialog(
+
+          title: const Text('어항 설정 변경'),
+
+
+
+          content: SingleChildScrollView(
+
+            child: Column(
+
+              mainAxisSize: MainAxisSize.min,
+
+              children: [
+
+                TextField(
+
+                  controller: tankNameController,
+
+                  keyboardType: TextInputType.text,
+
+                  decoration: const InputDecoration(
+
+                    labelText: '어항 이름'
+
+                  ),
+
+                ),
+
+                TextField(
+
+                  controller: minTempController,
+
+                  keyboardType:
+
+                      const TextInputType.numberWithOptions(decimal: true),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                  ],
+                  decoration: const InputDecoration(
+
+                    labelText: '최저 온도',
+
+                    suffixText: '℃',
+
+                  ),
+
+                ),
+
+
+
+                TextField(
+
+                  controller: maxTempController,
+
+                  keyboardType:
+
+                      const TextInputType.numberWithOptions(decimal: true),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                  ],
+                  decoration: const InputDecoration(
+
+                    labelText: '최고 온도',
+
+                    suffixText: '℃',
+
+                  ),
+
+                ),
+
+
+
+                TextField(
+
+                  controller: normalWaterController,
+
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                  ],
+                  decoration: const InputDecoration(
+
+                    labelText: '보통 수질 기준',
+
+                  ),
+
+                ),
+
+
+
+                TextField(
+
+                  controller: warningWaterController,
+
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                  ],
+                  decoration: const InputDecoration(
+
+                    labelText: '위험 수질 기준',
+
+                  ),
+
+                ),
+
+              ],
+
+            ),
+
+          ),
+
+
+
+          actions: [
+
+            TextButton(
+
+              onPressed: () {
+
+                Navigator.pop(context);
+
+              },
+
+              child: const Text('취소'),
+
+            ),
+
+
+
+            ElevatedButton(
+
+              onPressed: () async {
+
+                final tankName = tankNameController.text.trim();
+
+                final minTemp =
+
+                    double.tryParse(minTempController.text);
+
+                final maxTemp =
+
+                    double.tryParse(maxTempController.text);
+
+                final normalWater =
+
+                    int.tryParse(normalWaterController.text);
+
+                final warningWater =
+
+                    int.tryParse(warningWaterController.text);
+
+
+
+                if (minTemp == null ||
+
+                    maxTemp == null ||
+
+                    normalWater == null ||
+
+                    warningWater == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('모든 설정값을 올바르게 입력해주세요.'),
+                    ),
+                  );
+
+                  return;
+
+                }
+                if (minTemp >= maxTemp) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('최저 온도는 최고 온도보다 낮게 설정해주세요.'),
+                    ),
+                  );
+                  return;
+                }
+                if (normalWater >= warningWater) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('보통 수질 기준은 위험 수질 기준보다 낮게 설정해주세요.'),
+                    ),
+                  );
+                  return;
+                }
+
+
+
+                // 여기에서 서버에 수정 요청
+
+
+
+
+
+                final response = await ApiClient.post(
+
+                    '/api/tank/setting/$tankId',
+
+                    jsonEncode({
+
+                      "min_temp": minTemp,
+
+                      "max_temp": maxTemp,
+
+                      "tank_name": tankName,
+
+                      "normal_waterquality": normalWater,
+
+                      "warning_waterquality": warningWater,
+
+                    }),
+
+                    token: true,
+
+                  );
+
+
+
+                  if (!context.mounted) return;
+
+
+
+                  if (response.statusCode == 204) {
+
+                    Navigator.pop(context);
+
+
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+
+                      const SnackBar(
+
+                        content: Text('어항 설정이 변경되었습니다.'),
+
+                      ),
+
+                    );
+
+                  } else {
+
+                    Navigator.pop(context);
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+
+                      const SnackBar(
+
+                        content: Text('어항 설정 변경에 실패했습니다.'),
+
+                      ),
+
+                    );
+
+
+
+                }
+
+              },
+
+              child: const Text('변경'),
+
+            ),
+
+          ],
+
+        );
+
+      },
+
+    );
+
+  }
+
+
+
+
+
+
+
+  // 게시글 카드(PostCard)와 동일한 기본 발바닥 프로필
+  Widget _defaultProfileImage() {
+    return const SizedBox(
+      width: 94,
+      height: 94,
+      child: ColoredBox(
+        color: Colors.white,
+        child: Center(
+          child: Icon(
+            Icons.pets,
+            size: 52,
+            color: Color(0xff8A93A6),
+          ),
+        ),
+      ),
+    );
   }
 
   @override
-  void dispose() {
-    sseSubscription?.cancel();
-    super.dispose();
+
+  Widget build(BuildContext context) {
+
+    return Scaffold(
+
+      backgroundColor: const Color(0xffF7F7F7),
+
+
+
+      bottomNavigationBar: const CommonBottomNavBar(
+
+        selectedIndex: 3,
+
+      ),
+
+
+
+      body: SafeArea(
+
+      child: Stack(
+
+      children: [
+
+    //----------------------------------------
+    // 내용
+
+    //----------------------------------------
+
+
+
+    SingleChildScrollView(
+
+    child: Padding(
+
+    padding: const EdgeInsets.only(
+
+    top: 70,
+
+    left: 28,
+
+    right: 28,
+
+    bottom: 30,
+
+    ),
+
+    child: Column(
+
+    children: [
+
+
+
+    //--------------------------------
+
+    // 프로필 사진
+
+    //--------------------------------
+
+
+
+    CircleAvatar(
+      radius: 50,
+      backgroundColor: const Color(0xffBCC4D4),
+      child: ClipOval(
+        child: profileImage == null
+            ? _defaultProfileImage()
+            : Image.network(
+                profileImage!,
+                width: 94,
+                height: 94,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) =>
+                    _defaultProfileImage(),
+              ),
+      ),
+    ),
+
+
+
+    const SizedBox(height: 12),
+
+
+
+    //--------------------------------
+
+    // 닉네임
+
+    //--------------------------------
+
+
+
+    Text(
+
+    nickname,
+
+    style: const TextStyle(
+
+    fontSize: 26,
+
+    fontWeight: FontWeight.w700,
+
+    ),
+
+    ),
+
+
+
+    const SizedBox(height: 40),
+
+
+
+    //--------------------------------
+
+    // 프로필 변경 버튼
+
+    //--------------------------------
+
+
+
+    MyPageButton(
+
+    title: "프로필 변경",
+
+    onTap: () async {
+      await Navigator.pushNamed(context, "/profile-edit");
+      if (mounted) getUserInfo();
+    },
+
+    ),
+
+
+
+    const SizedBox(height: 12),
+
+
+
+    //--------------------------------
+
+    // 나의 물고기 버튼
+
+    //--------------------------------
+
+
+
+    MyPageButton(
+
+    title: "나의 물고기",
+
+    onTap: () {
+
+    Navigator.pushNamed(
+
+    context,
+
+    "/my-fish",
+
+    );
+
+    },
+
+    ),
+
+
+
+    //--------------------------------
+
+    // 어항 설정 화면
+
+    //--------------------------------
+
+
+
+    const SizedBox(height: 12),
+
+
+
+    MyPageButton(title: "어항 설정", onTap: (){
+
+      showTankSettingDialog(context);
+
+    }),
+
+
+
+    const SizedBox(height: 22),
+
+      //--------------------------------
+
+      // 로그아웃 버튼
+
+      //--------------------------------
+
+
+
+      LogoutPressButton(
+        onTap: () => logout(context),
+      ),
+
+      const SizedBox(height: 40),
+
+    ],
+
+    ),
+
+    ),
+
+    ),
+
+      ],
+
+      ),
+
+      ),
+
+    );
+
   }
 
-  String formatDate(DateTime date) {
-    final now = DateTime.now();
+}
 
-    if (date.year == now.year &&
-        date.month == now.month &&
-        date.day == now.day) {
-      return "오늘";
-    }
 
-    return "${date.year}.${date.month}.${date.day}";
+
+class MyPageButton extends StatefulWidget {
+
+  final String title;
+
+  final VoidCallback onTap;
+
+
+
+  const MyPageButton({
+
+    super.key,
+
+    required this.title,
+
+    required this.onTap,
+
+  });
+
+
+
+  @override
+
+  State<MyPageButton> createState() => _MyPageButtonState();
+
+}
+
+
+
+class _MyPageButtonState extends State<MyPageButton> {
+
+  bool isPressed = false;
+
+
+
+  void setPressed(bool value) {
+
+    setState(() {
+
+      isPressed = value;
+
+    });
+
   }
 
-  IconData getIcon(String type) {
-    switch (type) {
-      case "temp":
-        return Icons.thermostat;
-      case "waterquality":
-        return Icons.water_drop;
-      default:
-        return Icons.notifications_none;
-    }
+
+
+  @override
+
+  Widget build(BuildContext context) {
+
+    return AnimatedScale(
+
+      scale: isPressed ? 0.97 : 1,
+
+      duration: const Duration(milliseconds: 90),
+
+      curve: Curves.easeOut,
+
+      child: Material(
+
+        color: Colors.white,
+
+        elevation: isPressed ? 0 : 2,
+
+        shadowColor: Colors.black.withOpacity(0.12),
+
+        borderRadius: BorderRadius.circular(15),
+
+        clipBehavior: Clip.antiAlias,
+
+        child: InkWell(
+
+          onTap: widget.onTap,
+
+          onTapDown: (_) => setPressed(true),
+
+          onTapUp: (_) => setPressed(false),
+
+          onTapCancel: () => setPressed(false),
+
+          splashColor: const Color(0xff8FA8D8).withOpacity(0.15),
+
+          highlightColor: const Color(0xff8FA8D8).withOpacity(0.05),
+
+          child: Ink(
+
+            height: 68,
+
+            decoration: BoxDecoration(
+
+              color: isPressed
+
+                  ? const Color(0xffF4F8FF)
+
+                  : Colors.white,
+
+              borderRadius: BorderRadius.circular(15),
+
+            ),
+
+            child: Center(
+
+              child: Text(
+
+                widget.title,
+
+                style: const TextStyle(
+
+                  fontSize: 18,
+
+                  fontWeight: FontWeight.w700,
+
+                  color: Color(0xff50576B),
+
+                ),
+
+              ),
+
+            ),
+
+          ),
+
+        ),
+
+      ),
+
+    );
+
   }
 
-  Color getIconColor(AlertModel item) {
-    if (item.type == "temp") {
-      if (item.status == "low") {
-        return Colors.lightBlue.shade300;
-      }
-      if (item.status == "high") {
-        return Colors.red.shade300;
-      }
-    }
+}
 
-    if (item.type == "waterquality") {
-      return Colors.orange.shade300;
-    }
 
-    return Colors.grey;
-  }
 
-  Color getIconBackgroundColor(AlertModel item) {
-    if (item.type == "temp") {
-      if (item.status == "low") {
-        return Colors.lightBlue.shade50;
-      }
-      if (item.status == "high") {
-        return Colors.red.shade50;
-      }
-    }
 
-    if (item.type == "waterquality") {
-      return Colors.orange.shade50;
-    }
 
-    return const Color(0xFFF2F3F5);
+// 로그아웃: 기존 그라데이션/그림자 없음 유지, 일반 메뉴와 같은 눌림 크기
+class LogoutPressButton extends StatefulWidget {
+  final VoidCallback onTap;
+
+  const LogoutPressButton({super.key, required this.onTap});
+
+  @override
+  State<LogoutPressButton> createState() => _LogoutPressButtonState();
+}
+
+class _LogoutPressButtonState extends State<LogoutPressButton> {
+  bool isPressed = false;
+
+  void setPressed(bool value) {
+    if (!mounted) return;
+    setState(() => isPressed = value);
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        title: const Text(
-          "알림",
-          style: TextStyle(
-            color: Colors.black,
-            fontWeight: FontWeight.w600,
+    return AnimatedScale(
+      scale: isPressed ? 0.97 : 1,
+      duration: const Duration(milliseconds: 90),
+      curve: Curves.easeOut,
+      child: SizedBox(
+          width: double.infinity,
+          height: 58,
+          child: DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(15),
+            gradient: const LinearGradient(
+              colors: [
+                Color(0xff2D9CFF),
+                Color(0xff3CC8F2),
+              ],
+            ),
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(15),
+              onTap: widget.onTap,
+              onTapDown: (_) => setPressed(true),
+              onTapUp: (_) => setPressed(false),
+              onTapCancel: () => setPressed(false),
+              child: const Center(
+                child: Text(
+                  '로그아웃',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ),
           ),
         ),
-        iconTheme: const IconThemeData(
-          color: Colors.black,
-        ),
-      ),
-
-      body: FutureBuilder<List<AlertModel>>(
-        future: alertsFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState ==
-              ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
-          }
-
-          if (snapshot.hasError) {
-            return Center(
-              child: Text(
-                snapshot.error.toString(),
-              ),
-            );
-          }
-
-          final alerts = snapshot.data ?? [];
-          alerts.sort((a, b) =>
-              b.createdAt.compareTo(a.createdAt));
-          
-          if (alerts.isEmpty) {
-            return const Center(
-              child: Text("알림이 없습니다."),
-            );
-          }
-
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Padding(
-                padding: EdgeInsets.only(
-                  left: 20,
-                  top: 16,
-                  bottom: 12,
-                ),
-                child: Text(
-                  "새로운 알림",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-
-              Expanded(
-                child: RefreshIndicator(
-                  onRefresh: refreshAlerts,
-                  child: ListView.builder(
-                    itemCount: alerts.length,
-                    itemBuilder: (context, index) {
-                      final item = alerts[index];
-
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                        child: Row(
-                          crossAxisAlignment:
-                              CrossAxisAlignment.start,
-                          children: [
-                            Container(
-                              width: 60,
-                              height: 60,
-                              decoration: BoxDecoration(
-                                color:
-                                    getIconBackgroundColor(item),
-                                borderRadius:
-                                    BorderRadius.circular(16),
-                              ),
-                              child: Icon(
-                                getIcon(item.type),
-                                color: getIconColor(item),
-                                size: 28,
-                              ),
-                            ),
-
-                            const SizedBox(width: 14),
-
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment:
-                                    CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    item.message,
-                                    style: const TextStyle(
-                                      fontSize: 17,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-
-                                  const SizedBox(height: 4),
-
-                                  Text(
-                                    formatDate(item.createdAt),
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: Colors.grey.shade600,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ),
-            ],
-          );
-        },
       ),
     );
   }
