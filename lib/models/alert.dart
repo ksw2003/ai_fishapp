@@ -19,7 +19,7 @@ class AlertModel {
       type: json['type'] ?? '',
       status: json['status'] ?? '',
       message: json['message'] ?? '',
-      createdAt: DateTime.parse(json['created_at']),
+      createdAt: DateTime.parse(json['created_at']).add(const Duration(hours: 9)),
     );
   }
 }
