@@ -129,12 +129,6 @@ class _AlertScreenState
         iconTheme: const IconThemeData(
           color: Colors.black,
         ),
-        actions: [
-          TextButton(
-            onPressed: () {},
-            child: const Text("모두읽기"),
-          ),
-        ],
       ),
 
       body: FutureBuilder<List<AlertModel>>(
@@ -190,6 +184,7 @@ class _AlertScreenState
                 child: RefreshIndicator(
                   onRefresh: refreshAlerts,
                   child: ListView.builder(
+                    physics: const ClampingScrollPhysics(),
                     itemCount: alerts.length,
                     itemBuilder: (context, index) {
 
