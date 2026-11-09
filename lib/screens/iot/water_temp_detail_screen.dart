@@ -229,9 +229,9 @@ class TemperatureBar extends StatelessWidget {
 
     if (temp < minTemp!) {
       return const [
-        Color(0xFF00507E),
-        Color(0xFF002771),
-        Color(0xFF000B57),
+        Color(0xFF117FFF),
+        Color(0xFF0003EA),
+        Color(0xFF1400A5),
       ];
     } else if (temp > maxTemp!) {
       return const [
