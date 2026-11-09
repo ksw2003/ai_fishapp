@@ -82,19 +82,19 @@ class _WaterTempDetailScreenState extends State<WaterTempDetailScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // 뒤로가기 버튼
-                      IconButton(
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                        icon: const Icon(
-                          Icons.arrow_back_ios_new,
-                          size: 18,
-                          color: Color(0xFF8FA8D8),
-                        ),
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                      ),
+// 뒤로가기 버튼
+IconButton(
+  padding: EdgeInsets.zero,
+  constraints: const BoxConstraints(),
+  icon: const Icon(
+    Icons.arrow_back_ios_new,
+    size: 24,
+    color: Color(0xFF8FA8D8),
+  ),
+  onPressed: () {
+    Navigator.pop(context);
+  },
+),
 
                       SizedBox(height: screenHeight * 0.10),
 
