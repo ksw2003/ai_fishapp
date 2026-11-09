@@ -115,7 +115,10 @@ class _HomeScreenState extends State<HomeScreen> {
     if (minTemp == null || maxTemp == null) {
       return const Color(0xFF9CB8E8);
     }
-    if (temp < minTemp! || temp > maxTemp!) {
+    if (temp < minTemp!) {
+      return const Color(0xFF001EC1);
+    }
+    if (temp > maxTemp!) {
       return Colors.red;
     }
     return Colors.blue;
