@@ -29,12 +29,12 @@ class _HomeScreenState extends State<HomeScreen> {
   StreamSubscription<Map<String, dynamic>>? _sensorSubscription;
   final SensorApi _sensorApi = SensorApi();
   // 실제 SOM 활동성 결과를 받기 전에는 상태를 단정하지 않음
-  String fishCondition = '분석 중';
+  String fishCondition = '--';
   DateTime? _lastActivityReceivedAt;
   Timer? _activityStaleTimer;
 
   // 물고기 상태에 맞는 아이콘
-  IconData get _fishConditionIcon {
+  IconData? get _fishConditionIcon {
     switch (fishCondition) {
       case '좋음':
         return Icons.sentiment_very_satisfied_outlined;
@@ -43,7 +43,7 @@ class _HomeScreenState extends State<HomeScreen> {
       case '나쁨':
         return Icons.sentiment_very_dissatisfied_outlined;
       default:
-        return Icons.help_outline;
+        return null;
     }
   }
 
@@ -51,7 +51,7 @@ class _HomeScreenState extends State<HomeScreen> {
   // 현재 SOM이 상태를 판정한 개체 수를 기준으로 계산한다.
   String _classifyFishCondition(int healthy, int abnormal) {
     final total = healthy + abnormal;
-    if (total == 0) return '분석 중';
+    if (total == 0) return '물고기 없음';
     if (abnormal == 0) return '좋음';
     // 부동소수점 계산 대신 정수 비교로 정확하게 50% 경계를 판단
     if (abnormal * 2 >= total) return '나쁨';
@@ -167,10 +167,10 @@ class _HomeScreenState extends State<HomeScreen> {
     // AI 결과는 5초마다 재전송되므로 15초 이상 없으면 오래된 상태를 숨김
     _activityStaleTimer = Timer.periodic(const Duration(seconds: 3), (_) {
       final last = _lastActivityReceivedAt;
-      if (!mounted || last == null || fishCondition == '분석 중') return;
+      if (!mounted || last == null || fishCondition == '--') return;
       if (DateTime.now().difference(last) > const Duration(seconds: 15)) {
         setState(() {
-          fishCondition = '분석 중';
+          fishCondition = '--';
         });
       }
     });
@@ -479,12 +479,14 @@ class _HomeScreenState extends State<HomeScreen> {
                                         color: Colors.white,
                                       ),
                                     ),
-                                    const SizedBox(width: 6),
-                                    Icon(
-                                      _fishConditionIcon,
-                                      size: 28,
-                                      color: Colors.white,
-                                    ),
+                                    if (_fishConditionIcon != null) ...[
+                                      const SizedBox(width: 6),
+                                      Icon(
+                                        _fishConditionIcon!,
+                                        size: 28,
+                                        color: Colors.white,
+                                      ),
+                                    ],
                                   ],
                                 ),
                               ),

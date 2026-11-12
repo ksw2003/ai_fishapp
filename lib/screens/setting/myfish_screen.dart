@@ -249,8 +249,14 @@ class _MyFishScreenState extends State<MyFishScreen> {
     // 탐지된 물고기가 없을 때 중앙 Toast
     // ==========================================
     if (newFishes.isEmpty) {
-      showCenterToast('탐지된 물고기가 없어 자동 저장하지 않았습니다.');
-      if (mounted) setState(() => isRefreshing = false);
+      // 기존 수동 전체 삭제와 동일하게 빈 목록을 DB에 저장
+      final saved = await saveFish();
+      if (!mounted) return;
+
+      setState(() => isRefreshing = false);
+      if (saved) {
+        showCenterToast('탐지된 물고기가 없습니다.');
+      }
       return;
     }
 
